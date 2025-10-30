@@ -23,6 +23,7 @@ import com.google.gson.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.WorldCreator;
 
 import java.lang.reflect.Type;
 
@@ -75,7 +76,9 @@ public class LocationAdapter implements JsonDeserializer<Location>, JsonSerializ
 
         World worldInstance = Bukkit.getWorld( world.getAsString() );
         if (worldInstance == null) {
-            throw new IllegalArgumentException("Unknown/not loaded world");
+            worldInstance = Bukkit.createWorld(new WorldCreator(world.getAsString()));
+            if (worldInstance == null)
+                throw new IllegalArgumentException("Unknown/not loaded world");
         }
 
         return new Location( worldInstance, x.getAsDouble(), y.getAsDouble(), z.getAsDouble(), yaw.getAsFloat(), pitch.getAsFloat() );

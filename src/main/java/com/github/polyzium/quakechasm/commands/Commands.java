@@ -452,21 +452,16 @@ public abstract class Commands {
         CommandAPICommand reloadCmd = new CommandAPICommand("reload")
                 .withPermission("quake.admin")
                 .executes((sender, args) -> {
-                    Player player = null;
-                    if (sender instanceof Player)
-                        player = (Player) sender;
-
-                    QuakePlugin.INSTANCE.onDisable();
-                    QuakePlugin.INSTANCE.onEnable();
-                    if (player != null)
-                        sender.sendMessage(TranslationManager.t("plugin.reload", player));
-                    else
-                        sender.sendMessage(TranslationManager.t("plugin.reload", TranslationManager.FALLBACK));
-
-                    Bukkit.getServer().broadcast(
-                            Component.text("[Quakechasm]").color(TextColor.color(0x8e60e0)).append(
-                                    Component.text(" Plugin reloaded").color(TextColor.color(0xffffff)))
-                    );
+                    QuakePlugin.INSTANCE.reload();
+//                    if (player != null)
+//                        sender.sendMessage(TranslationManager.t("plugin.reload", player));
+//                    else
+//                        sender.sendMessage(TranslationManager.t("plugin.reload", TranslationManager.FALLBACK));
+//
+//                    Bukkit.getServer().broadcast(
+//                            Component.text("[Quakechasm]").color(TextColor.color(0x8e60e0)).append(
+//                                    Component.text(" Plugin reloaded").color(TextColor.color(0xffffff)))
+//                    );
                 });
 
         CommandAPICommand giveCmd = new CommandAPICommand("give")

@@ -36,12 +36,15 @@ import java.util.Locale;
 import java.util.Map;
 
 public class TranslationManager {
-    public static final Locale FALLBACK = Locale.US;
+    public static Locale FALLBACK = Locale.US;
     private final HashMap<String, JsonObject> translations;
     private final MiniMessage miniMessage;
     public static TranslationManager INSTANCE = null;
 
     public TranslationManager() throws IOException {
+        // Set fallback locale from config
+        FALLBACK = QuakePlugin.INSTANCE.config.locale.getFallbackLocale();
+        
         String languagesJson = new String(QuakePlugin.INSTANCE.getResource("lang.json").readAllBytes(), StandardCharsets.UTF_8);
         this.translations = new Gson().fromJson(languagesJson, new TypeToken<HashMap<String, JsonObject>>(){}.getType());
         this.miniMessage = MiniMessage.miniMessage();

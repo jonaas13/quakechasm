@@ -25,6 +25,9 @@ import com.github.polyzium.quakechasm.game.entities.QEntityUtil;
 import com.github.polyzium.quakechasm.game.entities.Trigger;
 import com.github.polyzium.quakechasm.game.entities.pickups.*;
 import com.google.gson.reflect.TypeToken;
+import dev.jorel.commandapi.CommandAPI;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.*;
@@ -73,6 +76,7 @@ public class QuakePlugin extends JavaPlugin {
     public MatchmakingManager matchmakingManager;
     public MenuManager menuManager;
     public TranslationManager translationManager;
+    public PluginConfig config;
 
     public void startRotatingPickups() {
         this.rotatorAngle = 0;
@@ -171,7 +175,7 @@ public class QuakePlugin extends JavaPlugin {
     }
 
     public void initPlayer(Player player) {
-        player.setWalkSpeed(0.4f);
+        player.setWalkSpeed(config.player.walkSpeed);
         player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(20);
         this.userStates.put(player, new QuakeUserState(player));
     }
@@ -326,12 +330,20 @@ public class QuakePlugin extends JavaPlugin {
         this.maps = maps;
     }
 
-    @Override
-    public void onEnable() {
+    public void init(boolean isReload) {
         getLogger().info("Quakechasm initializing");
 
         // singleton pattern
         INSTANCE = this;
+
+        // load configuration
+        getLogger().info("Loading configuration");
+        try {
+            this.config = PluginConfig.load();
+        } catch (IOException e) {
+            getLogger().severe("Failed to load configuration: " + e.getMessage());
+            throw new RuntimeException(e);
+        }
 
         // events
         getServer().getPluginManager().registerEvents(new MiscListener(), this);
@@ -343,11 +355,15 @@ public class QuakePlugin extends JavaPlugin {
 
         // lobby
         getLogger().info("Initializing lobby world");
-        World lobbyWorld = new WorldCreator("flat")
+        World lobbyWorld = new WorldCreator(config.lobby.world)
                 .createWorld();
         LOBBY = new Location(
                 lobbyWorld,
-                2977, 89, 2992
+                config.lobby.x,
+                config.lobby.y,
+                config.lobby.z,
+                config.lobby.yaw,
+                config.lobby.pitch
         );
 
         // other stuff
@@ -373,13 +389,15 @@ public class QuakePlugin extends JavaPlugin {
         this.startHudUpdater();
 
         // commands
-        Commands.initQuakeCommand();
+        if (!isReload)
+            Commands.initQuakeCommand();
     }
 
-    @Override
-    public void onDisable() {
+    public void halt(boolean isReload) {
         getLogger().info("Quakechasm is shutting down");
 
+        if (!isReload)
+            CommandAPI.unregister("quake");
         HandlerList.unregisterAll(this);
         getServer().getScheduler().cancelTasks(this);
 
@@ -392,14 +410,35 @@ public class QuakePlugin extends JavaPlugin {
         getLogger().info("Untracking triggers");
         this.triggers.clear();
 
-        getLogger().info("Saving maps");
-        if (this.maps != null) {
-            this.saveMaps();
-            this.maps.clear();
-        } else {
-            getLogger().warning("Maps list is null, skipping save");
+        if (!isReload) {
+            getLogger().info("Saving maps");
+            if (this.maps != null) {
+                this.saveMaps();
+                this.maps.clear();
+            } else {
+                getLogger().warning("Maps list is null, skipping save");
+            }
         }
 
         getLogger().info("Quakechasm disabled. Goodbye!");
+    }
+
+    @Override
+    public void onEnable() {
+        this.init(false);
+    }
+
+    @Override
+    public void onDisable() {
+        this.halt(false);
+    }
+
+    public void reload() {
+        this.halt(true);
+        this.init(true);
+        Bukkit.getServer().broadcast(
+                Component.text("[Quakechasm]").color(TextColor.color(0x8e60e0)).append(
+                        Component.text(" Plugin reloaded").color(TextColor.color(0xffffff))
+                ));
     }
 }
