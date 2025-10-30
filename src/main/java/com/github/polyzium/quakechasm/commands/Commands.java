@@ -101,7 +101,8 @@ public abstract class Commands {
                                     loc,
                                     player.getEyeLocation().getDirection().multiply((double) args.get("power"))
                             );
-                            player.sendMessage(String.format("Made a Jumppad at %.1f %.1f %.1f", loc.x(), loc.y(), loc.z()));
+                            player.sendMessage(TranslationManager.t("command.entity.jumppad.created", player,
+                                Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", loc.x(), loc.y(), loc.z()))));
                         })
                 )
                 .withSubcommand(new CommandAPICommand("visualize")
@@ -198,7 +199,8 @@ public abstract class Commands {
                                     jpLocation,
                                     launchVector
                             );
-                            player.sendMessage(String.format("Made a Jumppad at %.1f %.1f %.1f", jpLocation.x(), jpLocation.y(), jpLocation.z()));
+                            player.sendMessage(TranslationManager.t("command.entity.jumppad.created", player,
+                                Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", jpLocation.x(), jpLocation.y(), jpLocation.z()))));
                         })
                 );
 
@@ -215,10 +217,9 @@ public abstract class Commands {
 
                             Location ploc = player.getLocation();
                             new Portal(state.portalLoc, ploc);
-                            player.sendMessage(String.format("Made a Portal at %.1f %.1f %.1f, linked to %.1f %.1f %.1f",
-                                    state.portalLoc.x(), state.portalLoc.y(), state.portalLoc.z(),
-                                    ploc.x(), ploc.y(), ploc.z()
-                            ));
+                            player.sendMessage(TranslationManager.t("command.entity.portal.created", player,
+                                Placeholder.unparsed("location1", String.format("%.1f %.1f %.1f", state.portalLoc.x(), state.portalLoc.y(), state.portalLoc.z())),
+                                Placeholder.unparsed("location2", String.format("%.1f %.1f %.1f", ploc.x(), ploc.y(), ploc.z()))));
                             state.portalLoc = null;
                         })
                 )
@@ -272,7 +273,8 @@ public abstract class Commands {
                                     player.getWorld(),
                                     loc
                             );
-                            player.sendMessage(String.format("Made a HealthSpawner at %.1f %.1f %.1f", loc.x(), loc.y(), loc.z()));
+                            player.sendMessage(TranslationManager.t("command.entity.healthSpawner.created", player,
+                                Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", loc.x(), loc.y(), loc.z()))));
                         })
                 );
 
@@ -292,7 +294,8 @@ public abstract class Commands {
                             );
                             int ammoType = Arrays.asList(AmmoSpawner.ALIASES).indexOf(args.get("ammo_type"));
                             if (ammoType >= WeaponUtil.WEAPONS_NUM) {
-                                player.sendMessage("§cWrong type, use either of: "+String.join(",", AmmoSpawner.ALIASES));
+                                player.sendMessage(TranslationManager.t("command.ammoSpawner.wrongType", player,
+                                    Placeholder.unparsed("types", String.join(",", AmmoSpawner.ALIASES))));
                                 return;
                             }
 
@@ -301,7 +304,8 @@ public abstract class Commands {
                                     player.getWorld(),
                                     loc
                             );
-                            player.sendMessage(String.format("Made an AmmoSpawner at %.1f %.1f %.1f", loc.x(), loc.y(), loc.z()));
+                            player.sendMessage(TranslationManager.t("command.entity.ammoSpawner.created", player,
+                                Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", loc.x(), loc.y(), loc.z()))));
                         })
                 );
 
@@ -339,7 +343,8 @@ public abstract class Commands {
                                     player.getWorld(),
                                     loc
                             );
-                            player.sendMessage(String.format("Made an ArmorSpawner at %.1f %.1f %.1f", loc.x(), loc.y(), loc.z()));
+                            player.sendMessage(TranslationManager.t("command.entity.armorSpawner.created", player,
+                                Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", loc.x(), loc.y(), loc.z()))));
                         })
                 );
 
@@ -370,7 +375,8 @@ public abstract class Commands {
                             }
 
                             new PowerupSpawner(type, player.getWorld(), loc, false, 30);
-                            player.sendMessage(String.format("Made a PowerupSpawner at %.1f %.1f %.1f", loc.x(), loc.y(), loc.z()));
+                            player.sendMessage(TranslationManager.t("command.entity.powerupSpawner.created", player,
+                                Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", loc.x(), loc.y(), loc.z()))));
                         })
                 );
 
@@ -398,7 +404,9 @@ public abstract class Commands {
                             }
 
                             new CTFFlag(team, false, null, loc);
-                            player.sendMessage(String.format("Made a CTFFlag (%s team) at %.1f %.1f %.1f", team.name(), loc.x(), loc.y(), loc.z()));
+                            player.sendMessage(TranslationManager.t("command.entity.ctfFlag.created", player,
+                                Placeholder.unparsed("team", team.name()),
+                                Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", loc.x(), loc.y(), loc.z()))));
                         })
                 );
 
@@ -437,7 +445,8 @@ public abstract class Commands {
                                     player.getWorld(),
                                     loc
                             );
-                            player.sendMessage(String.format("Made a WeaponSpawner at %.1f %.1f %.1f", loc.x(), loc.y(), loc.z()));
+                            player.sendMessage(TranslationManager.t("command.entity.weaponSpawner.created", player,
+                                Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", loc.x(), loc.y(), loc.z()))));
                         }));
 
         CommandAPICommand reloadCmd = new CommandAPICommand("reload")
@@ -576,11 +585,23 @@ public abstract class Commands {
                 .withSubcommand(new CommandAPICommand("list")
                         .executes((sender, args) -> {
                             if (QuakePlugin.INSTANCE.maps.isEmpty()) {
-                                sender.sendMessage("§cNo maps to list");
+                                if (sender instanceof Player player)
+                                    sender.sendMessage(TranslationManager.t("command.map.list.empty", player));
+                                else
+                                    sender.sendMessage(TranslationManager.t("command.map.list.empty", TranslationManager.FALLBACK));
                                 return;
                             }
                             for (QMap map : QuakePlugin.INSTANCE.maps) {
-                                sender.sendMessage(map.name+" in "+map.world.getName()+" at "+ map.bounds.getMin());
+                                if (sender instanceof Player player)
+                                    sender.sendMessage(TranslationManager.t("command.map.list.entry", player,
+                                        Placeholder.unparsed("map_name", map.name),
+                                        Placeholder.unparsed("world_name", map.world.getName()),
+                                        Placeholder.unparsed("location", map.bounds.getMin().toString())));
+                                else
+                                    sender.sendMessage(TranslationManager.t("command.map.list.entry", TranslationManager.FALLBACK,
+                                        Placeholder.unparsed("map_name", map.name),
+                                        Placeholder.unparsed("world_name", map.world.getName()),
+                                        Placeholder.unparsed("location", map.bounds.getMin().toString())));
                             }
                         })
                 )
@@ -680,8 +701,7 @@ public abstract class Commands {
                            player.getInventory().addItem(SpawnerTool.createPowerupSpawnerTool(PowerupType.REGENERATION));
                            player.getInventory().addItem(SpawnerTool.createPowerupSpawnerTool(PowerupType.PROTECTION));
                            
-                           player.sendMessage(net.kyori.adventure.text.Component.text("Mapper toolkit added to inventory")
-                               .color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
+                           player.sendMessage(TranslationManager.t("command.map.toolkit.added", player));
                        })
                );
 
@@ -747,7 +767,9 @@ public abstract class Commands {
                             else
                                 locale =  player.locale();
 
-                            sender.sendMessage("Made a new "+TranslationManager.tLegacy(matchFactory.getNameKey(), locale)+" match with index "+ matchManager.matches.indexOf(match));
+                            sender.sendMessage(TranslationManager.t("command.match.created", locale,
+                                Placeholder.unparsed("match_type", TranslationManager.tLegacy(matchFactory.getNameKey(), locale)),
+                                Placeholder.unparsed("index", String.valueOf(matchManager.matches.indexOf(match)))));
                         })
                 )
                 .withSubcommand(new CommandAPICommand("join")
@@ -794,7 +816,12 @@ public abstract class Commands {
                             for (int i = 0; i < matchManager.matches.size(); i++) {
                                 Match match = matchManager.matches.get(i);
 
-                                sender.sendMessage(String.format("%d: %s on %s, %d players", i, match.getNameKey(), match.getMap().name, match.getPlayers().size()));
+                                sender.sendMessage(TranslationManager.t("command.match.list.entry",
+                                    sender instanceof Player ? ((Player)sender).locale() : TranslationManager.FALLBACK,
+                                    Placeholder.unparsed("index", String.valueOf(i)),
+                                    Placeholder.unparsed("match_name", match.getNameKey()),
+                                    Placeholder.unparsed("map_name", match.getMap().name),
+                                    Placeholder.unparsed("player_count", String.valueOf(match.getPlayers().size()))));
                             }
 
                         })
@@ -835,7 +862,8 @@ public abstract class Commands {
                                 default -> null;
                             };
                             if (mode == null) {
-                                player.sendMessage("Invalid match mode "+modeString);
+                                player.sendMessage(TranslationManager.t("command.matchmaking.invalidMode", player,
+                                    Placeholder.unparsed("mode", modeString)));
                                 return;
                             }
 
@@ -1027,7 +1055,7 @@ public abstract class Commands {
                         chatroom = Chatroom.valueOf(((String) args.get("chatroom")).toUpperCase());
                     } catch (IllegalArgumentException e) {
                         player.sendMessage(TranslationManager.t("error.chatroom.invalid", player));
-                        player.sendMessage("§c"+e.getMessage());
+                        player.sendMessage(Component.text("§c"+e.getMessage()));
                         return;
                     }
 

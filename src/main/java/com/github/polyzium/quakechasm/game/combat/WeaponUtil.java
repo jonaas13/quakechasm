@@ -348,7 +348,6 @@ public abstract class WeaponUtil {
         if (cause == DamageCause.RAILGUN && attacker instanceof Player attackerPlayer) {
             QuakeUserState attackerState = QuakePlugin.INSTANCE.userStates.get(attackerPlayer);
             attackerState.consecutiveRailgunHits++;
-            attacker.sendMessage(String.valueOf(attackerState.consecutiveRailgunHits));
             attackerState.checkImpressiveMedal();
         }
 

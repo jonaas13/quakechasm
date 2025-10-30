@@ -74,17 +74,20 @@ public class MatchmakingManager {
             this.players.add(player);
             QuakePlugin.INSTANCE.userStates.get(player)
                     .mmState.currentParty = this;
-            this.sendMessage(Component.textOfChildren(localizedPrefix(this.leader.locale()), player.displayName(), Component.text(" joined")));
+            this.sendMessage(Component.textOfChildren(localizedPrefix(this.leader.locale()), player.displayName(),
+                TranslationManager.t("party.joined", this.leader.locale())));
         }
 
         public void removePlayer(Player player) {
             this.players.remove(player);
             QuakePlugin.INSTANCE.userStates.get(player)
                     .mmState.currentParty = new Party(player);
-            this.sendMessage(Component.textOfChildren(localizedPrefix(this.leader.locale()), player.displayName(), Component.text(" left")));
+            this.sendMessage(Component.textOfChildren(localizedPrefix(this.leader.locale()), player.displayName(),
+                TranslationManager.t("party.left", this.leader.locale())));
             if (player == this.leader && !this.players.isEmpty()) {
                 leader = this.players.get(0);
-                this.sendMessage(Component.textOfChildren(localizedPrefix(this.leader.locale()), this.leader.displayName(), Component.text(" is the new party leader")));
+                this.sendMessage(Component.textOfChildren(localizedPrefix(this.leader.locale()), this.leader.displayName(),
+                    TranslationManager.t("party.newLeader", this.leader.locale())));
             }
         }
 
@@ -282,7 +285,9 @@ public class MatchmakingManager {
             if (!map.recommendedModes.contains(matchMode)) {
                 mapsUnfit = true;
                 unfitMapName = mapName;
-                party.sendMessage("§cMap "+mapName+" is unfit for "+matchMode.getDisplayName());
+                party.sendMessage(TranslationManager.t("matchmaking.mapUnfit", party.leader,
+                    Placeholder.unparsed("map_name", mapName),
+                    Placeholder.unparsed("mode", matchMode.getDisplayName())));
             }
         }
         if (mapsUnfit) {
@@ -319,7 +324,9 @@ public class MatchmakingManager {
 //                partyPlayer.sendMessage(Component.textOfChildren(Party.localizedPrefix(), party.leader.displayName(),
 //                        Component.text(" started search for matches: mode "+matchMode.toString()+", maps "+String.join(", ", selectedMaps)))
                 partyPlayer.sendMessage(Component.textOfChildren(Party.localizedPrefix(partyPlayer.locale()), party.leader.displayName(),
-                        Component.text(" started search for matches: mode "+matchMode.toString()+", maps "+String.join(", ", selectedMaps)))
+                        TranslationManager.t("matchmaking.search.leaderStarted", partyPlayer,
+                            Placeholder.unparsed("mode", matchMode.toString()),
+                            Placeholder.unparsed("maps", String.join(", ", selectedMaps))))
                 );
         }
     }
@@ -441,8 +448,10 @@ public class MatchmakingManager {
 
     private void onMatchFound(PendingParty pendingParty, PendingMatch pendingMatch) {
         pendingParty.party.sendMessage(TranslationManager.t("matchmaking.match.accept.chat", pendingParty.party.leader));
-        pendingParty.party.sendMessage("§b"+pendingMatch.map.displayName+" | "+pendingMatch.matchMode.getDisplayName());
-        pendingParty.party.sendMessage("Type \"/quake matchmaking accept\" to accept the match.");
+        pendingParty.party.sendMessage(TranslationManager.t("matchmaking.search.mapInfo", pendingParty.party.leader,
+            Placeholder.unparsed("map_name", pendingMatch.map.displayName),
+            Placeholder.unparsed("mode", pendingMatch.matchMode.getDisplayName())));
+        pendingParty.party.sendMessage(TranslationManager.t("matchmaking.search.acceptPrompt", pendingParty.party.leader));
         pendingParty.isAcceptingMatch = true;
         for (Player partyPlayer : pendingParty.party.players) {
             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(partyPlayer);

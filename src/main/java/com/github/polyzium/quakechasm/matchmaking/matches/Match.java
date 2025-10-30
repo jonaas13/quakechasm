@@ -137,14 +137,16 @@ public abstract class Match implements ForwardingAudience {
         }
 
         userState.switchChat(Chatroom.MATCH);
-        this.sendMessage(player.getName()+" entered the match");
+        this.sendMessage(TranslationManager.t("match.player.joined", TranslationManager.FALLBACK,
+            Placeholder.unparsed("player_name", player.getName())));
     }
 
     public void leave(Player player) {
         players.remove(player);
         cleanup(player);
 
-        this.sendMessage(player.getName()+" left the match");
+        this.sendMessage(TranslationManager.t("match.player.left", TranslationManager.FALLBACK,
+            Placeholder.unparsed("player_name", player.getName())));
     }
     public void end() {
         matchEnding = true;

@@ -18,6 +18,9 @@
       "generic": {
         "cancelledAlready": "<red>Already cancelled</red>"
       },
+      "ammoSpawner": {
+        "wrongType": "<red>Wrong type, use either of: <types></red>"
+      },
       "party": {
         "list": {
           "leader": " (leader)",
@@ -114,6 +117,9 @@
       },
       "kill": {
         "message": "You fragged <victim>"
+      },
+      "medal": {
+        "awarded": "Medal awarded: <medal_text>"
       }
     },
     "generic": {
@@ -293,6 +299,66 @@
     },
     "plugin": {
       "reload": "Plugin reloaded"
+    },
+    "command": {
+      "entity": {
+        "jumppad": {
+          "created": "Made a Jumppad at <location>",
+          "createdWithPower": "Made a Jumppad at <location1>, landing at <location2> (Power: <power>x)"
+        },
+        "portal": {
+          "created": "Made a Portal at <location1>, linked to <location2>"
+        },
+        "healthSpawner": {
+          "created": "Made a HealthSpawner at <location>"
+        },
+        "ammoSpawner": {
+          "created": "Made an AmmoSpawner at <location>"
+        },
+        "armorSpawner": {
+          "created": "Made an ArmorSpawner at <location>"
+        },
+        "powerupSpawner": {
+          "created": "Made a PowerupSpawner at <location>"
+        },
+        "ctfFlag": {
+          "created": "Made a CTFFlag (<team> team) at <location>"
+        },
+        "weaponSpawner": {
+          "created": "Made a WeaponSpawner at <location>"
+        }
+      },
+      "map": {
+        "list": {
+          "empty": "<red>No maps to list</red>",
+          "entry": "<map_name> in <world_name> at <location>"
+        },
+        "toolkit": {
+          "added": "<green>Mapper toolkit added to inventory</green>"
+        }
+      },
+      "match": {
+        "created": "Made a new <match_type> match with index <index>",
+        "list": {
+          "entry": "<index>: <match_name> on <map_name>, <player_count> players"
+        }
+      },
+      "matchmaking": {
+        "invalidMode": "Invalid match mode <mode>"
+      }
+    },
+    "party": {
+      "joined": " joined",
+      "left": " left",
+      "newLeader": " is the new party leader"
+    },
+    "matchmaking": {
+      "mapUnfit": "<red>Map <map_name> is unfit for <mode></red>",
+      "search": {
+        "leaderStarted": " started search for matches: mode <mode>, maps <maps>",
+        "acceptPrompt": "Type \"/quake matchmaking accept\" to accept the match.",
+        "mapInfo": "<map_name> | <mode>"
+      }
     },
     "scoreboard": {
       "team": {

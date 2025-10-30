@@ -239,7 +239,8 @@ public class QuakeUserState {
 
         String medalText = medalType.getDisplayName() + " x" + count;
 
-        player.sendMessage(Component.text("Medal awarded: " + medalText).color(TextColor.color(0xFFD700)));
+        player.sendMessage(TranslationManager.t("game.medal.awarded", player,
+            Placeholder.unparsed("medal_text", medalText)).color(TextColor.color(0xFFD700)));
         
 //        player.showTitle(Title.title(
 //                Component.text(medalText).color(TextColor.color(0xFFD700)),
