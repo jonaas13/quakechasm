@@ -22,7 +22,6 @@ permissions:
     children:
       quake.mapper: true
       quake.player: true
-      quake.match.create: true
   
   quake.mapper:
     description: Allows access to map and entity placement commands
@@ -30,12 +29,6 @@ permissions:
     children:
       quake.player: true
   
-  quake.match.create:
-    description: Allows creating custom matches
-    default: true
-    children:
-      quake.player: true
-  
   quake.player:
-    description: Allows access to basic player commands (menu, chat, party, matchmaking, joining matches)
+    description: Allows access to basic player commands (menu, chat, joining matches)
     default: true

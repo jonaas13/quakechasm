@@ -28,7 +28,6 @@ import java.util.Locale;
 public enum Chatroom {
     GLOBAL(0x55ff55),
     MATCH(0xffaa00),
-    PARTY(0xff55ff),
     TEAM(0x55ffff);
 
     final int color;

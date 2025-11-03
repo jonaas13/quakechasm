@@ -29,7 +29,6 @@ import com.github.polyzium.quakechasm.QuakePlugin;
 import com.github.polyzium.quakechasm.QuakeUserState;
 import com.github.polyzium.quakechasm.game.combat.DamageCause;
 import com.github.polyzium.quakechasm.game.movement.StrafeJumpHandler;
-import com.github.polyzium.quakechasm.matchmaking.MatchmakingManager;
 
 import static com.github.polyzium.quakechasm.game.combat.WeaponUtil.damageCustom;
 
@@ -52,9 +51,6 @@ public class MiscListener implements Listener {
         Player player = event.getPlayer();
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
         if (userState.currentMatch != null) userState.currentMatch.leave(player);
-        if (userState.mmState.currentPendingMatch != null) userState.mmState.currentPendingMatch.cancel();
-        if (MatchmakingManager.INSTANCE.findPendingParty(player) != null) MatchmakingManager.INSTANCE.stopSearching(player);
-        userState.mmState.currentParty.removePlayer(player);
 
         QuakePlugin.INSTANCE.userStates.remove(player);
 

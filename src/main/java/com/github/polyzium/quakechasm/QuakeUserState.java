@@ -27,12 +27,10 @@ import com.github.polyzium.quakechasm.game.combat.WeaponUtil;
 import com.github.polyzium.quakechasm.game.entities.Trigger;
 import com.github.polyzium.quakechasm.game.entities.triggers.Jumppad;
 import com.github.polyzium.quakechasm.game.mapper.PortalTool;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
-import net.kyori.adventure.title.Title;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
@@ -40,19 +38,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
-import com.github.polyzium.quakechasm.game.combat.*;
 import com.github.polyzium.quakechasm.game.combat.powerup.Powerup;
 import com.github.polyzium.quakechasm.game.combat.powerup.PowerupType;
 import com.github.polyzium.quakechasm.hud.Hud;
-import com.github.polyzium.quakechasm.matchmaking.MatchmakingManager;
-import com.github.polyzium.quakechasm.matchmaking.MatchmakingState;
 import com.github.polyzium.quakechasm.matchmaking.Team;
 import com.github.polyzium.quakechasm.matchmaking.matches.Match;
 import com.github.polyzium.quakechasm.misc.Chatroom;
 import com.github.polyzium.quakechasm.misc.MiscUtil;
 import com.github.polyzium.quakechasm.misc.TranslationManager;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -60,7 +54,6 @@ import java.util.HashMap;
 public class QuakeUserState {
     private Player player;
     public WeaponUserState weaponState;
-    public MatchmakingState mmState;
     public Location portalLoc = null;
     public BukkitRunnable healthDecreaser;
     public BukkitRunnable armorDecreaser;
@@ -95,8 +88,6 @@ public class QuakeUserState {
     public QuakeUserState(Player player) {
         this.player = player;
         this.weaponState = new WeaponUserState();
-        this.mmState = new MatchmakingState();
-        this.mmState.currentParty = new MatchmakingManager.Party(player);
         this.hud = new Hud(this);
     }
 

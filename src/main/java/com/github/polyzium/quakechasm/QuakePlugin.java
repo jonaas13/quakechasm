@@ -42,17 +42,12 @@ import org.bukkit.util.BoundingBox;
 import org.joml.Matrix4d;
 import org.joml.Matrix4f;
 import com.github.polyzium.quakechasm.commands.Commands;
-import com.github.polyzium.quakechasm.events.listeners.*;
-import com.github.polyzium.quakechasm.game.entities.*;
-import com.github.polyzium.quakechasm.game.entities.pickups.*;
 import com.github.polyzium.quakechasm.game.entities.triggers.Jumppad;
 import com.github.polyzium.quakechasm.game.entities.triggers.Portal;
-import com.github.polyzium.quakechasm.matchmaking.MatchmakingManager;
 import com.github.polyzium.quakechasm.matchmaking.matches.MatchManager;
 import com.github.polyzium.quakechasm.matchmaking.Team;
 import com.github.polyzium.quakechasm.matchmaking.map.QMap;
 import com.github.polyzium.quakechasm.matchmaking.map.Spawnpoint;
-import com.github.polyzium.quakechasm.menus.MenuManager;
 import com.github.polyzium.quakechasm.misc.MiscUtil;
 import com.github.polyzium.quakechasm.misc.TranslationManager;
 
@@ -75,8 +70,6 @@ public class QuakePlugin extends JavaPlugin {
     private float rotatorAngle;
     public ArrayList<QMap> maps;
     public MatchManager matchManager;
-    public MatchmakingManager matchmakingManager;
-    public MenuManager menuManager;
     public TranslationManager translationManager;
     public PluginConfig config;
 
@@ -351,7 +344,6 @@ public class QuakePlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ChatListener(), this);
         getServer().getPluginManager().registerEvents(new TriggerListener(), this);
         getServer().getPluginManager().registerEvents(new CombatListener(), this);
-        getServer().getPluginManager().registerEvents(new MenuListener(), this);
         getServer().getPluginManager().registerEvents(new MapperToolListener(), this);
 
         // lobby
@@ -370,10 +362,6 @@ public class QuakePlugin extends JavaPlugin {
         // other stuff
         getLogger().info("Initializing match manager");
         this.matchManager = new MatchManager();
-        getLogger().info("Initializing matchmaking manager");
-        this.matchmakingManager = new MatchmakingManager();
-        getLogger().info("Initializing menu manager");
-        this.menuManager = new MenuManager();
         getLogger().info("Initializing translation manager");
         try {
             this.translationManager = new TranslationManager();

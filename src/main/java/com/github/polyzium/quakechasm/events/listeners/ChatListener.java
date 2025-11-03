@@ -38,7 +38,6 @@ public class ChatListener implements Listener {
         switch (userState.currentChat) {
             case GLOBAL -> chatGlobal(event);
             case MATCH -> chatMatch(event);
-            case PARTY -> chatParty(event);
             case TEAM -> chatTeam(event);
         }
     }
@@ -63,22 +62,6 @@ public class ChatListener implements Listener {
         event.renderer((source, sourceDisplayName, message, viewer) -> {
             Player viewerPlayer = viewer instanceof Player ? (Player) viewer : event.getPlayer();
             return Component.textOfChildren(Chatroom.MATCH.getPrefix(viewerPlayer.locale()), MiniMessage.miniMessage().deserialize(
-                " <b><color:#7f7f7f><source_display_name></color></b> <message>",
-                Placeholder.component("source_display_name", sourceDisplayName),
-                Placeholder.component("message", message)
-            ));
-        });
-    }
-
-    public void chatParty(AsyncChatEvent event) {
-        QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(event.getPlayer());
-
-        event.viewers().clear();
-        event.viewers().add(userState.mmState.currentParty);
-
-        event.renderer((source, sourceDisplayName, message, viewer) -> {
-            Player viewerPlayer = viewer instanceof Player ? (Player) viewer : event.getPlayer();
-            return Component.textOfChildren(Chatroom.PARTY.getPrefix(viewerPlayer.locale()), MiniMessage.miniMessage().deserialize(
                 " <b><color:#7f7f7f><source_display_name></color></b> <message>",
                 Placeholder.component("source_display_name", sourceDisplayName),
                 Placeholder.component("message", message)
