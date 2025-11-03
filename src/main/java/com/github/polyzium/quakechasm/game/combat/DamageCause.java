@@ -21,6 +21,7 @@ package com.github.polyzium.quakechasm.game.combat;
 
 public enum DamageCause {
     UNKNOWN,
+    GAUNTLET,
     MACHINEGUN,
     SHOTGUN,
     ROCKET,

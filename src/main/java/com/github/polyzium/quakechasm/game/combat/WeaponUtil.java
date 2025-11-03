@@ -21,6 +21,8 @@ package com.github.polyzium.quakechasm.game.combat;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.damage.DamageSource;
+import org.bukkit.damage.DamageType;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -355,7 +357,8 @@ public abstract class WeaponUtil {
         if (victim instanceof Player player && player.getGameMode() != GameMode.CREATIVE)
             QuakePlugin.INSTANCE.userStates.get(player).lastDamage = new DamageData(attacker, amount, cause);
 
-        victim.damage(amount, attacker);
+//        victim.damage(amount, attacker);
+        victim.damage(amount, DamageSource.builder(DamageType.GENERIC).withDirectEntity(attacker).withCausingEntity(attacker).build());
     }
 
     public static void knockback(Location from, Entity victim, double power) {

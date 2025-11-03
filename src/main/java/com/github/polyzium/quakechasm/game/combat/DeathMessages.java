@@ -41,7 +41,7 @@ public abstract class DeathMessages {
 
         FRAG.put(DamageCause.UNKNOWN, "obituary.generic");
 //        FRAG.put(DamageCause.GRAPPLE, "obituary.grapple");
-//        FRAG.put(DamageCause.GAUNTLET, "obituary.gauntlet");
+        FRAG.put(DamageCause.GAUNTLET, "obituary.gauntlet");
         FRAG.put(DamageCause.MACHINEGUN, "obituary.machinegun");
         FRAG.put(DamageCause.SHOTGUN, "obituary.shotgun");
 //        FRAG.put(DamageCause.GRENADE, "obituary.rocket");

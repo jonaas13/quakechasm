@@ -29,6 +29,7 @@ import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.damage.DamageType;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -103,6 +104,20 @@ public class CombatListener implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
+        // Emulate the behavior of Gauntlet from Quake 3 via melee hits
+        boolean isMeleeDamage = event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK && event.getDamageSource().getDamageType().getTranslationKey().equals("player"); // With damage caused via damageCustom, getTranslationKey() will return "generic"
+        if (event instanceof EntityDamageByEntityEvent attackEvent && isMeleeDamage) {
+            event.setCancelled(true);
+            Entity attacker = attackEvent.getDamager();
+            boolean hasQuad = attacker instanceof Player attackerPlayer && Powerup.hasPowerup(attackerPlayer, PowerupType.QUAD_DAMAGE);
+            int amount = hasQuad ? 30 : 10;
+            WeaponUtil.damageCustom((LivingEntity) attackEvent.getEntity(), amount, attacker, DamageCause.GAUNTLET);
+            attacker.getWorld().playSound(attacker, "quake.weapons.gauntlet", 1f, 1);
+            if (attacker instanceof Player attackerPlayer && Powerup.hasPowerup(attackerPlayer, PowerupType.QUAD_DAMAGE))
+                attacker.getWorld().playSound(attacker, "quake.items.powerups.quad_damage.fire", 0.5f, 1f);
+            return;
+        }
+
         // Contain player state for later use (if it's a player)
         QuakeUserState userState = null;
         if (event.getEntity() instanceof Player player)
@@ -213,6 +228,12 @@ public class CombatListener implements Listener {
                 };
                 userState.currentMatch.onDeath(player, null, qCause);
             }
+
+            if (event instanceof EntityDamageByEntityEvent attackEvent && attackEvent.getDamager() instanceof Player attacker) {
+                QuakeUserState attackerState = QuakePlugin.INSTANCE.userStates.get(attacker);
+                if (userState.lastDamage.getCause() == DamageCause.GAUNTLET)
+                    attackerState.awardMedal(MedalType.HUMILIATION);
+            }
         }
 
         userState.lastDamage = null;
@@ -303,7 +324,8 @@ public class CombatListener implements Listener {
 
         Collection<ItemStack> drops = e.getDrops();
         drops.clear();
-        drops.add(handItem);
+        Item worldItem = player.getWorld().dropItem(player.getLocation(), handItem);
+        worldItem.setPickupDelay(5);
 
         if (userState.currentMatch != null) {
             e.deathMessage(Component.empty());

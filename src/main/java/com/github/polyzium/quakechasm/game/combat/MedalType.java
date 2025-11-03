@@ -22,7 +22,8 @@ package com.github.polyzium.quakechasm.game.combat;
 public enum MedalType {
     EXCELLENT("Excellent"),
     IMPRESSIVE("Impressive"),
-    ACCURACY("Accuracy");
+    ACCURACY("Accuracy"),
+    HUMILIATION("Humiliation");
 
     private final String displayName;
 
