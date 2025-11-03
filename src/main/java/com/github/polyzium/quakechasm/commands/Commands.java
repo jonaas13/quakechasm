@@ -26,6 +26,7 @@ import com.github.polyzium.quakechasm.game.combat.DamageCause;
 import com.github.polyzium.quakechasm.game.entities.pickups.*;
 import com.github.polyzium.quakechasm.matchmaking.factory.*;
 import com.github.polyzium.quakechasm.matchmaking.matches.FFAMatch;
+import com.github.polyzium.quakechasm.matchmaking.matches.MatchPrivacy;
 import com.github.polyzium.quakechasm.misc.Chatroom;
 import com.github.polyzium.quakechasm.misc.MiscUtil;
 import com.github.polyzium.quakechasm.misc.ParticleUtil;
@@ -68,10 +69,7 @@ import com.github.polyzium.quakechasm.matchmaking.map.Spawnpoint;
 import com.github.polyzium.quakechasm.menus.MenuGenerators;
 import com.github.polyzium.quakechasm.menus.MenuManager;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.github.polyzium.quakechasm.game.combat.WeaponUtil.spawnParticlesLine;
@@ -496,7 +494,7 @@ public abstract class Commands {
                 .withMapper(mode -> mode.name().toLowerCase())
                 .buildGreedy();
         CommandAPICommand mapCmd = new CommandAPICommand("map")
-                .withPermission("quake.builder")
+                .withPermission("quake.mapper")
                 .withSubcommand(new CommandAPICommand("create")
                         .withArguments(new StringArgument("name"), new TextArgument("displayName"), new IntegerArgument("neededPlayers"), recommendedModesArg)
                         .executesPlayer((player, args) -> {
@@ -705,30 +703,54 @@ public abstract class Commands {
                 .includeSuggestions(ArgumentSuggestions.strings("debug", "ffa", "tdm", "ctf"));
         IntegerArgument needPlayersArg = new IntegerArgument("needPlayers");
         CommandAPICommand matchCmd = new CommandAPICommand("match")
-                .withPermission("quake.admin")
                 .withSubcommand(new CommandAPICommand("create")
-                        .withArguments(matchModeArg, needPlayersArg, new StringArgument("mapName"))
-                        .executes((sender, args) -> {
-                            Player player = null;
-                            if (sender instanceof Player)
-                                player = (Player) sender;
-
+                        .withPermission("quake.match.create")
+                        .withArguments(
+                                matchModeArg,
+                                needPlayersArg,
+                                new StringArgument("mapName")
+                                        .includeSuggestions(ArgumentSuggestions.strings(info ->
+                                                QuakePlugin.INSTANCE.maps.stream()
+                                                        .map(map -> map.name)
+                                                        .toArray(String[]::new)
+                                        )),
+                                new StringArgument("privacy")
+                                        .includeSuggestions(ArgumentSuggestions.strings("public", "password", "invite_only"))
+                                        .setOptional(true),
+                                new StringArgument("password").setOptional(true)
+                        )
+                        .executesPlayer((player, args) -> {
                             String mode = (String) args.get("mode");
                             String mapName = (String) args.get("mapName");
                             Integer needPlayers = (Integer) args.get("needPlayers");
+                            String privacyStr = (String) args.getOrDefault("privacy", () -> "public");
+                            String password = (String) args.getOrDefault("password", () -> null);
 
                             QMap map = QuakePlugin.INSTANCE.getMap(mapName);
                             if (map == null) {
-                                sender.sendMessage(TranslationManager.t("error.noSuchMap", player));
+                                player.sendMessage(TranslationManager.t("error.noSuchMap", player));
                                 return;
                             }
 
                             for (Match match : QuakePlugin.INSTANCE.matchManager.matches) {
                                 if (match.getMap().name.equals(mapName)) {
-                                    sender.sendMessage(TranslationManager.t("error.match.mapOccupied", player,
+                                    player.sendMessage(TranslationManager.t("error.match.mapOccupied", player,
                                         Placeholder.unparsed("map_name", mapName)));
                                     return;
                                 }
+                            }
+
+                            MatchPrivacy privacy;
+                            try {
+                                privacy = MatchPrivacy.valueOf(privacyStr.toUpperCase());
+                            } catch (IllegalArgumentException e) {
+                                player.sendMessage(TranslationManager.t("match.privacy.invalid", player));
+                                return;
+                            }
+
+                            if (privacy == MatchPrivacy.PASSWORD && (password == null || password.isEmpty())) {
+                                player.sendMessage(TranslationManager.t("match.privacy.passwordRequired", player));
+                                return;
                             }
 
                             MatchFactory matchFactory = switch (mode) {
@@ -739,36 +761,39 @@ public abstract class Commands {
                                 default -> null;
                             };
                             if (matchFactory == null) {
-                                if (player != null)
-                                    sender.sendMessage(TranslationManager.t("error.invalidMode", player,
-                                        Placeholder.unparsed("mode", mode)));
-                                else
-                                    sender.sendMessage(TranslationManager.t("error.invalidMode", TranslationManager.FALLBACK,
-                                        Placeholder.unparsed("mode", mode)));
-
+                                player.sendMessage(TranslationManager.t("error.invalidMode", player,
+                                    Placeholder.unparsed("mode", mode)));
                                 return;
                             }
 
                             MatchManager matchManager = QuakePlugin.INSTANCE.matchManager;
-                            Match match = matchManager.newMatch(matchFactory, map);
+                            Match match = matchManager.newMatch(matchFactory, map, player.getUniqueId(), privacy, password);
                             if (match == null) {
-                                sender.sendMessage(TranslationManager.t("error.generic", player));
+                                player.sendMessage(TranslationManager.t("error.generic", player));
                                 return;
                             }
                             match.setNeedPlayers(needPlayers);
-                            Locale locale;
-                            if (player == null)
-                                locale = TranslationManager.FALLBACK;
-                            else
-                                locale =  player.locale();
 
-                            sender.sendMessage(TranslationManager.t("command.match.created", locale,
-                                Placeholder.unparsed("match_type", TranslationManager.tLegacy(matchFactory.getNameKey(), locale)),
-                                Placeholder.unparsed("index", String.valueOf(matchManager.matches.indexOf(match)))));
+                            List<Match> visibleMatches = matchManager.getVisibleMatches(player);
+                            int displayIndex = visibleMatches.indexOf(match);
+
+                            player.sendMessage(TranslationManager.t("command.match.created", player.locale(),
+                                Placeholder.unparsed("match_type", TranslationManager.tLegacy(matchFactory.getNameKey(), player.locale())),
+                                Placeholder.unparsed("index", String.valueOf(displayIndex))));
+                            
+                            if (privacy == MatchPrivacy.PASSWORD) {
+                                player.sendMessage(TranslationManager.t("match.privacy.passwordProtected", player));
+                            } else if (privacy == MatchPrivacy.INVITE_ONLY) {
+                                player.sendMessage(TranslationManager.t("match.privacy.inviteOnly", player));
+                            }
                         })
                 )
                 .withSubcommand(new CommandAPICommand("join")
-                        .withArguments(new IntegerArgument("index"))
+                        .withPermission("quake.player")
+                        .withArguments(
+                                new IntegerArgument("index"),
+                                new StringArgument("password").setOptional(true)
+                        )
                         .executesPlayer((player, args) -> {
                             MatchManager matchManager = QuakePlugin.INSTANCE.matchManager;
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
@@ -778,15 +803,30 @@ public abstract class Commands {
                             }
 
                             int index = (int) args.get("index");
-                            if (index >= matchManager.matches.size() || index < 0) {
+                            String password = (String) args.getOrDefault("password", () -> null);
+                            
+                            Match match = matchManager.getVisibleMatch(player, index);
+                            if (match == null) {
                                 player.sendMessage(TranslationManager.t("error.noSuchMatch", player));
                                 return;
                             }
 
-                            matchManager.matches.get(index).join(player, null);
+                            if (!match.canJoin(player, password)) {
+                                if (match.getPrivacy() == MatchPrivacy.PASSWORD) {
+                                    player.sendMessage(TranslationManager.t("match.privacy.incorrectPassword", player));
+                                } else if (match.getPrivacy() == MatchPrivacy.INVITE_ONLY) {
+                                    player.sendMessage(TranslationManager.t("match.privacy.inviteRequired", player));
+                                } else {
+                                    player.sendMessage(TranslationManager.t("match.privacy.cannotJoin", player));
+                                }
+                                return;
+                            }
+
+                            match.join(player, null);
                         })
                 )
                 .withSubcommand(new CommandAPICommand("leave")
+                        .withPermission("quake.player")
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
                             if (userState.currentMatch == null) {
@@ -797,28 +837,424 @@ public abstract class Commands {
                         })
                 )
                 .withSubcommand(new CommandAPICommand("list")
+                        .withPermission("quake.player")
+                        .withArguments(new LiteralArgument("--all").setOptional(true))
                         .executes((sender, args) -> {
                             MatchManager matchManager = QuakePlugin.INSTANCE.matchManager;
-                            if (matchManager.matches.isEmpty()) {
-                                if (sender instanceof Player player)
+                            Player player = sender instanceof Player ? (Player) sender : null;
+                            boolean showAll = args.get("--all") != null && (player == null || player.hasPermission("quake.admin"));
+                            
+                            List<Match> matchesToShow;
+                            if (showAll) {
+                                matchesToShow = matchManager.matches;
+                            } else if (player != null) {
+                                matchesToShow = matchManager.getVisibleMatches(player);
+                            } else {
+                                matchesToShow = matchManager.matches.stream()
+                                        .filter(m -> m.getPrivacy() != MatchPrivacy.INVITE_ONLY)
+                                        .toList();
+                            }
+
+                            if (matchesToShow.isEmpty()) {
+                                if (player != null)
                                     sender.sendMessage(TranslationManager.t("error.noMatches", player));
                                 else
                                     sender.sendMessage(TranslationManager.t("error.noMatches", TranslationManager.FALLBACK));
-
                                 return;
                             }
 
-                            for (int i = 0; i < matchManager.matches.size(); i++) {
-                                Match match = matchManager.matches.get(i);
+                            for (int i = 0; i < matchesToShow.size(); i++) {
+                                Match match = matchesToShow.get(i);
+                                Locale locale = sender instanceof Player ? ((Player)sender).locale() : TranslationManager.FALLBACK;
+                                
+                                Component privacyIcon = switch (match.getPrivacy()) {
+                                    case PUBLIC -> TranslationManager.t("match.list.privacy.public", locale);
+                                    case PASSWORD -> TranslationManager.t("match.list.privacy.password", locale);
+                                    case INVITE_ONLY -> TranslationManager.t("match.list.privacy.inviteOnly", locale);
+                                };
+                                
+                                Component ownerInfo = match.getOwnerId() != null ?
+                                    TranslationManager.t("match.list.owner", locale,
+                                        Placeholder.unparsed("owner_name", Bukkit.getOfflinePlayer(match.getOwnerId()).getName())) :
+                                    TranslationManager.t("match.list.matchmaking", locale);
 
-                                sender.sendMessage(TranslationManager.t("command.match.list.entry",
-                                    sender instanceof Player ? ((Player)sender).locale() : TranslationManager.FALLBACK,
+                                String matchTypeTranslated = TranslationManager.tLegacy(match.getNameKey(), locale);
+
+                                Component joinButton = TranslationManager.t("match.list.joinButton", locale,
+                                    Placeholder.parsed("index", String.valueOf(i)));
+
+                                Component matchEntry = TranslationManager.t("match.list.entry", locale,
                                     Placeholder.unparsed("index", String.valueOf(i)),
-                                    Placeholder.unparsed("match_name", match.getNameKey()),
-                                    Placeholder.unparsed("map_name", match.getMap().name),
-                                    Placeholder.unparsed("player_count", String.valueOf(match.getPlayers().size()))));
+                                    Placeholder.component("privacy_icon", privacyIcon),
+                                    Placeholder.unparsed("match_type", matchTypeTranslated),
+                                    Placeholder.unparsed("map_name", match.getMap().displayName),
+                                    Placeholder.unparsed("player_count", String.valueOf(match.getPlayers().size())),
+                                    Placeholder.component("owner_info", ownerInfo)
+                                ).append(joinButton);
+
+                                sender.sendMessage(matchEntry);
+                            }
+                        })
+                )
+                .withSubcommand(new CommandAPICommand("invite")
+                        .withPermission("quake.player")
+                        .withArguments(new EntitySelectorArgument.OnePlayer("player"))
+                        .executesPlayer((player, args) -> {
+                            QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+                            if (userState.currentMatch == null) {
+                                player.sendMessage(Component.text("§cYou must be in a match to invite players."));
+                                return;
                             }
 
+                            Match match = userState.currentMatch;
+                            if (!match.canManage(player)) {
+                                player.sendMessage(TranslationManager.t("match.manage.noPermission", player));
+                                return;
+                            }
+
+                            Player invitee = (Player) args.get("player");
+                            if (invitee == null) {
+                                player.sendMessage(TranslationManager.t("match.manage.playerNotFound", player));
+                                return;
+                            }
+
+                            if (match.getPlayers().contains(invitee)) {
+                                player.sendMessage(TranslationManager.t("match.manage.playerAlreadyInMatch", player));
+                                return;
+                            }
+
+                            match.invitePlayer(invitee.getUniqueId());
+                            player.sendMessage(TranslationManager.t("match.manage.invited", player,
+                                Placeholder.unparsed("player_name", invitee.getName())));
+                            invitee.sendMessage(TranslationManager.t("match.manage.inviteReceived", invitee,
+                                Placeholder.unparsed("inviter_name", player.getName())));
+                        })
+                )
+                .withSubcommand(new CommandAPICommand("uninvite")
+                        .withPermission("quake.player")
+                        .withArguments(new EntitySelectorArgument.OnePlayer("player"))
+                        .executesPlayer((player, args) -> {
+                            QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+                            if (userState.currentMatch == null) {
+                                player.sendMessage(Component.text("§cYou must be in a match to uninvite players."));
+                                return;
+                            }
+
+                            Match match = userState.currentMatch;
+                            if (!match.canManage(player)) {
+                                player.sendMessage(TranslationManager.t("match.manage.noPermission", player));
+                                return;
+                            }
+
+                            Player uninvitee = (Player) args.get("player");
+                            if (uninvitee == null) {
+                                player.sendMessage(TranslationManager.t("match.manage.playerNotFound", player));
+                                return;
+                            }
+
+                            match.uninvitePlayer(uninvitee.getUniqueId());
+                            player.sendMessage(TranslationManager.t("match.manage.uninvited", player,
+                                Placeholder.unparsed("player_name", uninvitee.getName())));
+                        })
+                )
+                .withSubcommand(new CommandAPICommand("invites")
+                        .withPermission("quake.player")
+                        .executesPlayer((player, args) -> {
+                            QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+                            if (userState.currentMatch == null) {
+                                player.sendMessage(Component.text("§cYou must be in a match to view invites."));
+                                return;
+                            }
+
+                            Match match = userState.currentMatch;
+                            if (!match.canManage(player)) {
+                                player.sendMessage(TranslationManager.t("match.manage.noPermission", player));
+                                return;
+                            }
+
+                            Set<UUID> invitedPlayers = match.getInvitedPlayers();
+                            if (invitedPlayers.isEmpty()) {
+                                player.sendMessage(TranslationManager.t("match.manage.noInvites", player));
+                                return;
+                            }
+
+                            player.sendMessage(TranslationManager.t("match.manage.invitesTitle", player));
+                            for (UUID uuid : invitedPlayers) {
+                                String playerName = Bukkit.getOfflinePlayer(uuid).getName();
+                                player.sendMessage(TranslationManager.t("match.manage.inviteEntry", player,
+                                    Placeholder.unparsed("player_name", playerName)));
+                            }
+                        })
+                )
+                .withSubcommand(new CommandAPICommand("kick")
+                        .withPermission("quake.player")
+                        .withArguments(new EntitySelectorArgument.OnePlayer("player"))
+                        .executesPlayer((player, args) -> {
+                            QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+                            if (userState.currentMatch == null) {
+                                player.sendMessage(Component.text("§cYou must be in a match to kick players."));
+                                return;
+                            }
+
+                            Match match = userState.currentMatch;
+                            if (!match.canManage(player)) {
+                                player.sendMessage(TranslationManager.t("match.manage.noPermission", player));
+                                return;
+                            }
+
+                            Player kickee = (Player) args.get("player");
+                            if (kickee == null) {
+                                player.sendMessage(TranslationManager.t("match.manage.playerNotFound", player));
+                                return;
+                            }
+
+                            if (!match.getPlayers().contains(kickee)) {
+                                player.sendMessage(TranslationManager.t("match.manage.playerNotInMatch", player));
+                                return;
+                            }
+
+                            if (kickee.equals(player)) {
+                                player.sendMessage(TranslationManager.t("match.manage.cannotKickSelf", player));
+                                return;
+                            }
+
+                            match.leave(kickee);
+                            player.sendMessage(TranslationManager.t("match.manage.kicked", player,
+                                Placeholder.unparsed("player_name", kickee.getName())));
+                            kickee.sendMessage(TranslationManager.t("match.manage.kickedBy", kickee,
+                                Placeholder.unparsed("kicker_name", player.getName())));
+                        })
+                )
+                .withSubcommand(new CommandAPICommand("password")
+                        .withPermission("quake.player")
+                        .withArguments(new GreedyStringArgument("new_password"))
+                        .executesPlayer((player, args) -> {
+                            QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+                            if (userState.currentMatch == null) {
+                                player.sendMessage(TranslationManager.t("match.manage.notInMatch", player,
+                                    Placeholder.unparsed("action", "change the password")));
+                                return;
+                            }
+
+                            Match match = userState.currentMatch;
+                            if (!match.canManage(player)) {
+                                player.sendMessage(TranslationManager.t("match.manage.noPermission", player));
+                                return;
+                            }
+
+                            String newPassword = (String) args.get("new_password");
+                            if (newPassword.equals("--remove")) {
+                                match.setPassword(null);
+                                if (match.getPrivacy() == MatchPrivacy.PASSWORD) {
+                                    match.setPrivacy(MatchPrivacy.PUBLIC);
+                                }
+                                player.sendMessage(TranslationManager.t("match.manage.passwordRemoved", player));
+                            } else {
+                                match.setPassword(newPassword);
+                                match.setPrivacy(MatchPrivacy.PASSWORD);
+                                player.sendMessage(TranslationManager.t("match.manage.passwordUpdated", player));
+                            }
+                        })
+                )
+                .withSubcommand(new CommandAPICommand("info")
+                        .withPermission("quake.player")
+                        .withArguments(new IntegerArgument("index").setOptional(true))
+                        .executesPlayer((player, args) -> {
+                            MatchManager matchManager = QuakePlugin.INSTANCE.matchManager;
+                            QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+                            
+                            Match match;
+                            Integer indexArg = (Integer) args.getOrDefault("index", () -> null);
+                            
+                            if (indexArg == null) {
+                                if (userState.currentMatch == null) {
+                                    player.sendMessage(TranslationManager.t("match.info.notInMatchUseIndex", player));
+                                    return;
+                                }
+                                match = userState.currentMatch;
+                            } else {
+                                match = matchManager.getVisibleMatch(player, indexArg);
+                                if (match == null) {
+                                    player.sendMessage(TranslationManager.t("error.noSuchMatch", player));
+                                    return;
+                                }
+                            }
+
+                            player.sendMessage(TranslationManager.t("match.info.title", player));
+
+                            String matchTypeTranslated = TranslationManager.tLegacy(match.getNameKey(), player.locale());
+                            player.sendMessage(TranslationManager.t("match.info.type", player,
+                                Placeholder.unparsed("match_type", matchTypeTranslated)));
+
+                            player.sendMessage(TranslationManager.t("match.info.map", player,
+                                Placeholder.unparsed("map_name", match.getMap().displayName)));
+
+                            player.sendMessage(TranslationManager.t("match.info.privacy", player,
+                                Placeholder.unparsed("privacy", match.getPrivacy().name())));
+
+                            player.sendMessage(TranslationManager.t("match.info.players", player,
+                                Placeholder.unparsed("player_count", String.valueOf(match.getPlayers().size()))));
+
+                            if (match.getOwnerId() != null) {
+                                String ownerName = Bukkit.getOfflinePlayer(match.getOwnerId()).getName();
+                                player.sendMessage(TranslationManager.t("match.info.owner", player,
+                                    Placeholder.unparsed("owner_name", ownerName)));
+                            } else {
+                                player.sendMessage(TranslationManager.t("match.info.matchmaking", player));
+                            }
+
+                            Map<String, Object> properties = match.getManageableProperties();
+                            if (!properties.isEmpty()) {
+                                player.sendMessage(TranslationManager.t("match.info.settingsTitle", player));
+                                for (Map.Entry<String, Object> entry : properties.entrySet()) {
+                                    player.sendMessage(TranslationManager.t("match.manage.propertyEntry", player,
+                                        Placeholder.unparsed("property", entry.getKey()),
+                                        Placeholder.unparsed("value", String.valueOf(entry.getValue()))));
+                                }
+                            }
+
+                            if (match.canManage(player)) {
+                                player.sendMessage(TranslationManager.t("match.manage.canManage", player));
+                            }
+                        })
+                )
+                .withSubcommand(new CommandAPICommand("privacy")
+                        .withPermission("quake.player")
+                        .withArguments(new StringArgument("privacy_level")
+                                .includeSuggestions(ArgumentSuggestions.strings("public", "password", "invite_only")))
+                        .executesPlayer((player, args) -> {
+                            QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+                            if (userState.currentMatch == null) {
+                                player.sendMessage(TranslationManager.t("match.manage.notInMatch", player,
+                                    Placeholder.unparsed("action", "change privacy settings")));
+                                return;
+                            }
+
+                            Match match = userState.currentMatch;
+                            if (!match.canManage(player)) {
+                                player.sendMessage(TranslationManager.t("match.manage.noPermission", player));
+                                return;
+                            }
+
+                            String privacyStr = (String) args.get("privacy_level");
+                            MatchPrivacy newPrivacy;
+                            try {
+                                newPrivacy = MatchPrivacy.valueOf(privacyStr.toUpperCase());
+                            } catch (IllegalArgumentException e) {
+                                player.sendMessage(TranslationManager.t("match.privacy.invalid", player));
+                                return;
+                            }
+
+                            MatchPrivacy oldPrivacy = match.getPrivacy();
+                            match.setPrivacy(newPrivacy);
+                            
+                            player.sendMessage(TranslationManager.t("match.privacy.changed", player,
+                                Placeholder.unparsed("old_privacy", oldPrivacy.name()),
+                                Placeholder.unparsed("new_privacy", newPrivacy.name())));
+
+                            if (newPrivacy == MatchPrivacy.PASSWORD && !match.isPasswordProtected()) {
+                                player.sendMessage(TranslationManager.t("match.privacy.passwordWarning", player));
+                            }
+                        })
+                )
+                .withSubcommand(new CommandAPICommand("set")
+                        .withPermission("quake.player")
+                        .withArguments(
+                                new StringArgument("property")
+                                        .includeSuggestions(ArgumentSuggestions.strings(info -> {
+                                            if (info.sender() instanceof Player player) {
+                                                QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+                                                if (userState.currentMatch != null) {
+                                                    return userState.currentMatch.getManageableProperties().keySet().toArray(String[]::new);
+                                                }
+                                            }
+                                            return new String[]{"fraglimit", "capturelimit", "needPlayers"};
+                                        })),
+                                new IntegerArgument("value")
+                        )
+                        .executesPlayer((player, args) -> {
+                            QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+                            if (userState.currentMatch == null) {
+                                player.sendMessage(TranslationManager.t("match.manage.notInMatch", player,
+                                    Placeholder.unparsed("action", "set properties")));
+                                return;
+                            }
+
+                            Match match = userState.currentMatch;
+                            if (!match.canManage(player)) {
+                                player.sendMessage(TranslationManager.t("match.manage.noPermission", player));
+                                return;
+                            }
+
+                            String property = (String) args.get("property");
+                            int value = (int) args.get("value");
+
+                            try {
+                                match.setManageableProperty(property, value);
+
+                                match.sendMessage(TranslationManager.t("match.manage.propertyChanged", TranslationManager.FALLBACK,
+                                    Placeholder.unparsed("property", property),
+                                    Placeholder.unparsed("value", String.valueOf(value))));
+                            } catch (IllegalArgumentException e) {
+                                if (e.getMessage().contains("not found or not manageable"))
+                                    player.sendMessage(TranslationManager.t("match.manage.propertyNotFound", player, Placeholder.unparsed("property", property)));
+                                else
+                                    player.sendMessage(MiniMessage.miniMessage().deserialize("<red>" + e.getMessage() + "</red>"));
+                            }
+                        })
+                )
+                .withSubcommand(new CommandAPICommand("get")
+                        .withPermission("quake.player")
+                        .withArguments(new StringArgument("property")
+                                .includeSuggestions(ArgumentSuggestions.strings(info -> {
+                                    if (info.sender() instanceof Player player) {
+                                        QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+                                        if (userState.currentMatch != null) {
+                                            return userState.currentMatch.getManageableProperties().keySet().toArray(String[]::new);
+                                        }
+                                    }
+                                    return new String[]{"fraglimit", "capturelimit", "needPlayers"};
+                                }))
+                                .setOptional(true))
+                        .executesPlayer((player, args) -> {
+                            QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+                            if (userState.currentMatch == null) {
+                                player.sendMessage(TranslationManager.t("match.manage.notInMatch", player,
+                                    Placeholder.unparsed("action", "get properties")));
+                                return;
+                            }
+
+                            Match match = userState.currentMatch;
+                            String property = (String) args.getOrDefault("property", () -> null);
+
+                            if (property == null) {
+                                Map<String, Object> properties = match.getManageableProperties();
+                                if (properties.isEmpty()) {
+                                    player.sendMessage(TranslationManager.t("match.manage.noProperties", player));
+                                    return;
+                                }
+
+                                player.sendMessage(TranslationManager.t("match.manage.propertiesTitle", player));
+                                for (Map.Entry<String, Object> entry : properties.entrySet()) {
+                                    player.sendMessage(TranslationManager.t("match.manage.propertyEntry", player,
+                                        Placeholder.unparsed("property", entry.getKey()),
+                                        Placeholder.unparsed("value", String.valueOf(entry.getValue()))));
+                                }
+                            } else {
+                                try {
+                                    Object value = match.getManageableProperties().get(property);
+                                    if (value == null) {
+                                        player.sendMessage(TranslationManager.t("match.manage.propertyNotFound", player,
+                                            Placeholder.unparsed("property", property)));
+                                    } else {
+                                        player.sendMessage(TranslationManager.t("match.manage.propertyEntry", player,
+                                            Placeholder.unparsed("property", property),
+                                            Placeholder.unparsed("value", String.valueOf(value))));
+                                    }
+                                } catch (Exception e) {
+                                    player.sendMessage(Component.text("<red>Error getting property: " + e.getMessage() + "</red>"));
+                                }
+                            }
                         })
                 );
 
@@ -830,6 +1266,7 @@ public abstract class Commands {
                 .buildGreedy();
         CommandAPICommand matchmakingCmd = new CommandAPICommand("matchmaking")
                 .withSubcommand(new CommandAPICommand("search")
+                        .withPermission("quake.player")
                         .withArguments(matchmakingModeArg, matchmakingMapsArg)
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
@@ -873,6 +1310,7 @@ public abstract class Commands {
                         })
                 )
                 .withSubcommand(new CommandAPICommand("cancel")
+                        .withPermission("quake.player")
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
                             if (userState.mmState.currentParty.leader != player) {
@@ -896,6 +1334,7 @@ public abstract class Commands {
                         })
                 )
                 .withSubcommand(new CommandAPICommand("accept")
+                        .withPermission("quake.player")
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
                             if (userState.mmState.currentPendingMatch != null) {
@@ -909,6 +1348,7 @@ public abstract class Commands {
 
         CommandAPICommand partyCmd = new CommandAPICommand("party")
                 .withSubcommand(new CommandAPICommand("invite")
+                        .withPermission("quake.player")
                         .withArguments(new PlayerProfileArgument("player"))
                         .executesPlayer((player, args) -> {
                             Player invitee = (Player) args.get("player");
@@ -951,6 +1391,7 @@ public abstract class Commands {
                         })
                 )
                 .withSubcommand(new CommandAPICommand("accept")
+                        .withPermission("quake.player")
                         .executesPlayer((player, args) -> {
                             QuakeUserState inviteeState = QuakePlugin.INSTANCE.userStates.get(player);
 
@@ -966,6 +1407,7 @@ public abstract class Commands {
                         })
                 )
                 .withSubcommand(new CommandAPICommand("list")
+                        .withPermission("quake.player")
                         .executesPlayer((player, args) -> {
                             player.sendMessage(TranslationManager.t("command.party.list.begin", player));
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
@@ -979,6 +1421,7 @@ public abstract class Commands {
                         })
                 )
                 .withSubcommand(new CommandAPICommand("kick")
+                        .withPermission("quake.player")
                         .withArguments(new PlayerProfileArgument("player"))
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
@@ -1013,6 +1456,7 @@ public abstract class Commands {
                         })
                 )
                 .withSubcommand(new CommandAPICommand("leave")
+                        .withPermission("quake.player")
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
                             MatchmakingManager.Party partyToLeave = userState.mmState.currentParty;
@@ -1030,7 +1474,7 @@ public abstract class Commands {
                 );
 
         CommandAPICommand entityCmd = new CommandAPICommand("entity")
-                .withPermission("quake.builder")
+                .withPermission("quake.mapper")
                 .withSubcommands(
                         weaponSpawnerCmd,
                         healthSpawnerCmd,
@@ -1043,6 +1487,7 @@ public abstract class Commands {
                 );
 
         CommandAPICommand chatCmd = new CommandAPICommand("chat")
+                .withPermission("quake.player")
                 .withArguments(new MultiLiteralArgument("chatroom", MiscUtil.getEnumNamesLowercase(Chatroom.class)))
                 .executesPlayer((player, args) -> {
                     Chatroom chatroom;
@@ -1099,6 +1544,7 @@ public abstract class Commands {
                 });
 
         CommandAPICommand menuCmd = new CommandAPICommand("menu")
+                .withPermission("quake.player")
                 .executesPlayer((player, args) -> {
                     MenuManager.INSTANCE.showMenu(MenuGenerators.mainMenu(player.locale()), player);
                 });

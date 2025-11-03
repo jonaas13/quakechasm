@@ -47,10 +47,12 @@ import com.github.polyzium.quakechasm.misc.MiscUtil;
 import com.github.polyzium.quakechasm.misc.Pair;
 import com.github.polyzium.quakechasm.misc.TranslationManager;
 
+import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public abstract class Match implements ForwardingAudience {
     protected QMap map;
@@ -59,8 +61,26 @@ public abstract class Match implements ForwardingAudience {
     protected org.bukkit.scoreboard.Team vanillaRedTeam;
     protected org.bukkit.scoreboard.Team vanillaBlueTeam;
     public boolean matchEnding = false;
+
+    protected UUID ownerId;
+    protected MatchPrivacy privacy;
+    protected String passwordHash;
+    protected HashSet<UUID> invitedPlayers;
+    
     public Match(QMap map) {
+        this(map, null, MatchPrivacy.PUBLIC, null);
+    }
+    
+    public Match(QMap map, UUID ownerId, MatchPrivacy privacy, String password) {
         this.map = map;
+        this.ownerId = ownerId;
+        this.privacy = privacy != null ? privacy : MatchPrivacy.PUBLIC;
+        this.invitedPlayers = new HashSet<>();
+        
+        if (password != null && !password.isEmpty()) {
+            setPassword(password);
+        }
+        
         this.map.chunkLoad();
 
         // This is needed to hide nametags
@@ -151,6 +171,8 @@ public abstract class Match implements ForwardingAudience {
     public void end() {
         matchEnding = true;
 
+        clearInvites();
+
         for (Player player : players.keySet()) {
             player.playSound(player, "quake.feedback.match_end", SoundCategory.NEUTRAL, 1, 1);
         }
@@ -162,7 +184,10 @@ public abstract class Match implements ForwardingAudience {
             public void run() {
                 endTimer--;
                 if (endTimer <= 5)
-                    that.showTitle(Title.title(Component.empty(), Component.text("Teleporting to lobby in "+endTimer), Title.Times.times(Duration.ZERO, Duration.ofSeconds(1), Duration.ofSeconds(1))));
+                    that.showTitle(Title.title(Component.empty(),
+                        TranslationManager.t("match.end.teleportCountdown", TranslationManager.FALLBACK,
+                            Placeholder.unparsed("count", String.valueOf(endTimer))),
+                        Title.Times.times(Duration.ZERO, Duration.ofSeconds(1), Duration.ofSeconds(1))));
 
                 if (endTimer == 0) {
                     for (Player player : players.keySet()) {
@@ -260,5 +285,197 @@ public abstract class Match implements ForwardingAudience {
 
     public @NotNull Iterable<? extends Audience> audiences() {
         return this.players.keySet();
+    }
+    
+    public boolean isOwner(Player player) {
+        if (this.ownerId == null) return false;
+        return this.ownerId.equals(player.getUniqueId());
+    }
+    
+    public boolean canManage(Player player) {
+        return isOwner(player) || player.hasPermission("quake.admin");
+    }
+    
+    public UUID getOwnerId() {
+        return this.ownerId;
+    }
+    
+    public void setOwner(UUID playerId) {
+        this.ownerId = playerId;
+    }
+    
+    public MatchPrivacy getPrivacy() {
+        return this.privacy;
+    }
+    
+    public void setPrivacy(MatchPrivacy privacy) {
+        this.privacy = privacy;
+    }
+    
+    public boolean isPasswordProtected() {
+        return this.passwordHash != null;
+    }
+    
+    public boolean checkPassword(String password) {
+        if (this.passwordHash == null) return true;
+        if (password == null) return false;
+        
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+            return this.passwordHash.equals(bytesToHex(hash));
+        } catch (NoSuchAlgorithmException e) {
+            return false;
+        }
+    }
+    
+    public void setPassword(String password) {
+        if (password == null || password.isEmpty()) {
+            this.passwordHash = null;
+            return;
+        }
+        
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+            this.passwordHash = bytesToHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            QuakePlugin.INSTANCE.getLogger().severe("SHA-256 not available!");
+            this.passwordHash = null;
+        }
+    }
+    
+    public void removePassword() {
+        this.passwordHash = null;
+    }
+    
+    private static String bytesToHex(byte[] hash) {
+        StringBuilder hexString = new StringBuilder(2 * hash.length);
+        for (byte b : hash) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) hexString.append('0');
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+    
+    public boolean isInvited(UUID playerId) {
+        return this.invitedPlayers.contains(playerId);
+    }
+    
+    public void invitePlayer(UUID playerId) {
+        this.invitedPlayers.add(playerId);
+    }
+    
+    public void uninvitePlayer(UUID playerId) {
+        this.invitedPlayers.remove(playerId);
+    }
+    
+    public Set<UUID> getInvitedPlayers() {
+        return new HashSet<>(this.invitedPlayers);
+    }
+    
+    public void clearInvites() {
+        this.invitedPlayers.clear();
+    }
+
+    
+    public boolean canJoin(Player player, String password) {
+        if (player.hasPermission("quake.admin")) {
+            return true;
+        }
+
+        if (isOwner(player)) {
+            return true;
+        }
+
+        return switch (this.privacy) {
+            case PUBLIC -> true;
+            case PASSWORD -> {
+                if (isInvited(player.getUniqueId())) {
+                    yield true;
+                }
+                yield checkPassword(password);
+            }
+            case INVITE_ONLY -> isInvited(player.getUniqueId());
+            default -> false;
+        };
+    }
+
+    public Map<String, Object> getManageableProperties() {
+        Map<String, Object> properties = new HashMap<>();
+        Class<?> clazz = this.getClass();
+        
+        for (Field field : clazz.getDeclaredFields()) {
+            if (field.isAnnotationPresent(QManageable.class)) {
+                QManageable annotation = field.getAnnotation(QManageable.class);
+                try {
+                    field.setAccessible(true);
+                    properties.put(annotation.name(), field.get(this));
+                } catch (IllegalAccessException e) {
+                    QuakePlugin.INSTANCE.getLogger().warning(
+                        "Failed to access manageable field: " + field.getName()
+                    );
+                }
+            }
+        }
+        
+        return properties;
+    }
+
+    public void setManageableProperty(String propertyName, Object value) throws IllegalArgumentException {
+        Class<?> clazz = this.getClass();
+        
+        for (Field field : clazz.getDeclaredFields()) {
+            if (field.isAnnotationPresent(QManageable.class)) {
+                QManageable annotation = field.getAnnotation(QManageable.class);
+                
+                if (annotation.name().equals(propertyName)) {
+                    try {
+                        field.setAccessible(true);
+
+                        if (value instanceof Integer) {
+                            int intValue = (Integer) value;
+                            if (intValue < annotation.min() || intValue > annotation.max()) {
+                                throw new IllegalArgumentException(
+                                    String.format("Value %d is out of range [%d, %d]",
+                                        intValue, annotation.min(), annotation.max())
+                                );
+                            }
+                        }
+                        
+                        field.set(this, value);
+                        return;
+                    } catch (IllegalAccessException e) {
+                        throw new IllegalArgumentException("Cannot access property: " + propertyName);
+                    }
+                }
+            }
+        }
+        
+        throw new IllegalArgumentException("Property not found or not manageable: " + propertyName);
+    }
+
+    public Object getManageableProperty(String propertyName) throws IllegalArgumentException {
+        Map<String, Object> properties = getManageableProperties();
+        if (!properties.containsKey(propertyName)) {
+            throw new IllegalArgumentException("Property not found or not manageable: " + propertyName);
+        }
+        return properties.get(propertyName);
+    }
+
+    public QManageable getPropertyAnnotation(String propertyName) {
+        Class<?> clazz = this.getClass();
+        
+        for (Field field : clazz.getDeclaredFields()) {
+            if (field.isAnnotationPresent(QManageable.class)) {
+                QManageable annotation = field.getAnnotation(QManageable.class);
+                if (annotation.name().equals(propertyName)) {
+                    return annotation;
+                }
+            }
+        }
+        
+        return null;
     }
 }

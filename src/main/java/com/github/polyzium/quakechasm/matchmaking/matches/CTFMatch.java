@@ -49,8 +49,12 @@ import java.time.Duration;
 import java.util.*;
 
 public class CTFMatch extends Match {
+    @QManageable(name = "capturelimit", min = 1, max = 100, description = "Number of captures needed to win")
     private int capturelimit = 10;
+    
+    @QManageable(name = "needPlayers", min = 1, max = 100, description = "Number of players needed to start")
     private int needPlayers = 2;
+    
     @SuppressWarnings("FieldMayBeFinal")
     private HashMap<Player, Integer> scores = new HashMap<>();
     @SuppressWarnings("FieldMayBeFinal")
@@ -59,9 +63,18 @@ public class CTFMatch extends Match {
     private boolean started = false;
     private BukkitTask warmupTask = null;
     private BossBar infoBar;
+    
     public CTFMatch(QMap map) {
         super(map);
-
+        initCTF();
+    }
+    
+    public CTFMatch(QMap map, UUID ownerId, MatchPrivacy privacy, String password) {
+        super(map, ownerId, privacy, password);
+        initCTF();
+    }
+    
+    private void initCTF() {
         getRedFlag().prepareForMatch(this);
         getBlueFlag().prepareForMatch(this);
 
@@ -94,10 +107,9 @@ public class CTFMatch extends Match {
 
         Team playerTeam = this.players.get(player);
         this.sendMessage(
-                player.displayName()
-                        .append(Component.text(" has joined the "))
-                        .append(Component.text(playerTeam.name()).color(TextColor.color(Team.Colors.get(playerTeam))))
-                        .append(Component.text(" team."))
+                TranslationManager.t("match.team.joined", TranslationManager.FALLBACK,
+                        Placeholder.unparsed("player_name", player.getName()),
+                        Placeholder.component("team_color", Component.text(playerTeam.name()).color(TextColor.color(Team.Colors.get(playerTeam)))))
         );
 
         this.updateScoreboard();
@@ -350,16 +362,18 @@ public class CTFMatch extends Match {
             Component subtitle;
             if (captures[0] > captures[1]) {
                 // Red leads
-                subtitle = Component.text("Red leads " + captures[0] + " to " + captures[1])
-                    .color(TextColor.color(Team.Colors.get(Team.RED)));
+                subtitle = TranslationManager.t("match.team.leads.red", TranslationManager.FALLBACK,
+                        Placeholder.unparsed("red_score", String.valueOf(captures[0])),
+                        Placeholder.unparsed("blue_score", String.valueOf(captures[1])));
             } else if (captures[1] > captures[0]) {
                 // Blue leads
-                subtitle = Component.text("Blue leads " + captures[1] + " to " + captures[0])
-                    .color(TextColor.color(Team.Colors.get(Team.BLUE)));
+                subtitle = TranslationManager.t("match.team.leads.blue", TranslationManager.FALLBACK,
+                        Placeholder.unparsed("blue_score", String.valueOf(captures[1])),
+                        Placeholder.unparsed("red_score", String.valueOf(captures[0])));
             } else {
                 // Teams are tied
-                subtitle = Component.text("Teams are tied " + captures[0] + " to " + captures[1])
-                    .color(TextColor.color(0xFFFF00));
+                subtitle = TranslationManager.t("match.team.leads.tiedWithScore", TranslationManager.FALLBACK,
+                        Placeholder.unparsed("score", String.valueOf(captures[0])));
             }
             
             // Show title with capture message and score
@@ -482,16 +496,17 @@ public class CTFMatch extends Match {
         Component header;
         if (captures[1] > captures[0]) {
             // Blue leads
-            header = Component.text("Blue leads " + captures[1] + " to " + captures[0])
-                .color(TextColor.color(Team.Colors.get(Team.BLUE)));
+            header = TranslationManager.t("match.team.leads.blue", TranslationManager.FALLBACK,
+                    Placeholder.unparsed("blue_score", String.valueOf(captures[1])),
+                    Placeholder.unparsed("red_score", String.valueOf(captures[0])));
         } else if (captures[0] > captures[1]) {
             // Red leads
-            header = Component.text("Red leads " + captures[0] + " to " + captures[1])
-                .color(TextColor.color(Team.Colors.get(Team.RED)));
+            header = TranslationManager.t("match.team.leads.red", TranslationManager.FALLBACK,
+                    Placeholder.unparsed("red_score", String.valueOf(captures[0])),
+                    Placeholder.unparsed("blue_score", String.valueOf(captures[1])));
         } else {
             // Teams are tied
-            header = Component.text("Teams are tied")
-                .color(TextColor.color(0xFFFF00));
+            header = TranslationManager.t("match.team.leads.tied", TranslationManager.FALLBACK);
         }
         return header.appendNewline();
     }

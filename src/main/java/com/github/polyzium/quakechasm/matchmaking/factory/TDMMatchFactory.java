@@ -20,13 +20,16 @@
 package com.github.polyzium.quakechasm.matchmaking.factory;
 
 import com.github.polyzium.quakechasm.matchmaking.matches.Match;
+import com.github.polyzium.quakechasm.matchmaking.matches.MatchPrivacy;
 import com.github.polyzium.quakechasm.matchmaking.matches.TDMMatch;
 import com.github.polyzium.quakechasm.matchmaking.map.QMap;
 
+import java.util.UUID;
+
 public class TDMMatchFactory implements MatchFactory {
     @Override
-    public Match createMatch(QMap map) {
-        return new TDMMatch(map);
+    public Match createMatch(QMap map, UUID ownerId, MatchPrivacy privacy, String password) {
+        return new TDMMatch(map, ownerId, privacy, password);
     }
 
     @Override

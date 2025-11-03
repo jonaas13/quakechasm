@@ -41,16 +41,25 @@ import java.time.Duration;
 import java.util.*;
 
 public class TDMMatch extends Match {
+    @QManageable(name = "fraglimit", min = 1, max = 1000, description = "Number of frags needed to win")
     private int fraglimit = 10;
+    
+    @QManageable(name = "needPlayers", min = 1, max = 100, description = "Number of players needed to start")
     private int needPlayers = 2;
+    
     @SuppressWarnings("FieldMayBeFinal")
     private HashMap<Player, Integer> scores = new HashMap<>();
     @SuppressWarnings("FieldMayBeFinal")
     private int[] teamScores = {0,0};
     private boolean started = false;
     private BukkitTask warmupTask = null;
+    
     public TDMMatch(QMap map) {
         super(map);
+    }
+    
+    public TDMMatch(QMap map, UUID ownerId, MatchPrivacy privacy, String password) {
+        super(map, ownerId, privacy, password);
     }
 
     public static String getNameKeyStatic() {
@@ -77,10 +86,9 @@ public class TDMMatch extends Match {
 
         Team playerTeam = this.players.get(player);
         this.sendMessage(
-                player.displayName()
-                        .append(Component.text(" has joined the "))
-                        .append(Component.text(playerTeam.name()).color(TextColor.color(Team.Colors.get(playerTeam))))
-                        .append(Component.text(" team."))
+                TranslationManager.t("match.team.joined", TranslationManager.FALLBACK,
+                        Placeholder.unparsed("player_name", player.getName()),
+                        Placeholder.component("team_color", Component.text(playerTeam.name()).color(TextColor.color(Team.Colors.get(playerTeam)))))
         );
 
         this.updateScoreboard();
@@ -216,16 +224,17 @@ public class TDMMatch extends Match {
         Component header;
         if (teamScores[1] > teamScores[0]) {
             // Blue leads
-            header = Component.text("Blue leads " + teamScores[1] + " to " + teamScores[0])
-                .color(TextColor.color(Team.Colors.get(Team.BLUE)));
+            header = TranslationManager.t("match.team.leads.blue", TranslationManager.FALLBACK,
+                    Placeholder.unparsed("blue_score", String.valueOf(teamScores[1])),
+                    Placeholder.unparsed("red_score", String.valueOf(teamScores[0])));
         } else if (teamScores[0] > teamScores[1]) {
             // Red leads
-            header = Component.text("Red leads " + teamScores[0] + " to " + teamScores[1])
-                .color(TextColor.color(Team.Colors.get(Team.RED)));
+            header = TranslationManager.t("match.team.leads.red", TranslationManager.FALLBACK,
+                    Placeholder.unparsed("red_score", String.valueOf(teamScores[0])),
+                    Placeholder.unparsed("blue_score", String.valueOf(teamScores[1])));
         } else {
             // Teams are tied
-            header = Component.text("Teams are tied")
-                .color(TextColor.color(0xFFFF00 ));
+            header = TranslationManager.t("match.team.leads.tied", TranslationManager.FALLBACK);
         }
         return header.appendNewline();
     }

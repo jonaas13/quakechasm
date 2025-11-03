@@ -17,20 +17,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.github.polyzium.quakechasm.matchmaking.factory;
+package com.github.polyzium.quakechasm.matchmaking.matches;
 
-import com.github.polyzium.quakechasm.matchmaking.matches.Match;
-import com.github.polyzium.quakechasm.matchmaking.matches.MatchPrivacy;
-import com.github.polyzium.quakechasm.matchmaking.map.QMap;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.util.UUID;
-
-public interface MatchFactory {
-    Match createMatch(QMap map, UUID ownerId, MatchPrivacy privacy, String password);
-
-    default Match createMatch(QMap map) {
-        return createMatch(map, null, MatchPrivacy.PUBLIC, null);
-    }
-    
-    String getNameKey();
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface QManageable {
+    String name();
+    int min() default Integer.MIN_VALUE;
+    int max() default Integer.MAX_VALUE;
+    String description() default "";
 }

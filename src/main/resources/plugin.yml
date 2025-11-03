@@ -6,3 +6,36 @@ description: Quake minigame plugin for Minecraft servers running PaperMC
 author: Polyzium
 website: https://github.com/polyzium/quakechasm
 api-version: '1.21'
+
+permissions:
+  quake.*:
+    description: Grants all Quakechasm permissions
+    default: op
+    children:
+      quake.admin: true
+      quake.mapper: true
+      quake.player: true
+  
+  quake.admin:
+    description: Allows access to administrative commands (reload, give, match management)
+    default: op
+    children:
+      quake.mapper: true
+      quake.player: true
+      quake.match.create: true
+  
+  quake.mapper:
+    description: Allows access to map and entity placement commands
+    default: op
+    children:
+      quake.player: true
+  
+  quake.match.create:
+    description: Allows creating custom matches
+    default: true
+    children:
+      quake.player: true
+  
+  quake.player:
+    description: Allows access to basic player commands (menu, chat, party, matchmaking, joining matches)
+    default: true

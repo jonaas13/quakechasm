@@ -29,10 +29,15 @@ import com.github.polyzium.quakechasm.matchmaking.map.QMap;
 import com.github.polyzium.quakechasm.misc.TranslationManager;
 
 import java.util.List;
+import java.util.UUID;
 
 public class DebugMatch extends Match {
     public DebugMatch(QMap map) {
         super(map);
+    }
+    
+    public DebugMatch(QMap map, UUID ownerId, MatchPrivacy privacy, String password) {
+        super(map, ownerId, privacy, password);
     }
 
     @Override

@@ -20,11 +20,15 @@
 package com.github.polyzium.quakechasm.matchmaking.matches;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.bukkit.entity.Player;
 import com.github.polyzium.quakechasm.QuakePlugin;
 import com.github.polyzium.quakechasm.matchmaking.factory.MatchFactory;
 import com.github.polyzium.quakechasm.matchmaking.map.QMap;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class MatchManager {
     public static MatchManager INSTANCE;
@@ -38,9 +42,14 @@ public class MatchManager {
     }
 
     public Match newMatch(MatchFactory matchFactory, QMap map) {
+        return newMatch(matchFactory, map, null, MatchPrivacy.PUBLIC, null);
+    }
+    
+    public Match newMatch(MatchFactory matchFactory, QMap map, UUID ownerId,
+                         MatchPrivacy privacy, String password) {
         Match match = null;
         try {
-            match = matchFactory.createMatch(map);
+            match = matchFactory.createMatch(map, ownerId, privacy, password);
         } catch (Exception e) {
             QuakePlugin.INSTANCE.getLogger().severe(
                     "Caught an exception from "+matchFactory.getClass().getSimpleName()+":\n"+
@@ -54,5 +63,35 @@ public class MatchManager {
 
         matches.add(match);
         return match;
+    }
+
+    public List<Match> getVisibleMatches(Player player) {
+        boolean isAdmin = player.hasPermission("quake.admin");
+        
+        return matches.stream()
+            .filter(match -> {
+                if (isAdmin) return true;
+
+                if (match.getPrivacy() == MatchPrivacy.INVITE_ONLY) {
+                    return match.isOwner(player) || match.isInvited(player.getUniqueId());
+                }
+
+                return true;
+            })
+            .collect(Collectors.toList());
+    }
+
+    public Match getVisibleMatch(Player player, int index) {
+        List<Match> visible = getVisibleMatches(player);
+        if (index < 0 || index >= visible.size()) return null;
+        return visible.get(index);
+    }
+
+    public Match getMatchByOwner(UUID ownerId) {
+        return matches.stream()
+            .filter(match -> match.getOwnerId() != null &&
+                            match.getOwnerId().equals(ownerId))
+            .findFirst()
+            .orElse(null);
     }
 }

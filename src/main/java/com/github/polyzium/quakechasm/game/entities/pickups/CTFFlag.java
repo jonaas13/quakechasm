@@ -1,26 +1,25 @@
 /*
  * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
- * 
+ *
  * Copyright (C) 2024-present Polyzium
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package com.github.polyzium.quakechasm.game.entities.pickups;
 
-import net.kyori.adventure.text.Component;
-import org.apache.commons.lang3.StringUtils;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
@@ -35,6 +34,7 @@ import com.github.polyzium.quakechasm.hud.Hud;
 import com.github.polyzium.quakechasm.matchmaking.matches.CTFMatch;
 import com.github.polyzium.quakechasm.matchmaking.Team;
 import com.github.polyzium.quakechasm.matchmaking.map.QMap;
+import com.github.polyzium.quakechasm.misc.TranslationManager;
 
 public class CTFFlag implements DisplayPickup {
     private ItemDisplay display;
@@ -134,6 +134,8 @@ public class CTFFlag implements DisplayPickup {
     }
 
     public void onPickup(Player player) {
+        if (this.match == null) return;
+
         ItemStack item = display.getItemStack();
         if (item.isEmpty()) return;
 
@@ -168,7 +170,9 @@ public class CTFFlag implements DisplayPickup {
 
         match.grabFlag(this.team, player);
 
-        Hud.pickupMessage(player, Component.text(StringUtils.capitalize(this.team.name().toLowerCase()) + " Flag"));
+        Hud.pickupMessage(player, TranslationManager.t("pickup.ctfFlag.title", player,
+            Placeholder.unparsed("team_color", TranslationManager.tLegacy("pickup.ctfFlag."+this.team.name().toLowerCase()+"Adj", player))
+        ));
     }
 
     public Team getTeam() {

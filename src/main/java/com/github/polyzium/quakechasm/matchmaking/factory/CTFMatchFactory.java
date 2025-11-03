@@ -21,12 +21,15 @@ package com.github.polyzium.quakechasm.matchmaking.factory;
 
 import com.github.polyzium.quakechasm.matchmaking.matches.CTFMatch;
 import com.github.polyzium.quakechasm.matchmaking.matches.Match;
+import com.github.polyzium.quakechasm.matchmaking.matches.MatchPrivacy;
 import com.github.polyzium.quakechasm.matchmaking.map.QMap;
+
+import java.util.UUID;
 
 public class CTFMatchFactory implements MatchFactory {
     @Override
-    public Match createMatch(QMap map) {
-        return new CTFMatch(map);
+    public Match createMatch(QMap map, UUID ownerId, MatchPrivacy privacy, String password) {
+        return new CTFMatch(map, ownerId, privacy, password);
     }
 
     @Override

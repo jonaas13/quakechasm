@@ -42,13 +42,22 @@ import java.time.Duration;
 import java.util.*;
 
 public class FFAMatch extends Match {
+    @QManageable(name = "fraglimit", min = 1, max = 1000, description = "Number of frags needed to win")
     public int fraglimit = 10;
+    
+    @QManageable(name = "needPlayers", min = 1, max = 100, description = "Number of players needed to start")
     private int needPlayers = 2;
+    
     private HashMap<Player, Integer> scores = new HashMap<>();
     private boolean started = false;
     private BukkitTask warmupTask = null;
+    
     public FFAMatch(QMap map) {
         super(map);
+    }
+    
+    public FFAMatch(QMap map, UUID ownerId, MatchPrivacy privacy, String password) {
+        super(map, ownerId, privacy, password);
     }
 
     public static String getNameKeyStatic() {

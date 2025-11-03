@@ -1,19 +1,58 @@
 {
   "en": {
     "command": {
-      "chat": {
-        "switch": "You have switched to <chatroom> chat"
-      },
       "entity": {
+        "jumppad": {
+          "created": "Made a Jumppad at <location>",
+          "createdWithPower": "Made a Jumppad at <location1>, landing at <location2> (Power: <power>x)"
+        },
         "portal": {
           "createCanceled": "Portal creation cancelled",
-          "createInitiated": "Portal location stored. Go to the teleport target location and run the command again to create the portal.\nOtherwise, do /quake portal cancel"
+          "createInitiated": "Portal location stored. Go to the teleport target location and run the command again to create the portal.\nOtherwise, do /quake portal cancel",
+          "created": "Made a Portal at <location1>, linked to <location2>"
+        },
+        "healthSpawner": {
+          "created": "Made a HealthSpawner at <location>"
+        },
+        "ammoSpawner": {
+          "created": "Made an AmmoSpawner at <location>"
+        },
+        "armorSpawner": {
+          "created": "Made an ArmorSpawner at <location>"
+        },
+        "powerupSpawner": {
+          "created": "Made a PowerupSpawner at <location>"
+        },
+        "ctfFlag": {
+          "created": "Made a CTFFlag (<team> team) at <location>"
+        },
+        "weaponSpawner": {
+          "created": "Made a WeaponSpawner at <location>"
         }
       },
       "map": {
         "created": "Map <map_name> has been created",
         "removed": "Map <map_name> removed",
-        "selectResult": "Selection set to map bounds."
+        "selectResult": "Selection set to map bounds.",
+        "list": {
+          "empty": "<red>No maps to list</red>",
+          "entry": "<map_name> in <world_name> at <location>"
+        },
+        "toolkit": {
+          "added": "<green>Mapper toolkit added to inventory</green>"
+        }
+      },
+      "match": {
+        "created": "Made a new <match_type> match with index <index>",
+        "list": {
+          "entry": "<index>: <match_name> on <map_name>, <player_count> players"
+        }
+      },
+      "matchmaking": {
+        "invalidMode": "Invalid match mode <mode>"
+      },
+      "chat": {
+        "switch": "You have switched to <chatroom> chat"
       },
       "generic": {
         "cancelledAlready": "<red>Already cancelled</red>"
@@ -169,7 +208,73 @@
       "team": {
         "joined": "<player_name> has joined the <team_color> team.",
         "winsBegin": "Team ",
-        "winsEnd": " wins"
+        "winsEnd": " wins",
+        "leads": {
+          "red": "<red>Red leads <red_score> to <blue_score></red>",
+          "blue": "<blue>Blue leads <blue_score> to <red_score></blue>",
+          "tied": "<yellow>Teams are tied</yellow>",
+          "tiedWithScore": "<yellow>Teams are tied <score> to <score></yellow>"
+        }
+      },
+      "end": {
+        "teleportCountdown": "Teleporting to lobby in <count>"
+      },
+      "privacy": {
+        "invalid": "<red>Invalid privacy level. Use: public, password, or invite_only</red>",
+        "passwordRequired": "<red>Password-protected matches require a password. Use: /quake match create <mode> <needPlayers> <map> password <your_password></red>",
+        "passwordProtected": "<green>Match is password-protected.</green>",
+        "inviteOnly": "<green>Match is invite-only. Use /quake match invite <player> to invite players.</green>",
+        "incorrectPassword": "<red>Incorrect password or password required. Use: /quake match join <index> <password></red>",
+        "inviteRequired": "<red>This match is invite-only. You need an invitation to join.</red>",
+        "cannotJoin": "<red>You cannot join this match.</red>",
+        "changed": "<green>Match privacy changed from <old_privacy> to <new_privacy></green>",
+        "passwordWarning": "<yellow>Warning: Password privacy selected but no password is set. Use /quake match password <password> to set one.</yellow>"
+      },
+      "manage": {
+        "notInMatch": "<red>You must be in a match to <action>.</red>",
+        "noPermission": "<red>You don't have permission to manage this match.</red>",
+        "playerNotFound": "<red>Player not found.</red>",
+        "playerAlreadyInMatch": "<red>That player is already in the match.</red>",
+        "playerNotInMatch": "<red>That player is not in the match.</red>",
+        "cannotKickSelf": "<red>You cannot kick yourself. Use /quake match leave instead.</red>",
+        "invited": "<green>Invited <player_name> to the match.</green>",
+        "inviteReceived": "<green>You have been invited to a match by <inviter_name>. Use /quake match join to join.</green>",
+        "uninvited": "<green>Removed invitation for <player_name>.</green>",
+        "noInvites": "<yellow>No players have been invited to this match.</yellow>",
+        "invitesTitle": "<green>Invited players:</green>",
+        "inviteEntry": "<gray>- <white><player_name>",
+        "kicked": "<green>Kicked <player_name> from the match.</green>",
+        "kickedBy": "<red>You have been kicked from the match by <kicker_name>.</red>",
+        "passwordRemoved": "<green>Password removed. Match is now public.</green>",
+        "passwordUpdated": "<green>Password updated. Match is now password-protected.</green>",
+        "propertyChanged": "<yellow>Match: <white><property> <yellow>changed to <white><value>",
+        "propertyNotFound": "<red>Property '<property>' not found or not manageable.</red>",
+        "noProperties": "<yellow>This match has no manageable properties.</yellow>",
+        "propertiesTitle": "<blue><bold>Manageable Properties:</bold></blue>",
+        "propertyEntry": "<gray><property>: <white><value>",
+        "canManage": "<green>You can manage this match.</green>"
+      },
+      "info": {
+        "title": "<blue><bold>Match Info</bold></blue>",
+        "type": "<gray>Type: <white><match_type>",
+        "map": "<gray>Map: <white><map_name>",
+        "privacy": "<gray>Privacy: <white><privacy>",
+        "players": "<gray>Players: <white><player_count>",
+        "owner": "<gray>Owner: <white><owner_name>",
+        "matchmaking": "<gray>Type: <white>Matchmaking",
+        "settingsTitle": "<blue><bold>Match Settings:</bold></blue>",
+        "notInMatchUseIndex": "<red>You are not in a match. Use /quake match info <index> to view a specific match.</red>"
+      },
+      "list": {
+        "privacy": {
+          "public": "<green>[PUBLIC]</green>",
+          "password": "<yellow>[PASSWORD]</yellow>",
+          "inviteOnly": "<red>[INVITE]</red>"
+        },
+        "owner": "<gray>(Owner: <owner_name>)</gray>",
+        "matchmaking": "<gray>(Matchmaking)</gray>",
+        "entry": "<blue>[<index>]</blue> <privacy_icon> <white><match_type></white> <gray>-</gray> <white><map_name></white> <gray>-</gray> <white><player_count> players</white><owner_info> ",
+        "joinButton": "<click:run_command:/quake match join <index>><hover:show_text:'Click to join'><green>[Join]</green></hover></click>"
       }
     },
     "matchmaking": {
@@ -277,7 +382,11 @@
         "light": "Light Armor",
         "shard": "Armor Shard"
       },
-      "ctfFlag": "<team_color> Flag",
+      "ctfFlag": {
+        "title": "<team_color> Flag",
+        "redAdj": "Red",
+        "blueAdj": "Blue"
+      },
       "health": {
         "generic": "<amount> Health",
         "mega": "Mega Health"
@@ -299,53 +408,6 @@
     },
     "plugin": {
       "reload": "Plugin reloaded"
-    },
-    "command": {
-      "entity": {
-        "jumppad": {
-          "created": "Made a Jumppad at <location>",
-          "createdWithPower": "Made a Jumppad at <location1>, landing at <location2> (Power: <power>x)"
-        },
-        "portal": {
-          "created": "Made a Portal at <location1>, linked to <location2>"
-        },
-        "healthSpawner": {
-          "created": "Made a HealthSpawner at <location>"
-        },
-        "ammoSpawner": {
-          "created": "Made an AmmoSpawner at <location>"
-        },
-        "armorSpawner": {
-          "created": "Made an ArmorSpawner at <location>"
-        },
-        "powerupSpawner": {
-          "created": "Made a PowerupSpawner at <location>"
-        },
-        "ctfFlag": {
-          "created": "Made a CTFFlag (<team> team) at <location>"
-        },
-        "weaponSpawner": {
-          "created": "Made a WeaponSpawner at <location>"
-        }
-      },
-      "map": {
-        "list": {
-          "empty": "<red>No maps to list</red>",
-          "entry": "<map_name> in <world_name> at <location>"
-        },
-        "toolkit": {
-          "added": "<green>Mapper toolkit added to inventory</green>"
-        }
-      },
-      "match": {
-        "created": "Made a new <match_type> match with index <index>",
-        "list": {
-          "entry": "<index>: <match_name> on <map_name>, <player_count> players"
-        }
-      },
-      "matchmaking": {
-        "invalidMode": "Invalid match mode <mode>"
-      }
     },
     "party": {
       "joined": " joined",
