@@ -175,7 +175,13 @@
       "message": "Вы убили <victim>"
     },
     "medal": {
-      "awarded": "Получена медаль: <medal_text>"
+      "awarded": "Получена медаль: <medal_text>",
+      "name": {
+        "excellent": "Отлично",
+        "impressive": "Впечатляюще",
+        "accuracy": "Точность",
+        "humiliation": "Унижение"
+      }
     }
   },
   "generic": {

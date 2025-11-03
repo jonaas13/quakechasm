@@ -31,5 +31,9 @@ public abstract class Icons {
     public static final char RED_FLAG = 'I';
     public static final char RED_FLAG_TAKEN = 'J';
     public static final char RED_FLAG_LOST = 'K';
+    public static final char MEDAL_EXCELLENT = 'L';
+    public static final char MEDAL_IMPRESSIVE = 'M';
+    public static final char MEDAL_ACCURACY = 'N';
+    public static final char MEDAL_HUMILIATION = 'O';
     public static final char WEAPONS_OFFSET = 'a';
 }

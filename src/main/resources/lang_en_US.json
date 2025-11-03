@@ -175,7 +175,13 @@
       "message": "You fragged <victim>"
     },
     "medal": {
-      "awarded": "Medal awarded: <medal_text>"
+      "awarded": "Medal awarded: <medal_text>",
+      "name": {
+        "excellent": "Excellent",
+        "impressive": "Impressive",
+        "accuracy": "Accuracy",
+        "humiliation": "Humiliation"
+      }
     }
   },
   "generic": {

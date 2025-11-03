@@ -20,6 +20,7 @@
 package com.github.polyzium.quakechasm.game.combat;
 
 import com.github.polyzium.quakechasm.QuakePlugin;
+import com.github.polyzium.quakechasm.QuakeUserState;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -150,6 +151,8 @@ public abstract class ProjectileUtil {
     }
 
     public static void explodeCustom(Location impactLocation, Entity attacker, Entity hitEntity, double explosionRadius, double directDamage, double splashDamage, double knockback, DamageCause directCause, DamageCause splashCause) {
+        boolean awardedAccuracy = false;
+        
         for (Entity entity : impactLocation.getWorld().getNearbyEntities(impactLocation, explosionRadius, explosionRadius, explosionRadius)) {
             if (!(entity instanceof LivingEntity victim)) continue;
 
@@ -166,6 +169,21 @@ public abstract class ProjectileUtil {
             ) {
                 knockback *= 3;
             }
+
+            if (!awardedAccuracy &&
+                attacker instanceof Player pAttacker &&
+                victim instanceof Player &&
+                (directCause == DamageCause.ROCKET || splashCause == DamageCause.ROCKET_SPLASH) &&
+                !victim.isOnGround() &&
+                attacker != victim
+            ) {
+                QuakeUserState attackerState = QuakePlugin.INSTANCE.userStates.get(pAttacker);
+                if (attackerState != null) {
+                    attackerState.awardMedal(MedalType.ACCURACY);
+                    awardedAccuracy = true;
+                }
+            }
+            
             if (hitEntity != null && entity == hitEntity)
                 damageCustom(victim, directDamage, attacker, directCause);
             else

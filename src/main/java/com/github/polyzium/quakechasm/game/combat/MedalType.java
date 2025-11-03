@@ -19,19 +19,27 @@
 
 package com.github.polyzium.quakechasm.game.combat;
 
+import com.github.polyzium.quakechasm.hud.Icons;
+
 public enum MedalType {
-    EXCELLENT("Excellent"),
-    IMPRESSIVE("Impressive"),
-    ACCURACY("Accuracy"),
-    HUMILIATION("Humiliation");
+    EXCELLENT("game.medal.name.excellent", Icons.MEDAL_EXCELLENT),
+    IMPRESSIVE("game.medal.name.impressive", Icons.MEDAL_IMPRESSIVE),
+    ACCURACY("game.medal.name.accuracy", Icons.MEDAL_ACCURACY),
+    HUMILIATION("game.medal.name.humiliation", Icons.MEDAL_HUMILIATION);
 
-    private final String displayName;
+    private final String translationKey;
+    private final char icon;
 
-    MedalType(String displayName) {
-        this.displayName = displayName;
+    MedalType(String translationKey, char icon) {
+        this.translationKey = translationKey;
+        this.icon = icon;
     }
 
-    public String getDisplayName() {
-        return displayName;
+    public String getTranslationKey() {
+        return translationKey;
+    }
+
+    public char getIcon() {
+        return icon;
     }
 }

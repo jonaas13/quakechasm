@@ -62,6 +62,7 @@ import com.github.polyzium.quakechasm.matchmaking.Team;
 import com.github.polyzium.quakechasm.matchmaking.map.QMap;
 import com.github.polyzium.quakechasm.matchmaking.map.Spawnpoint;
 
+import java.io.IOException;
 import java.util.*;
 
 import static com.github.polyzium.quakechasm.game.combat.WeaponUtil.spawnParticlesLine;

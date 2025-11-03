@@ -27,6 +27,9 @@ import com.github.polyzium.quakechasm.game.combat.WeaponUtil;
 import com.github.polyzium.quakechasm.game.entities.Trigger;
 import com.github.polyzium.quakechasm.game.entities.triggers.Jumppad;
 import com.github.polyzium.quakechasm.game.mapper.PortalTool;
+import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -50,6 +53,8 @@ import com.github.polyzium.quakechasm.misc.TranslationManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class QuakeUserState {
     private Player player;
@@ -71,6 +76,13 @@ public class QuakeUserState {
     public HashMap<MedalType, Integer> medals = new HashMap<>();
     public long lastKillTime = 0;
     public int consecutiveRailgunHits = 0;
+    public boolean lastKillWasMidair = false;
+    
+    // Medal display queue
+    private MedalType currentlyDisplayedMedal = null;
+    private BossBar currentMedalBossbar = null;
+    private BukkitRunnable currentMedalTimer = null;
+    private Queue<MedalType> medalQueue = new LinkedList<>();
 
     // Mapper toolkit state
     public Trigger movingEntity = null;
@@ -111,6 +123,19 @@ public class QuakeUserState {
         this.medals.clear();
         this.lastKillTime = 0;
         this.consecutiveRailgunHits = 0;
+        this.lastKillWasMidair = false;
+        
+        // Clear medal display queue
+        if (currentMedalBossbar != null) {
+            player.hideBossBar(currentMedalBossbar);
+            currentMedalBossbar = null;
+        }
+        if (currentMedalTimer != null) {
+            currentMedalTimer.cancel();
+            currentMedalTimer = null;
+        }
+        currentlyDisplayedMedal = null;
+        medalQueue.clear();
     }
 
     public void initForMatch() {
@@ -231,16 +256,106 @@ public class QuakeUserState {
         int count = medals.getOrDefault(medalType, 0) + 1;
         medals.put(medalType, count);
 
-        String medalText = medalType.getDisplayName() + " x" + count;
+        String medalText = TranslationManager.tLegacy(medalType.getTranslationKey(), player) + " x" + count;
 
         player.sendMessage(TranslationManager.t("game.medal.awarded", player,
             Placeholder.unparsed("medal_text", medalText)).color(TextColor.color(0xFFD700)));
+
+        if (currentlyDisplayedMedal == medalType) {
+            updateCurrentMedalDisplay(medalType, count);
+            resetMedalTimer();
+        }
+        else if (currentlyDisplayedMedal != null) {
+            if (!medalQueue.contains(medalType)) {
+                medalQueue.offer(medalType);
+            }
+        }
+        else {
+            showMedalBossbar(medalType, count);
+        }
+    }
+    
+    private void showMedalBossbar(MedalType medalType, int count) {
+        currentlyDisplayedMedal = medalType;
+
+        Component bossbarTitle;
+        if (count >= 10) {
+            bossbarTitle = Component.join(JoinConfiguration.noSeparators(),
+                            Component.text(medalType.getIcon()),
+                            Component.text(count).color(TextColor.color(0xffffff))
+                    )
+                    .font(net.kyori.adventure.key.Key.key("minecraft:hud_bossbar"));
+        } else {
+            bossbarTitle = Component.text(Character.toString(medalType.getIcon()).repeat(count))
+                    .font(net.kyori.adventure.key.Key.key("minecraft:hud_bossbar"));
+        }
         
-//        player.showTitle(Title.title(
-//                Component.text(medalText).color(TextColor.color(0xFFD700)),
-//                Component.empty(),
-//                Title.Times.times(Duration.ZERO, Duration.ofSeconds(2), Duration.ofMillis(500))
-//        ));
+        currentMedalBossbar = BossBar.bossBar(
+                bossbarTitle,
+                0,
+                BossBar.Color.YELLOW,
+                BossBar.Overlay.PROGRESS
+        );
+        
+        player.showBossBar(currentMedalBossbar);
+
+        currentMedalTimer = new BukkitRunnable() {
+            @Override
+            public void run() {
+                player.hideBossBar(currentMedalBossbar);
+                currentMedalBossbar = null;
+                currentlyDisplayedMedal = null;
+                currentMedalTimer = null;
+
+                if (!medalQueue.isEmpty()) {
+                    MedalType nextMedal = medalQueue.poll();
+                    int nextCount = medals.getOrDefault(nextMedal, 0);
+                    showMedalBossbar(nextMedal, nextCount);
+                }
+            }
+        };
+        currentMedalTimer.runTaskLater(QuakePlugin.INSTANCE, 60);
+    }
+    
+    private void updateCurrentMedalDisplay(MedalType medalType, int count) {
+        if (currentMedalBossbar != null) {
+            Component bossbarTitle;
+            if (count >= 10) {
+                bossbarTitle = Component.join(JoinConfiguration.noSeparators(),
+                                Component.text(medalType.getIcon()),
+                                Component.text(count).color(TextColor.color(0xffffff))
+                        )
+                        .font(net.kyori.adventure.key.Key.key("minecraft:hud_bossbar"));
+            } else {
+                bossbarTitle = Component.text(Character.toString(medalType.getIcon()).repeat(count))
+                        .font(net.kyori.adventure.key.Key.key("minecraft:hud_bossbar"));
+            }
+            
+            currentMedalBossbar.name(bossbarTitle);
+        }
+    }
+    
+    private void resetMedalTimer() {
+        if (currentMedalTimer != null) {
+            currentMedalTimer.cancel();
+
+            currentMedalTimer = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    player.hideBossBar(currentMedalBossbar);
+                    currentMedalBossbar = null;
+                    currentlyDisplayedMedal = null;
+                    currentMedalTimer = null;
+
+                    if (!medalQueue.isEmpty()) {
+                        MedalType nextMedal = medalQueue.poll();
+                        int nextCount = medals.getOrDefault(nextMedal, 0);
+                        showMedalBossbar(nextMedal, nextCount);
+                    }
+                }
+            };
+            currentMedalTimer.runTaskLater(QuakePlugin.INSTANCE, 60);
+        }
     }
 
     public void checkExcellentMedal() {
