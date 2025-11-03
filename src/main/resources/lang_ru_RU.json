@@ -1,0 +1,619 @@
+{
+  "command": {
+    "entity": {
+      "jumppad": {
+        "created": "Создан трамплин на <location>",
+        "createdWithPower": "Создан трамплин на <location1>, приземление на <location2> (Мощность: <power>x)"
+      },
+      "portal": {
+        "createCanceled": "Создание портала отменено",
+        "createInitiated": "Местоположение портала сохранено. Отправляйтесь к целевой точке телепортации и снова выполните команду, чтобы создать портал.\nВ противном случае, введите /quake portal cancel",
+        "created": "Создан портал на <location1>, связанный с <location2>"
+      },
+      "healthSpawner": {
+        "created": "Создан спавнер здоровья на <location>"
+      },
+      "ammoSpawner": {
+        "created": "Создан спавнер боеприпасов на <location>"
+      },
+      "armorSpawner": {
+        "created": "Создан спавнер брони на <location>"
+      },
+      "powerupSpawner": {
+        "created": "Создан спавнер усилений на <location>"
+      },
+      "ctfFlag": {
+        "created": "Создан флаг CTF (<team> команда) на <location>"
+      },
+      "weaponSpawner": {
+        "created": "Создан спавнер оружия на <location>"
+      }
+    },
+    "map": {
+      "created": "Карта <map_name> создана",
+      "removed": "Карта <map_name> удалена",
+      "selectResult": "Выделение установлено на границы карты.",
+      "list": {
+        "empty": "<red>Нет карт для отображения</red>",
+        "entry": "<map_name> в мире <world_name> на <location>"
+      },
+      "toolkit": {
+        "added": "<green>Набор инструментов для маппинга добавлен в инвентарь</green>"
+      }
+    },
+    "match": {
+      "created": "Создан новый матч типа \"<match_type>\" с индексом <index>",
+      "list": {
+        "entry": "<index>: <match_name> на карте <map_name>, <player_count> игроков"
+      }
+    },
+    "matchmaking": {
+      "invalidMode": "Неверный режим матча <mode>"
+    },
+    "chat": {
+      "prefix": {
+        "global": "ГЛОБАЛ",
+        "match": "МАТЧ",
+        "party": "ГРУППА",
+        "team": "КОМАНДА"
+      },
+      "switch": {
+        "title": "Вы переключились на <chatroom> чат",
+        "globalAdj": "глобальный",
+        "matchAdj": "матчевый",
+        "partyAdj": "групповой",
+        "teamAdj": "командный"
+      }
+    },
+    "generic": {
+      "cancelledAlready": "<red>Уже отменено</red>"
+    },
+    "ammoSpawner": {
+      "wrongType": "<red>Неверный тип, используйте один из: <types></red>"
+    },
+    "party": {
+      "list": {
+        "leader": " (лидер)",
+        "begin": "Все игроки в вашей группе:"
+      }
+    }
+  },
+  "error": {
+    "armorSpawner": {
+      "wrongType": "<red>Неверный тип брони, используйте один из: shard, light, heavy</red>"
+    },
+    "chat": {
+      "switchNoMatch": {
+        "title": "<red>Не удалось переключиться на <chatroom> чат, вы не в матче</red>",
+        "globalAdj": "глобальный",
+        "matchAdj": "матчевый",
+        "partyAdj": "групповой",
+        "teamAdj": "командный"
+      }
+    },
+    "chatroom": {
+      "invalid": "<red>Это баг! Этот чат-рум недействителен!</red>"
+    },
+    "ctfFlag": {
+      "wrongTeam": "<red>Неверная команда, используйте один из: red, blue</red>"
+    },
+    "duplicateMap": "<red>Уже существует карта с таким именем</red>",
+    "entity": {
+      "jumppad": {
+        "noNearby": "<red>Поблизости не найдено трамплинов</red>"
+      }
+    },
+    "generic": "<red>Произошла ошибка, пожалуйста, свяжитесь с администраторами сервера.</red>",
+    "give": {
+      "invalidOption": "<red>Я не знаю, что такое <option></red>"
+    },
+    "healthSpawner": {
+      "wrongType": "<red>Неверный тип здоровья, используйте один из: small, medium, large, mega</red>"
+    },
+    "invalidMode": "<red>Неверный режим <mode></red>",
+    "map": {
+      "regionNotSelected": "<red>Сначала выберите регион WorldEdit</red>"
+    },
+    "match": {
+      "already": "<red>Вы уже находитесь в матче, пожалуйста, покиньте его, если хотите присоединиться к другому</red>",
+      "mapOccupied": "<red>На карте <map_name> уже идет матч. Пожалуйста, дождитесь его окончания.</red>",
+      "notInMatch": "<red>Вы не в матче</red>",
+      "notTeam": "<red>Это не командный матч</red>"
+    },
+    "matchmaking": {
+      "alreadySearching": "<red>Вы уже ищете матч!</red>",
+      "canceledMatchNoAccept": "<red>Ваша игра была отменена, потому что вы не приняли.</red>",
+      "generic": "<red>Приносим извинения, что-то пошло ужасно не так со стороны подбора игроков. Пожалуйста, свяжитесь с администраторами сервера.</red>",
+      "mapUnfit": "<red>Карта <map_name> не подходит для <mode>\nПопробуйте выбрать другой пул карт или режим.</red>",
+      "noCancel": "<red>Вы не можете отменить после принятия матча!</red>",
+      "noPendingMatch": "<red>У вас нет ожидающего матча для принятия!</red>",
+      "notAccepted": "<red>Пожалуйста, сначала примите матч</red>",
+      "onlyOneMap": "<red>Постановка в очередь на несколько карт в настоящее время не поддерживается</red>",
+      "search": {
+        "inMatch": "<red>Пожалуйста, покиньте матч перед началом поиска</red>",
+        "ohShitItsFucked": "<red>Ваш поиск матча был отменён для предотвращения дальнейших ошибок.</red>"
+      }
+    },
+    "noMatches": "<red>Нет матчей</red>",
+    "noSuchMap": "<red>Нет такой карты</red>",
+    "noSuchMatch": "<red>Нет такого матча</red>",
+    "offhand": "<red>Вы не можете помещать предметы в левую руку!</red>",
+    "party": {
+      "absent": "<player_name> нет в вашей группе",
+      "alreadyThere": "<red>Этот игрок уже в вашей группе</red>",
+      "command": {
+        "leaderOnly": "<red>Только лидер группы имеет доступ к этой команде</red>"
+      },
+      "invite": {
+        "didntAccept": "<player_name> не принял ваше приглашение в группу"
+      },
+      "inviteExpired": "<red>Срок действия вашего приглашения в группу истек</red>",
+      "kicked": "<red>Вас выгнали из группы <leader_name></red>",
+      "matchmaking": {
+        "leaderOnly": "<red>Только лидер группы имеет доступ к подбору игроков</red>"
+      },
+      "noInvite": "<red>У вас нет ожидающего приглашения в группу для принятия!</red>",
+      "single": "<red>Вы единственный в этой группе</red>",
+      "tooBig": "<red>В вашей группе <party_size> игроков вместо максимально разрешенных <max_players> для карты <map_name>\nУдалите одного или нескольких игроков из вашей группы.</red>",
+      "unableSelfInvite": "<red>Вы не можете пригласить себя!</red>",
+      "unableSelfKick": "<red>Вы не можете выгнать себя!</red>"
+    },
+    "powerupSpawner": {
+      "wrongType": "<red>Неверный тип усиления, используйте один из: <types></red>"
+    },
+    "weapon": {
+      "unknown": "Это оружие неизвестно или еще не реализовано"
+    },
+    "worldEdit": "<red>WorldEdit либо не установлен, либо не загружен</red>",
+    "wrongType": "<red>Неверный тип, используйте один из: <types></red>"
+  },
+  "game": {
+    "dash": {
+      "cooldown": "Перезарядка рывка <seconds>с"
+    },
+    "kill": {
+      "message": "Вы убили <victim>"
+    },
+    "medal": {
+      "awarded": "Получена медаль: <medal_text>"
+    }
+  },
+  "generic": {
+    "debug": "Отладка"
+  },
+  "match": {
+    "aftermath": {
+      "scoreboard": {
+        "begin": "Результаты этого матча:"
+      }
+    },
+    "base": "Базовый матч",
+    "countdown": "Матч начнется через: <count>",
+    "createResult": "Матч типа <match_type> с индексом <index>",
+    "ctf": {
+      "flag": {
+        "returnedAuto": {
+          "title": "<flag_color> флаг вернулся!",
+          "redAdj": "<red>КРАСНЫЙ</red>",
+          "blueAdj": "<blue>СИНИЙ</blue>"
+        },
+        "returnedByPlayer": {
+          "title": "<player_name> вернул <flag_color> флаг!",
+          "redAdj": "<red>КРАСНЫЙ</red>",
+          "blueAdj": "<blue>СИНИЙ</blue>"
+        },
+        "taken": {
+          "title": "<player_name> взял <flag_color> флаг!",
+          "redAdj": "<red>КРАСНЫЙ</red>",
+          "blueAdj": "<blue>СИНИЙ</blue>"
+        },
+        "capture": {
+          "title": "<player_name> захватил <flag_color> флаг!",
+          "redAdj": "<red>КРАСНЫЙ</red>",
+          "blueAdj": "<blue>СИНИЙ</blue>"
+        }
+      },
+      "name": "Захват флага",
+      "startMessage": "Захватите вражеский флаг <capturelimit> раз"
+    },
+    "debug": {
+      "disclaimer": "Этот матч предназначен только для тестирования!"
+    },
+    "ffa": {
+      "name": "Каждый сам за себя"
+    },
+    "generic": {
+      "startMessage": "Убейте <fraglimit> противников",
+      "wins": "<winner> побеждает"
+    },
+    "player": {
+      "joined": "<player_name> вошел в матч",
+      "left": "<player_name> покинул матч"
+    },
+    "score": {
+      "place": " место с <score>",
+      "tiedFor": "Ничья за "
+    },
+    "start": "В бой!",
+    "tdm": {
+      "name": "Командный бой насмерть"
+    },
+    "team": {
+      "joined": {
+        "title": "<player_name> присоединился к <team_color> команде.",
+        "redAdj": "<red>КРАСНОЙ</red>",
+        "blueAdj": "<blue>СИНЕЙ</blue>"
+      },
+      "wins": {
+        "title": "<team_color> команда побеждает",
+        "redAdj": "<red>КРАСНАЯ</red>",
+        "blueAdj": "<blue>СИНЯЯ</blue>"
+      },
+      "leads": {
+        "red": "<red>Красные ведут: <red_score> против <blue_score></red>",
+        "blue": "<blue>Синие ведут: <blue_score> против <red_score></blue>",
+        "tied": "<yellow>Команды равны</yellow>",
+        "tiedWithScore": "<yellow>Команды равны: <score> против <score></yellow>"
+      }
+    },
+    "end": {
+      "teleportCountdown": "Телепортация в лобби через <count>"
+    },
+    "privacy": {
+      "invalid": "<red>Неверный уровень конфиденциальности. Используйте: public, password или invite_only</red>",
+      "passwordRequired": "<red>Матчи, защищенные паролем, требуют пароля. Используйте: /quake match create <mode> <needPlayers> <map> password <ваш_пароль></red>",
+      "passwordProtected": "<green>Матч защищен паролем.</green>",
+      "inviteOnly": "<green>Матч только по приглашениям. Используйте /quake match invite <player>, чтобы пригласить игроков.</green>",
+      "incorrectPassword": "<red>Неверный пароль или требуется пароль. Используйте: /quake match join <index> <пароль></red>",
+      "inviteRequired": "<red>Этот матч только по приглашениям. Вам нужно приглашение, чтобы присоединиться.</red>",
+      "cannotJoin": "<red>Вы не можете присоединиться к этому матчу.</red>",
+      "changed": "<green>Конфиденциальность матча изменена с <old_privacy> на <new_privacy></green>",
+      "passwordWarning": "<yellow>Предупреждение: Выбран пароль, но он не установлен. Используйте /quake match password <password>, чтобы установить его.</yellow>"
+    },
+    "manage": {
+      "notInMatch": {
+        "title": "<red>Вы должны быть в матче, чтобы <action>.</red>",
+        "invitePlayers": "приглашать игроков",
+        "uninvitePlayers": "снимать приглашения с игроков",
+        "viewInvites": "просматривать приглашения",
+        "kickPlayers": "кикать игроков",
+        "changePassword": "изменить пароль",
+        "changePrivacy": "изменить настройки конфиденциальности",
+        "setProperties": "задать свойства",
+        "getProperties": "получить свойства"
+      },
+      "noPermission": "<red>У вас нет разрешения управлять этим матчем.</red>",
+      "playerNotFound": "<red>Игрок не найден.</red>",
+      "playerAlreadyInMatch": "<red>Этот игрок уже в матче.</red>",
+      "playerNotInMatch": "<red>Этот игрок не в матче.</red>",
+      "cannotKickSelf": "<red>Вы не можете исключить себя. Используйте /quake match leave вместо этого.</red>",
+      "invited": "<green>Приглашен <player_name> в матч.</green>",
+      "inviteReceived": "<green>Вас пригласил в матч <inviter_name>. Используйте /quake match join, чтобы присоединиться.</green>",
+      "uninvited": "<green>Приглашение для <player_name> удалено.</green>",
+      "noInvites": "<yellow>Ни один игрок не был приглашен в этот матч.</yellow>",
+      "invitesTitle": "<green>Приглашенные игроки:</green>",
+      "inviteEntry": "<gray>- <white><player_name>",
+      "kicked": "<green>Игрок <player_name> исключен из матча.</green>",
+      "kickedBy": "<red>Вы были исключены из матча игроком <kicker_name>.</red>",
+      "passwordRemoved": "<green>Пароль удален. Матч теперь публичный.</green>",
+      "passwordUpdated": "<green>Пароль обновлен. Матч теперь защищен паролем.</green>",
+      "propertyChanged": "<yellow>Матч: <white><property> <yellow>изменено на <white><value>",
+      "propertyNotFound": "<red>Свойство '<property>' не найдено или не управляется.</red>",
+      "noProperties": "<yellow>У этого матча нет управляемых свойств.</yellow>",
+      "propertiesTitle": "<blue><bold>Управляемые свойства:</bold></blue>",
+      "propertyEntry": "<gray><property>: <white><value>",
+      "canManage": "<green>Вы можете управлять этим матчем.</green>"
+    },
+    "info": {
+      "title": "<blue><bold>Информация о матче</bold></blue>",
+      "type": "<gray>Тип: <white><match_type>",
+      "map": "<gray>Карта: <white><map_name>",
+      "privacy": "<gray>Конфиденциальность: <white><privacy>",
+      "players": "<gray>Игроки: <white><player_count>",
+      "owner": "<gray>Владелец: <white><owner_name>",
+      "matchmaking": "<gray>Тип: <white>Подбор игроков",
+      "settingsTitle": "<blue><bold>Настройки матча:</bold></blue>",
+      "notInMatchUseIndex": "<red>Вы не в матче. Используйте /quake match info <index>, чтобы просмотреть конкретный матч.</red>"
+    },
+    "list": {
+      "privacy": {
+        "public": "<green>[ПУБЛИЧНЫЙ]</green>",
+        "password": "<yellow>[ПАРОЛЬ]</yellow>",
+        "inviteOnly": "<red>[ПРИГЛАШЕНИЕ]</red>"
+      },
+      "owner": "<gray>(Владелец: <owner_name>)</gray>",
+      "matchmaking": "<gray>(Подбор игроков)</gray>",
+      "entry": "<blue>[<index>]</blue> <privacy_icon> <white><match_type></white> <gray>-</gray> <white><map_name></white> <gray>-</gray> <white><player_count> игроков</white><owner_info> ",
+      "joinButton": "<click:run_command:/quake match join <index>><hover:show_text:'Нажмите, чтобы присоединиться'><green>[Присоединиться]</green></hover></click>"
+    }
+  },
+  "matchmaking": {
+    "match": {
+      "accept": {
+        "title": "Ваша игра готова!",
+        "subtitle": "У вас есть <seconds> секунд, чтобы принять",
+        "chat": "Ваш матч найден:\nВведите \"/quake matchmaking accept\", чтобы принять матч.",
+        "waiting": "Ожидание других игроков..."
+      }
+    },
+    "search": {
+      "canceled": "Поиск отменен",
+      "start": {
+        "statusBarInit": "Поиск матчей: 00:00",
+        "statusBar": "Поиск матчей: <time>",
+        "message": "Поиск матчей... \nИспользуйте \"/quake matchmaking cancel\", чтобы остановить поиск"
+      }
+    }
+  },
+  "menu": {
+    "back": "Назад",
+    "disabled": {
+      "noMaps": "Отключено - карты не выбраны",
+      "partySingle": "Отключено - вы единственный в этой группе"
+    },
+    "kickPlayer": "Двойной левый клик, чтобы выгнать игрока",
+    "leader": "Лидер",
+    "leaveParty": "Покинуть",
+    "main": "Главное меню",
+    "matchmaking": {
+      "cancelSearch": "Отменить поиск",
+      "search": "Поиск матча",
+      "title": "Подбор игроков",
+      "criteria": {
+        "playersRequirement": "Требуется <players> игроков"
+      }
+    },
+    "party": "Ваша группа",
+    "selected": "Выбрано"
+  },
+  "name": "Имя",
+  "obituary": {
+    "bfg": "<victim_name> был взорван BFG <attacker_name>",
+    "crush": "<victim_name> был раздавлен",
+    "fall": "<victim_name> разбился",
+    "gauntlet": "<victim_name> был избит <attacker_name>",
+    "generic": "<victim_name> был убит <attacker_name>",
+    "grapple": "<victim_name> был пойман <attacker_name>",
+    "grenade": "<victim_name> был разорван <attacker_name>",
+    "bfgLaser": "<victim_name> увидел красивые огни от <attacker_name>",
+    "lightning": "<victim_name> был поражен током <attacker_name>",
+    "machinegun": "<victim_name> был расстрелян из пулемета <attacker_name>",
+    "plasmagun": "<victim_name> был расплавлен плазмоганом <attacker_name>",
+    "railgun": "<victim_name> был подстрелен из рельсотрона <attacker_name>",
+    "rocket": "<victim_name> съел ракету <attacker_name>",
+    "rocketSplash": "<victim_name> почти увернулся от ракеты <attacker_name>",
+    "shotgun": "<victim_name> был застрелен <attacker_name>",
+    "telefrag": "<victim_name> попытался вторгнуться в личное пространство <attacker_name>",
+    "suicide": {
+      "bfg": "<victim_name> следовало использовать оружие поменьше",
+      "drowning": "<victim_name> утонул как камень",
+      "explosion": "<victim_name> взорвал себя",
+      "plasma": "<victim_name> расплавил себя",
+      "generic": "<victim_name> совершает самоубийство",
+      "laser": "<victim_name> увидел свет",
+      "lava": "<victim_name> делает сальто назад в лаву",
+      "void": "<victim_name> был не в том месте",
+      "unknown": "<victim_name> встретил неожиданный конец от <death_cause>"
+    },
+    "unknown": "<victim_name> был странно убит <attacker_name> из-за <death_cause>"
+  },
+  "party": {
+    "invited": "<inviter_name> пригласил <invitee_name>",
+    "invitedBy": "<inviter_name> пригласил вас в свою группу. Введите \"/quake party accept\", чтобы принять приглашение.\nЭто приглашение действительно в течение 30 секунд, если вы хотите отказаться, не принимайте его.",
+    "leader": {
+      "newElected": "<player_name> - новый лидер группы",
+      "kicked": "<leader_name> выгнал <player_name>"
+    },
+    "left": "<green>Вы покинули группу <leader_name></green>",
+    "matchmaking": {
+      "canceled": "<player_name> остановил поиск матчей",
+      "search": {
+        "leaderDidntAccept": "Игра отменена, лидер группы не принял"
+      }
+    },
+    "member": {
+      "left": "<player_name> покинул"
+    },
+    "prefix": "[ГРУППА] ",
+    "title": "Группа"
+  },
+  "pickup": {
+    "ammo": {
+      "battery": "Батарея",
+      "bfg": "Заряд BFG",
+      "bullets": "Патроны",
+      "cells": "Плазма",
+      "rockets": "Ракеты",
+      "shells": "Дроби",
+      "slugs": "Рельсы"
+    },
+    "armor": {
+      "heavy": "Тяжелая броня",
+      "light": "Легкая броня",
+      "shard": "Осколок брони"
+    },
+    "ctfFlag": {
+      "title": "<team_color> флаг",
+      "redAdj": "Красный",
+      "blueAdj": "Синий"
+    },
+    "health": {
+      "generic": "<amount> здоровья",
+      "mega": "Мега здоровье"
+    },
+    "powerup": {
+      "protection": "Защита",
+      "quad": "Четырехкратный урон",
+      "regeneration": "Регенерация"
+    },
+    "weapon": {
+      "bfg": "BFG10K",
+      "lightningGun": "Молния",
+      "machinegun": "Пулемет",
+      "plasmaGun": "Плазмаган",
+      "railgun": "Рельсотрон",
+      "rocketLauncher": "Ракетница",
+      "shotgun": "Дробовик"
+    }
+  },
+  "plugin": {
+    "reload": "Плагин перезагружен"
+  },
+  "party": {
+    "joined": " присоединился",
+    "left": " покинул",
+    "newLeader": " - новый лидер группы"
+  },
+  "matchmaking": {
+    "mapUnfit": "<red>Карта <map_name> не подходит для <mode></red>",
+    "search": {
+      "leaderStarted": " начал поиск матчей: режим <mode>, карты <maps>",
+      "acceptPrompt": "Введите \"/quake matchmaking accept\", чтобы принять матч.",
+      "mapInfo": "<map_name> | <mode>"
+    }
+  },
+  "scoreboard": {
+    "team": {
+      "blue": "Синяя команда: <score>",
+      "red": "Красная команда: <score>"
+    }
+  },
+  "warning": {
+    "matchmaking": {
+      "continueSearch": "<yellow>Один или несколько игроков не приняли матч. Поиск продолжается.</yellow>"
+    },
+    "party": {
+      "leavingWhileLeader": "<yellow>Вы покидаете свою группу. Лидером группы будет выбран кто-то другой.</yellow>"
+    }
+  },
+  "suffix": {
+    "first": "-е",
+    "second": "-е",
+    "third": "-е",
+    "nth": "-е"
+  },
+  "mapper": {
+    "tool": {
+      "entity": {
+        "name": "Инструмент сущностей",
+        "lore": {
+          "leftClick": "Левый клик: Удалить сущность",
+          "rightClick": "Правый клик: Переместить сущность"
+        },
+        "message": {
+          "cancelled": "Перемещение сущности отменено",
+          "noBlock": "Нет блока в поле зрения для размещения сущности",
+          "noEntity": "Нет сущности для удаления",
+          "noEntityMove": "Нет сущности для перемещения",
+          "noEntityMoving": "Нет перемещаемой сущности",
+          "removed": "Удален <entity_type> на <location>",
+          "startedMoving": "Начато перемещение <entity_type>. Нажмите правой кнопкой мыши еще раз, чтобы разместить.",
+          "placed": "Размещен <entity_type> на <location>"
+        },
+        "subtitle": {
+          "noEntity": "Нет сущностей в поле зрения",
+          "entityInfo": "<entity_type> на <location>"
+        }
+      },
+      "jumppad": {
+        "name": "Инструмент трамплина",
+        "lore": {
+          "pointAtJumppad": "Наведите на трамплин:",
+          "leftClickEdit": "  Левый клик: Изменить позицию приземления",
+          "pointAtBlock": "Наведите на блок:",
+          "rightClickPlace": "  Правый клик: Разместить трамплин",
+          "rightClickLanding": "  Правый клик еще раз: Установить приземление",
+          "leftClickCancel": "  Левый клик: Отменить"
+        },
+        "message": {
+          "cancelled": "Размещение трамплина отменено",
+          "editCancelled": "Редактирование трамплина отменено",
+          "clickLanding": "Нажмите, где вы хотите, чтобы приземлился трамплин",
+          "pointAtJumppad": "Наведите на трамплин, чтобы отредактировать его",
+          "noBlock": "Нет блока в поле зрения",
+          "locationSet": "Местоположение трамплина установлено на <location>. Нажмите правой кнопкой мыши, где вы хотите, чтобы он приземлился",
+          "updated": "Трамплин обновлен! Приземление на <location> (Мощность: <power>x)",
+          "created": "Трамплин создан на <location1>, приземление на <location2> (Мощность: <power>x)",
+          "trajectoryFailed": "Не удалось рассчитать траекторию - попробуйте настроить мощность"
+        },
+        "subtitle": {
+          "landing": "Приземление: <location>",
+          "power": "Мощность трамплина: <power>x"
+        }
+      },
+      "spawnpoint": {
+        "name": {
+          "red": "Красная точка возрождения",
+          "blue": "Синяя точка возрождения",
+          "free": "Свободная/FFA точка возрождения",
+          "spectator": "Точка возрождения зрителя"
+        },
+        "lore": {
+          "rightClick": "Правый клик на блоке для размещения",
+          "team": "Команда: <team>"
+        },
+        "message": {
+          "invalid": "Неверный инструмент точки возрождения",
+          "placed": "Точка возрождения <team> размещена на <location>"
+        },
+        "team": {
+          "red": "Красный",
+          "blue": "Синий",
+          "free": "Свободный/FFA",
+          "spectator": "Зритель"
+        }
+      },
+      "portal": {
+        "name": "Инструмент портала",
+        "lore": {
+          "pointAtPortal": "Наведите на портал:",
+          "leftClickEdit": "  Левый клик: Изменить целевую позицию телепорта",
+          "pointAtBlock": "Наведите на блок:",
+          "rightClickPlace": "  Правый клик: Разместить портал",
+          "rightClickTarget": "  Правый клик еще раз: Установить цель телепорта",
+          "leftClickCancel": "  Левый клик: Отменить"
+        },
+        "message": {
+          "placementCancelled": "Размещение портала отменено",
+          "targetCancelled": "Установка цели портала отменена",
+          "editCancelled": "Редактирование портала отменено",
+          "clickTarget": "Нажмите, куда вы хотите, чтобы телепортировался портал",
+          "pointAtPortal": "Наведите на портал, чтобы отредактировать его",
+          "noBlock": "Нет блока в поле зрения",
+          "locationSet": "Местоположение портала установлено на <location>. Нажмите правой кнопкой мыши, куда вы хотите, чтобы он телепортировался",
+          "targetUpdated": "Цель портала обновлена! Теперь телепортируется на <location>",
+          "created": "Портал создан на <location1>, телепортируется на <location2>"
+        },
+        "subtitle": {
+          "target": "Цель: <location> (отклонение: <yaw>°)"
+        }
+      },
+      "spawner": {
+        "name": {
+          "redFlag": "Красный флаг CTF",
+          "blueFlag": "Синий флаг CTF",
+          "weapon": "Спавнер оружия: <weapon>",
+          "ammo": "Спавнер боеприпасов: <ammo>",
+          "health": {
+            "small": "Спавнер здоровья: Малое здоровье (+5 HP)",
+            "medium": "Спавнер здоровья: Среднее здоровье (+25 HP)",
+            "large": "Спавнер здоровья: Большое здоровье (+50 HP)",
+            "mega": "Спавнер здоровья: Мега здоровье (+100 HP)",
+            "generic": "Спавнер здоровья: Здоровье"
+          },
+          "armor": {
+            "shard": "Спавнер брони: Осколок брони (+5)",
+            "light": "Спавнер брони: Легкая броня (+50)",
+            "heavy": "Спавнер брони: Тяжелая броня (+100)",
+            "generic": "Спавнер брони: Броня"
+          },
+          "powerup": "Спавнер усилений: <powerup>"
+        },
+        "message": {
+          "invalid": "Неверный инструмент спавнера",
+          "placed": "<spawner> размещен на <location>"
+        }
+      }
+    }
+  }
+}

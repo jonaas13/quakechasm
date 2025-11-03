@@ -171,7 +171,7 @@ public class CTFFlag implements DisplayPickup {
         match.grabFlag(this.team, player);
 
         Hud.pickupMessage(player, TranslationManager.t("pickup.ctfFlag.title", player,
-            Placeholder.unparsed("team_color", TranslationManager.tLegacy("pickup.ctfFlag."+this.team.name().toLowerCase()+"Adj", player))
+            Placeholder.parsed("team_color", TranslationManager.tLegacy("pickup.ctfFlag."+this.team.name().toLowerCase()+"Adj", player))
         ));
     }
 

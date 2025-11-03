@@ -28,6 +28,7 @@ import com.github.polyzium.quakechasm.game.entities.Trigger;
 import com.github.polyzium.quakechasm.game.entities.triggers.Jumppad;
 import com.github.polyzium.quakechasm.game.mapper.PortalTool;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -169,8 +170,9 @@ public class QuakeUserState {
                 this.currentMatch == null &&
                 (chatroom == Chatroom.MATCH || chatroom == Chatroom.TEAM)
         ) {
-            player.sendMessage(TranslationManager.t("error.chat.switchNoMatch", player,
-                    Placeholder.unparsed("chatroom", chatroom.name())));
+            player.sendMessage(TranslationManager.t("error.chat.switchNoMatch.title", player,
+                    Placeholder.component("chatroom", TranslationManager.t("error.chat.switchNoMatch." + chatroom.name().toLowerCase() + "Adj", player).color(TextColor.color(chatroom.getColor())))
+            ));
             return;
         }
 
@@ -184,8 +186,9 @@ public class QuakeUserState {
         }
 
         this.currentChat = chatroom;
-        player.sendMessage(TranslationManager.t("command.chat.switch", player,
-                Placeholder.component("chatroom", this.currentChat.getPrefix().decoration(TextDecoration.BOLD, false))));
+        player.sendMessage(TranslationManager.t("command.chat.switch.title", player,
+                Placeholder.component("chatroom", TranslationManager.t("command.chat.switch." + this.currentChat.name().toLowerCase() + "Adj", player).color(TextColor.color(this.currentChat.getColor())))
+        ));
     }
 
     public void startArmorDecreaser() {

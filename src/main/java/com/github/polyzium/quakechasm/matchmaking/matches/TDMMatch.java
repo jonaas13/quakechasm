@@ -86,9 +86,9 @@ public class TDMMatch extends Match {
 
         Team playerTeam = this.players.get(player);
         this.sendMessage(
-                TranslationManager.t("match.team.joined", TranslationManager.FALLBACK,
+                TranslationManager.t("match.team.joined.title", TranslationManager.FALLBACK,
                         Placeholder.unparsed("player_name", player.getName()),
-                        Placeholder.component("team_color", Component.text(playerTeam.name()).color(TextColor.color(Team.Colors.get(playerTeam)))))
+                        Placeholder.parsed("team_color", TranslationManager.tLegacy("match.team.joined."+playerTeam.name().toLowerCase()+"Adj", TranslationManager.FALLBACK)))
         );
 
         this.updateScoreboard();
@@ -306,14 +306,13 @@ public class TDMMatch extends Match {
 
         if (teamScores[0] == fraglimit || teamScores[1] == fraglimit) { // red or blue hits the fraglimit
             for (Player player : this.players.keySet()) {
+                Team winner = teamScores[0] > teamScores[1] ? Team.RED : Team.BLUE;
                 player.showTitle(Title.title(
-                        TranslationManager.t("match.team.winsBegin", player)
-                                .append(winningTeam)
-                                .append(TranslationManager.t("match.team.winsEnd", player)),
+                        TranslationManager.t("match.team.wins.title", player,
+                                Placeholder.parsed("team_color", TranslationManager.tLegacy("match.team.wins."+winner.name().toLowerCase()+"Adj", player))),
                         Component.empty(),
                         Title.Times.times(Duration.ZERO, Duration.ofSeconds(3), Duration.ofMillis(500))
                 ));
-                player.sendMessage(TranslationManager.t("match.aftermath.scoreboardBegin", player));
                 player.sendMessage(this.getScoreboard());
             }
             this.end();

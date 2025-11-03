@@ -23,19 +23,29 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 
+import java.util.Locale;
+
 public enum Chatroom {
-    GLOBAL(Component.text("GLOBAL").color(TextColor.color(0x55ff55)).decorate(TextDecoration.BOLD)),
-    MATCH(Component.text("MATCH").color(TextColor.color(0xffaa00)).decorate(TextDecoration.BOLD)),
-    PARTY(Component.text("PARTY").color(TextColor.color(0xff55ff)).decorate(TextDecoration.BOLD)),
-    TEAM(Component.text("TEAM").color(TextColor.color(0x55ffff)).decorate(TextDecoration.BOLD));
+    GLOBAL(0x55ff55),
+    MATCH(0xffaa00),
+    PARTY(0xff55ff),
+    TEAM(0x55ffff);
 
-    final Component prefix;
+    final int color;
 
-    Chatroom(Component prefix) {
-        this.prefix = prefix;
+    Chatroom(int color) {
+        this.color = color;
+    }
+
+    public int getColor() { return this.color; }
+
+    public Component getPrefix(Locale locale) {
+        return Component.text(TranslationManager.tLegacy("command.chat.prefix."+this.name().toLowerCase(), locale))
+                .color(TextColor.color(this.color))
+                .decorate(TextDecoration.BOLD);
     }
 
     public Component getPrefix() {
-        return prefix;
+        return getPrefix(TranslationManager.FALLBACK);
     }
 }

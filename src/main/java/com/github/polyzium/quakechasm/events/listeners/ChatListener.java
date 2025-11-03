@@ -43,15 +43,15 @@ public class ChatListener implements Listener {
         }
     }
 
-    // TODO: prefixes
     public void chatGlobal(AsyncChatEvent event) {
-        event.renderer((source, sourceDisplayName, message, viewer) ->
-                Component.textOfChildren(Chatroom.GLOBAL.getPrefix(), MiniMessage.miniMessage().deserialize(
+        event.renderer((source, sourceDisplayName, message, viewer) -> {
+            Player viewerPlayer = viewer instanceof Player ? (Player) viewer : event.getPlayer();
+            return Component.textOfChildren(Chatroom.GLOBAL.getPrefix(viewerPlayer.locale()), MiniMessage.miniMessage().deserialize(
                 " <b><color:#7f7f7f><source_display_name></color></b> <message>",
                 Placeholder.component("source_display_name", sourceDisplayName),
                 Placeholder.component("message", message)
-            ))
-        );
+            ));
+        });
     }
 
     public void chatMatch(AsyncChatEvent event) {
@@ -60,13 +60,14 @@ public class ChatListener implements Listener {
         event.viewers().clear();
         event.viewers().add(Audience.audience(userState.currentMatch));
 
-        event.renderer((source, sourceDisplayName, message, viewer) ->
-                Component.textOfChildren(Chatroom.MATCH.getPrefix(), MiniMessage.miniMessage().deserialize(
+        event.renderer((source, sourceDisplayName, message, viewer) -> {
+            Player viewerPlayer = viewer instanceof Player ? (Player) viewer : event.getPlayer();
+            return Component.textOfChildren(Chatroom.MATCH.getPrefix(viewerPlayer.locale()), MiniMessage.miniMessage().deserialize(
                 " <b><color:#7f7f7f><source_display_name></color></b> <message>",
                 Placeholder.component("source_display_name", sourceDisplayName),
                 Placeholder.component("message", message)
-            ))
-        );
+            ));
+        });
     }
 
     public void chatParty(AsyncChatEvent event) {
@@ -75,13 +76,14 @@ public class ChatListener implements Listener {
         event.viewers().clear();
         event.viewers().add(userState.mmState.currentParty);
 
-        event.renderer((source, sourceDisplayName, message, viewer) ->
-                Component.textOfChildren(Chatroom.PARTY.getPrefix(), MiniMessage.miniMessage().deserialize(
+        event.renderer((source, sourceDisplayName, message, viewer) -> {
+            Player viewerPlayer = viewer instanceof Player ? (Player) viewer : event.getPlayer();
+            return Component.textOfChildren(Chatroom.PARTY.getPrefix(viewerPlayer.locale()), MiniMessage.miniMessage().deserialize(
                 " <b><color:#7f7f7f><source_display_name></color></b> <message>",
                 Placeholder.component("source_display_name", sourceDisplayName),
                 Placeholder.component("message", message)
-            ))
-        );
+            ));
+        });
     }
 
     public void chatTeam(AsyncChatEvent event) {
@@ -93,12 +95,13 @@ public class ChatListener implements Listener {
                 userState.currentMatch.getTeamOfPlayer(player)
         )));
 
-        event.renderer((source, sourceDisplayName, message, viewer) ->
-                Component.textOfChildren(Chatroom.TEAM.getPrefix(), MiniMessage.miniMessage().deserialize(
+        event.renderer((source, sourceDisplayName, message, viewer) -> {
+            Player viewerPlayer = viewer instanceof Player ? (Player) viewer : event.getPlayer();
+            return Component.textOfChildren(Chatroom.TEAM.getPrefix(viewerPlayer.locale()), MiniMessage.miniMessage().deserialize(
                 " <b><color:#7f7f7f><source_display_name></color></b> <message>",
                 Placeholder.component("source_display_name", sourceDisplayName),
                 Placeholder.component("message", message)
-            ))
-        );
+            ));
+        });
     }
 }

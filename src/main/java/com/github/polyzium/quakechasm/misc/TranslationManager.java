@@ -29,7 +29,10 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.entity.Player;
 import com.github.polyzium.quakechasm.QuakePlugin;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
@@ -42,19 +45,73 @@ public class TranslationManager {
     public static TranslationManager INSTANCE = null;
 
     public TranslationManager() throws IOException {
-        // Set fallback locale from config
         FALLBACK = QuakePlugin.INSTANCE.config.locale.getFallbackLocale();
         
-        String languagesJson = new String(QuakePlugin.INSTANCE.getResource("lang.json").readAllBytes(), StandardCharsets.UTF_8);
-        this.translations = new Gson().fromJson(languagesJson, new TypeToken<HashMap<String, JsonObject>>(){}.getType());
+        this.translations = new HashMap<>();
         this.miniMessage = MiniMessage.miniMessage();
+
+        loadLocale(FALLBACK);
+        
         INSTANCE = this;
     }
 
+    private void loadLocale(Locale locale) throws IOException {
+        String localeString = locale.toString();
+        String filename = "lang_" + localeString + ".json";
+        
+        JsonObject localeData = null;
+
+        File configFolder = QuakePlugin.INSTANCE.getDataFolder();
+        File localeFile = new File(configFolder, filename);
+        
+        if (localeFile.exists()) {
+            QuakePlugin.INSTANCE.getLogger().info("Loading locale " + localeString + " from config folder: " + localeFile.getPath());
+            try (FileReader reader = new FileReader(localeFile)) {
+                localeData = new Gson().fromJson(reader, JsonObject.class);
+            } catch (Exception e) {
+                QuakePlugin.INSTANCE.getLogger().warning("Failed to load locale from config folder: " + e.getMessage());
+                QuakePlugin.INSTANCE.getLogger().warning("Falling back to JAR resource");
+            }
+        }
+
+        if (localeData == null) {
+            InputStream resourceStream = QuakePlugin.INSTANCE.getResource(filename);
+            if (resourceStream != null) {
+                QuakePlugin.INSTANCE.getLogger().info("Loading locale " + localeString + " from JAR resources");
+                String jsonContent = new String(resourceStream.readAllBytes(), StandardCharsets.UTF_8);
+                localeData = new Gson().fromJson(jsonContent, JsonObject.class);
+                resourceStream.close();
+            } else {
+                throw new IOException("Locale file not found: " + filename);
+            }
+        }
+
+        translations.put(localeString, localeData);
+
+        translations.put(locale.getLanguage(), localeData);
+    }
+
     private String getTranslationString(String key, Locale locale) {
-        JsonObject localeTranslations = translations.get(locale.getLanguage());
+        String localeString = locale.toString();
+        if (!translations.containsKey(localeString) && !translations.containsKey(locale.getLanguage())) {
+            try {
+                loadLocale(locale);
+            } catch (IOException e) {
+                QuakePlugin.INSTANCE.getLogger().warning("Failed to load locale " + localeString + ": " + e.getMessage());
+            }
+        }
+
+        JsonObject localeTranslations = translations.get(localeString);
+
         if (localeTranslations == null) {
-            localeTranslations = translations.get(FALLBACK.getLanguage());
+            localeTranslations = translations.get(locale.getLanguage());
+        }
+
+        if (localeTranslations == null) {
+            localeTranslations = translations.get(FALLBACK.toString());
+            if (localeTranslations == null) {
+                localeTranslations = translations.get(FALLBACK.getLanguage());
+            }
         }
 
         String[] keyParts = key.split("\\.");
@@ -71,21 +128,26 @@ public class TranslationManager {
             return current.getAsString();
         }
 
-        // Fallback to FALLBACK locale
-        if (!locale.getLanguage().equals(FALLBACK.getLanguage())) {
-            JsonObject fallbackTranslations = translations.get(FALLBACK.getLanguage());
-            current = fallbackTranslations;
-
-            for (String part : keyParts) {
-                if (current == null || !current.isJsonObject()) {
-                    break;
-                }
-                current = current.getAsJsonObject().get(part);
+        if (!localeString.equals(FALLBACK.toString()) && !locale.getLanguage().equals(FALLBACK.getLanguage())) {
+            JsonObject fallbackTranslations = translations.get(FALLBACK.toString());
+            if (fallbackTranslations == null) {
+                fallbackTranslations = translations.get(FALLBACK.getLanguage());
             }
+            
+            if (fallbackTranslations != null) {
+                current = fallbackTranslations;
 
-            if (current != null && current.isJsonPrimitive()) {
-                QuakePlugin.INSTANCE.getLogger().warning("TranslationManager could not get translation of " + key + " for locale " + locale.getLanguage() + ", falling back to " + FALLBACK.getLanguage());
-                return current.getAsString();
+                for (String part : keyParts) {
+                    if (current == null || !current.isJsonObject()) {
+                        break;
+                    }
+                    current = current.getAsJsonObject().get(part);
+                }
+
+                if (current != null && current.isJsonPrimitive()) {
+                    QuakePlugin.INSTANCE.getLogger().warning("TranslationManager could not get translation of " + key + " for locale " + localeString + ", falling back to " + FALLBACK.toString());
+                    return current.getAsString();
+                }
             }
         }
 

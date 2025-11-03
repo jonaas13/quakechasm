@@ -902,7 +902,8 @@ public abstract class Commands {
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
                             if (userState.currentMatch == null) {
-                                player.sendMessage(Component.text("§cYou must be in a match to invite players."));
+                                player.sendMessage(TranslationManager.t("match.manage.notInMatch.title", player,
+                                    Placeholder.unparsed("action", TranslationManager.tLegacy("match.manage.notInMatch.invitePlayers", player))));
                                 return;
                             }
 
@@ -936,7 +937,8 @@ public abstract class Commands {
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
                             if (userState.currentMatch == null) {
-                                player.sendMessage(Component.text("§cYou must be in a match to uninvite players."));
+                                player.sendMessage(TranslationManager.t("match.manage.notInMatch.title", player,
+                                    Placeholder.unparsed("action", TranslationManager.tLegacy("match.manage.notInMatch.uninvitePlayers", player))));
                                 return;
                             }
 
@@ -962,7 +964,8 @@ public abstract class Commands {
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
                             if (userState.currentMatch == null) {
-                                player.sendMessage(Component.text("§cYou must be in a match to view invites."));
+                                player.sendMessage(TranslationManager.t("match.manage.notInMatch.title", player,
+                                    Placeholder.unparsed("action", TranslationManager.tLegacy("match.manage.notInMatch.viewInvites", player))));
                                 return;
                             }
 
@@ -992,7 +995,8 @@ public abstract class Commands {
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
                             if (userState.currentMatch == null) {
-                                player.sendMessage(Component.text("§cYou must be in a match to kick players."));
+                                player.sendMessage(TranslationManager.t("match.manage.notInMatch.title", player,
+                                    Placeholder.unparsed("action", TranslationManager.tLegacy("match.manage.notInMatch.kickPlayers", player))));
                                 return;
                             }
 
@@ -1031,8 +1035,8 @@ public abstract class Commands {
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
                             if (userState.currentMatch == null) {
-                                player.sendMessage(TranslationManager.t("match.manage.notInMatch", player,
-                                    Placeholder.unparsed("action", "change the password")));
+                                player.sendMessage(TranslationManager.t("match.manage.notInMatch.title", player,
+                                    Placeholder.unparsed("action", TranslationManager.tLegacy("match.manage.notInMatch.changePassword", player))));
                                 return;
                             }
 
@@ -1125,8 +1129,8 @@ public abstract class Commands {
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
                             if (userState.currentMatch == null) {
-                                player.sendMessage(TranslationManager.t("match.manage.notInMatch", player,
-                                    Placeholder.unparsed("action", "change privacy settings")));
+                                player.sendMessage(TranslationManager.t("match.manage.notInMatch.title", player,
+                                    Placeholder.unparsed("action", TranslationManager.tLegacy("match.manage.notInMatch.changePrivacy", player))));
                                 return;
                             }
 
@@ -1175,8 +1179,8 @@ public abstract class Commands {
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
                             if (userState.currentMatch == null) {
-                                player.sendMessage(TranslationManager.t("match.manage.notInMatch", player,
-                                    Placeholder.unparsed("action", "set properties")));
+                                player.sendMessage(TranslationManager.t("match.manage.notInMatch.title", player,
+                                    Placeholder.unparsed("action", TranslationManager.tLegacy("match.manage.notInMatch.setProperties", player))));
                                 return;
                             }
 
@@ -1219,8 +1223,8 @@ public abstract class Commands {
                         .executesPlayer((player, args) -> {
                             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
                             if (userState.currentMatch == null) {
-                                player.sendMessage(TranslationManager.t("match.manage.notInMatch", player,
-                                    Placeholder.unparsed("action", "get properties")));
+                                player.sendMessage(TranslationManager.t("match.manage.notInMatch.title", player,
+                                    Placeholder.unparsed("action", TranslationManager.tLegacy("match.manage.notInMatch.getProperties", player))));
                                 return;
                             }
 

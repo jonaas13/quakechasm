@@ -107,9 +107,9 @@ public class CTFMatch extends Match {
 
         Team playerTeam = this.players.get(player);
         this.sendMessage(
-                TranslationManager.t("match.team.joined", TranslationManager.FALLBACK,
+                TranslationManager.t("match.team.joined.title", TranslationManager.FALLBACK,
                         Placeholder.unparsed("player_name", player.getName()),
-                        Placeholder.component("team_color", Component.text(playerTeam.name()).color(TextColor.color(Team.Colors.get(playerTeam)))))
+                        Placeholder.parsed("team_color", TranslationManager.tLegacy("match.team.joined."+playerTeam.name().toLowerCase()+"Adj", TranslationManager.FALLBACK)))
         );
 
         this.updateScoreboard();
@@ -248,9 +248,9 @@ public class CTFMatch extends Match {
 
         for (Player matchPlayer : this.players.keySet()) {
             matchPlayer.sendMessage(
-                    TranslationManager.t("match.ctf.flag.taken", matchPlayer,
+                    TranslationManager.t("match.ctf.flag.taken.title", matchPlayer,
                             Placeholder.unparsed("player_name", player.getName()),
-                            Placeholder.component("flag_color", Component.text(belongingFlagTeam.name()).color(TextColor.color(Team.Colors.get(belongingFlagTeam)))))
+                            Placeholder.parsed("flag_color", TranslationManager.tLegacy("match.ctf.flag.taken."+belongingFlagTeam.name().toLowerCase()+"Adj", matchPlayer)))
             );
             
             // Play sound based on whether the flag taken is opponent's or player's team
@@ -283,14 +283,14 @@ public class CTFMatch extends Match {
                 for (Player player : this.players.keySet()) {
                     if (returningPlayer != null)
                         player.sendMessage(
-                                TranslationManager.t("match.ctf.flag.returnedByPlayer", player,
+                                TranslationManager.t("match.ctf.flag.returnedByPlayer.title", player,
                                         Placeholder.unparsed("player_name", returningPlayer.getName()),
-                                        Placeholder.component("flag_color", Component.text(team.name()).color(TextColor.color(Team.Colors.get(team)))))
+                                        Placeholder.parsed("flag_color", TranslationManager.tLegacy("match.ctf.flag.returnedByPlayer."+team.name().toLowerCase()+"Adj", player)))
                         );
                     else
                         player.sendMessage(
-                                TranslationManager.t("match.ctf.flag.returnedAuto", player,
-                                        Placeholder.component("flag_color", Component.text(team.name()).color(TextColor.color(Team.Colors.get(team)))))
+                                TranslationManager.t("match.ctf.flag.returnedAuto.title", player,
+                                        Placeholder.parsed("flag_color", TranslationManager.tLegacy("match.ctf.flag.returnedAuto."+team.name().toLowerCase()+"Adj", player)))
                         );
                     
                     // Play sound based on whether the returned flag is opponent's or player's team
@@ -353,9 +353,9 @@ public class CTFMatch extends Match {
 
         for (Player player : this.players.keySet()) {
             player.sendMessage(
-                    TranslationManager.t("match.ctf.flag.capture", player,
+                    TranslationManager.t("match.ctf.flag.capture.title", player,
                             Placeholder.unparsed("player_name", capturer.getName()),
-                            Placeholder.component("flag_color", Component.text(capturerTeam.oppositeTeam().name()).color(TextColor.color(Team.Colors.get(capturerTeam.oppositeTeam())))))
+                            Placeholder.parsed("flag_color", TranslationManager.tLegacy("match.ctf.flag.capture."+capturerTeam.oppositeTeam().name().toLowerCase()+"Adj", player)))
             );
             
             // Build subtitle with current score
@@ -378,9 +378,9 @@ public class CTFMatch extends Match {
             
             // Show title with capture message and score
             player.showTitle(Title.title(
-                    TranslationManager.t("match.ctf.flag.capture", player,
+                    TranslationManager.t("match.ctf.flag.capture.title", player,
                             Placeholder.unparsed("player_name", capturer.getName()),
-                            Placeholder.component("flag_color", Component.text(capturerTeam.oppositeTeam().name()).color(TextColor.color(Team.Colors.get(capturerTeam.oppositeTeam()))))),
+                            Placeholder.parsed("flag_color", TranslationManager.tLegacy("match.ctf.flag.capture."+capturerTeam.oppositeTeam().name().toLowerCase()+"Adj", player))),
                     subtitle,
                     Title.Times.times(Duration.ZERO, Duration.ofSeconds(3), Duration.ofMillis(500))
             ));
@@ -406,14 +406,13 @@ public class CTFMatch extends Match {
         if (captures[0] == capturelimit || captures[1] == capturelimit) { // red or blue
             for (Player player : this.players.keySet()) {
 
+                Team winner = captures[0] > captures[1] ? Team.RED : Team.BLUE;
                 player.showTitle(Title.title(
-                        TranslationManager.t("match.team.winsBegin", player)
-                                .append(winningTeam)
-                                .append(TranslationManager.t("match.team.winsEnd", player)),
+                        TranslationManager.t("match.team.wins.title", player,
+                                Placeholder.parsed("team_color", TranslationManager.tLegacy("match.team.wins."+winner.name().toLowerCase()+"Adj", player))),
                         Component.empty(),
                         Title.Times.times(Duration.ZERO, Duration.ofSeconds(3), Duration.ofMillis(500))
                 ));
-                player.sendMessage(TranslationManager.t("match.aftermath.scoreboardBegin", player));
                 player.sendMessage(this.getScoreboard());
             }
             this.end();

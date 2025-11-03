@@ -27,6 +27,7 @@ import com.github.polyzium.quakechasm.game.entities.pickups.*;
 import com.google.gson.reflect.TypeToken;
 import dev.jorel.commandapi.CommandAPI;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
@@ -63,6 +64,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 public class QuakePlugin extends JavaPlugin {
     public static QuakePlugin INSTANCE;
@@ -169,7 +171,6 @@ public class QuakePlugin extends JavaPlugin {
                 String entityType = QEntityUtil.getEntityType(entity);
                 if (entityType == null) continue;
                 this.loadTrigger(entity);
-                getLogger().info(String.format("Found %s in %s at %.1f %.1f %.1f", QEntityUtil.getEntityType(entity), world.getName(), entity.getX(), entity.getY(), entity.getZ()));
             }
         }
     }
@@ -437,8 +438,11 @@ public class QuakePlugin extends JavaPlugin {
         this.halt(true);
         this.init(true);
         Bukkit.getServer().broadcast(
-                Component.text("[Quakechasm]").color(TextColor.color(0x8e60e0)).append(
-                        Component.text(" Plugin reloaded").color(TextColor.color(0xffffff))
-                ));
+                Component.join(
+                        JoinConfiguration.noSeparators(),
+                        Component.text("[Quakechasm] ").color(TextColor.color(0xff0000)),
+                        TranslationManager.t("plugin.reload", TranslationManager.FALLBACK)
+                )
+        );
     }
 }
