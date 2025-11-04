@@ -399,14 +399,12 @@ public class QuakePlugin extends JavaPlugin {
         getLogger().info("Untracking triggers");
         this.triggers.clear();
 
-        if (!isReload) {
-            getLogger().info("Saving maps");
-            if (this.maps != null) {
-                this.saveMaps();
-                this.maps.clear();
-            } else {
-                getLogger().warning("Maps list is null, skipping save");
-            }
+        getLogger().info("Saving maps");
+        if (this.maps != null) {
+            this.saveMaps();
+            this.maps.clear();
+        } else {
+            getLogger().warning("Maps list is null, skipping save");
         }
 
         getLogger().info("Quakechasm disabled. Goodbye!");
