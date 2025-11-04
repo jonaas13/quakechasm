@@ -35,9 +35,9 @@ import static com.github.polyzium.quakechasm.misc.MiscUtil.GRAVITY;
 // How to use: press sprint, hold down W and then look left or right
 public class StrafeJumpHandler {
     private static final int TICK_INTERVAL = 5; // Apply velocity every 5 ticks to reduce ACK delays
-    private static final double AIR_ACCELERATION = 0.4*TICK_INTERVAL;
+    private static final double AIR_ACCELERATION = 0.2*TICK_INTERVAL;
     private static final double MAX_SPEED_MULTIPLIER = 1.8*TICK_INTERVAL;
-    private static final double ANGLE_THRESHOLD = 0.975;
+    private static final double ANGLE_THRESHOLD = 0.95;
 
     public static void applyStrafeAcceleration(Player player, QuakeUserState userState, Vector velocity) {
         if (player.isOnGround() || player.isFlying() || player.isSneaking() || !player.isSprinting()) {
@@ -80,8 +80,8 @@ public class StrafeJumpHandler {
             }
 
             velocity.setY(velocity.getY() - GRAVITY);
-            velocity.setX(velocity.getX() * 0.95);
-            velocity.setZ(velocity.getZ() * 0.95);
+            velocity.setX(velocity.getX());
+            velocity.setZ(velocity.getZ());
 
             player.setVelocity(velocity);
         }
