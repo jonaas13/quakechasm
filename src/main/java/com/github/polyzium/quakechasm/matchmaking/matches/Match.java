@@ -231,7 +231,7 @@ public abstract class Match implements ForwardingAudience {
         player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
 
         // Restore normal movement speeds
-        player.setWalkSpeed(0.4f);
+        player.setWalkSpeed(QuakePlugin.INSTANCE.config.player.walkSpeed);
 
         MiscUtil.teleEffect(player.getLocation(), true);
         player.teleport(QuakePlugin.LOBBY);

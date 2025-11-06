@@ -413,6 +413,6 @@ public class CombatListener implements Listener {
         boolean sprinting = event.isSprinting();
         Player player = event.getPlayer();
 
-        player.setWalkSpeed(sprinting ? 0.3076923077f : 0.4f);
+        player.setWalkSpeed(sprinting ? QuakePlugin.INSTANCE.config.player.walkSpeed/1.3f : QuakePlugin.INSTANCE.config.player.walkSpeed);
     }
 }
