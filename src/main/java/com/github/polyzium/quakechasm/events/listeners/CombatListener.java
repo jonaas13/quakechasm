@@ -106,7 +106,8 @@ public class CombatListener implements Listener {
     public void onEntityDamage(EntityDamageEvent event) {
         // Emulate the behavior of Gauntlet from Quake 3 via melee hits
         boolean isMeleeDamage = event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK && event.getDamageSource().getDamageType().getTranslationKey().equals("player"); // With damage caused via damageCustom, getTranslationKey() will return "generic"
-        if (event instanceof EntityDamageByEntityEvent attackEvent && isMeleeDamage) {
+        // 2025-11-08: armor stands are bugged for some reason so do not use the gauntlet when it's an armor stand
+        if (event instanceof EntityDamageByEntityEvent attackEvent && !(attackEvent.getEntity() instanceof ArmorStand) && isMeleeDamage) {
             event.setCancelled(true);
             Entity attacker = attackEvent.getDamager();
             boolean hasQuad = attacker instanceof Player attackerPlayer && Powerup.hasPowerup(attackerPlayer, PowerupType.QUAD_DAMAGE);
