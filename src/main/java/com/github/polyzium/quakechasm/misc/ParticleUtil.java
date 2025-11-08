@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -26,8 +26,8 @@ import org.bukkit.util.Vector;
 
 public abstract class ParticleUtil {
     public static void drawParticlesCircle(Particle particle, Location loc, double radius, int amount) {
-        double centerX = loc.x();
-        double centerZ = loc.z();
+        double centerX = loc.getX();
+        double centerZ = loc.getZ();
 
         double angleIncrement = 2 * Math.PI / amount;
         double currentAngle = 0;
@@ -38,7 +38,7 @@ public abstract class ParticleUtil {
             double x = centerX + (radius * Math.cos(currentAngle));
             double z = centerZ + (radius * Math.sin(currentAngle));
 
-            Location particleLocation = new Location(world, x, loc.y(), z);
+            Location particleLocation = new Location(world, x, loc.getY(), z);
             world.spawnParticle(particle, particleLocation, 1, 0, 0, 0, 0);
 
             currentAngle += angleIncrement;

@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -21,27 +21,26 @@ package com.github.polyzium.quakechasm.events.listeners;
 
 import com.github.polyzium.quakechasm.matchmaking.Team;
 import com.github.polyzium.quakechasm.misc.TranslationManager;
-import io.papermc.paper.event.player.AsyncChatEvent;
-import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import com.github.polyzium.quakechasm.QuakePlugin;
 import com.github.polyzium.quakechasm.QuakeUserState;
 import com.github.polyzium.quakechasm.misc.Chatroom;
 
 public class ChatListener implements Listener {
     @EventHandler
-    public void onChat(AsyncChatEvent event) {
+    public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
 
-        String messageText = PlainTextComponentSerializer.plainText().serialize(event.message());
+        String messageText = event.getMessage();
 
         Chatroom targetChatroom = userState.currentChat;
         String processedMessage = messageText;
@@ -69,7 +68,7 @@ public class ChatListener implements Listener {
         }
 
         if (userState.currentMatch == null && (targetChatroom == Chatroom.MATCH || targetChatroom == Chatroom.TEAM)) {
-            player.sendMessage(TranslationManager.t("error.chat.switchNoMatch.title", player,
+            QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("error.chat.switchNoMatch.title", player,
                     Placeholder.component("chatroom", TranslationManager.t("error.chat.switchNoMatch." + targetChatroom.name().toLowerCase() + "Adj", player).color(TextColor.color(targetChatroom.getColor())))
             ));
             event.setCancelled(true);
@@ -79,12 +78,12 @@ public class ChatListener implements Listener {
         if (userState.currentMatch != null &&
                 userState.currentMatch.allowedTeams().stream().allMatch(team -> team == Team.FREE) &&
                 targetChatroom == Chatroom.TEAM) {
-            player.sendMessage(TranslationManager.t("error.match.notTeam", player));
+            QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("error.match.notTeam", player));
             event.setCancelled(true);
             return;
         }
 
-        event.message(Component.text(processedMessage));
+        event.setMessage(processedMessage);
 
         switch (targetChatroom) {
             case GLOBAL -> chatGlobal(event);
@@ -93,49 +92,55 @@ public class ChatListener implements Listener {
         }
     }
 
-    public void chatGlobal(AsyncChatEvent event) {
-        event.renderer((source, sourceDisplayName, message, viewer) -> {
-            Player viewerPlayer = viewer instanceof Player ? (Player) viewer : event.getPlayer();
-            return Component.textOfChildren(Chatroom.GLOBAL.getPrefix(viewerPlayer.locale()), MiniMessage.miniMessage().deserialize(
-                " <b><color:#7f7f7f><source_display_name></color></b> <message>",
-                Placeholder.component("source_display_name", sourceDisplayName),
-                Placeholder.component("message", message)
-            ));
-        });
+    public void chatGlobal(AsyncPlayerChatEvent event) {
+        Component prefix = Chatroom.GLOBAL.getPrefix(TranslationManager.getPlayerLocale(event.getPlayer()));
+        Component formatted = Component.textOfChildren(
+            prefix,
+            MiniMessage.miniMessage().deserialize(
+                " <b><color:#7f7f7f><player></color></b> <message>",
+                Placeholder.unparsed("player", event.getPlayer().getName()),
+                Placeholder.unparsed("message", event.getMessage())
+            )
+        );
+        event.setFormat(LegacyComponentSerializer.legacySection().serialize(formatted));
     }
 
-    public void chatMatch(AsyncChatEvent event) {
+    public void chatMatch(AsyncPlayerChatEvent event) {
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(event.getPlayer());
 
-        event.viewers().clear();
-        event.viewers().add(Audience.audience(userState.currentMatch));
+        event.getRecipients().clear();
+        event.getRecipients().addAll(userState.currentMatch.getPlayers());
 
-        event.renderer((source, sourceDisplayName, message, viewer) -> {
-            Player viewerPlayer = viewer instanceof Player ? (Player) viewer : event.getPlayer();
-            return Component.textOfChildren(Chatroom.MATCH.getPrefix(viewerPlayer.locale()), MiniMessage.miniMessage().deserialize(
-                " <b><color:#7f7f7f><source_display_name></color></b> <message>",
-                Placeholder.component("source_display_name", sourceDisplayName),
-                Placeholder.component("message", message)
-            ));
-        });
+        Component prefix = Chatroom.MATCH.getPrefix(TranslationManager.getPlayerLocale(event.getPlayer()));
+        Component formatted = Component.textOfChildren(
+            prefix,
+            MiniMessage.miniMessage().deserialize(
+                " <b><color:#7f7f7f><player></color></b> <message>",
+                Placeholder.unparsed("player", event.getPlayer().getName()),
+                Placeholder.unparsed("message", event.getMessage())
+            )
+        );
+        event.setFormat(LegacyComponentSerializer.legacySection().serialize(formatted));
     }
 
-    public void chatTeam(AsyncChatEvent event) {
+    public void chatTeam(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
 
-        event.viewers().clear();
-        event.viewers().add(Audience.audience(userState.currentMatch.getTeamAudience(
+        event.getRecipients().clear();
+        event.getRecipients().addAll(userState.currentMatch.getPlayersInTeam(
                 userState.currentMatch.getTeamOfPlayer(player)
-        )));
+        ));
 
-        event.renderer((source, sourceDisplayName, message, viewer) -> {
-            Player viewerPlayer = viewer instanceof Player ? (Player) viewer : event.getPlayer();
-            return Component.textOfChildren(Chatroom.TEAM.getPrefix(viewerPlayer.locale()), MiniMessage.miniMessage().deserialize(
-                " <b><color:#7f7f7f><source_display_name></color></b> <message>",
-                Placeholder.component("source_display_name", sourceDisplayName),
-                Placeholder.component("message", message)
-            ));
-        });
+        Component prefix = Chatroom.TEAM.getPrefix(TranslationManager.getPlayerLocale(player));
+        Component formatted = Component.textOfChildren(
+            prefix,
+            MiniMessage.miniMessage().deserialize(
+                " <b><color:#7f7f7f><player></color></b> <message>",
+                Placeholder.unparsed("player", player.getName()),
+                Placeholder.unparsed("message", event.getMessage())
+            )
+        );
+        event.setFormat(LegacyComponentSerializer.legacySection().serialize(formatted));
     }
 }

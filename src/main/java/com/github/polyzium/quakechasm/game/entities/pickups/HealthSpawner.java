@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -84,7 +84,7 @@ public class HealthSpawner extends Spawner {
     public void onPickup(Player player) {
         boolean isMegaOrSmall = this.health == 20 || this.health == 1;
         if (
-                this.display.getItemStack().isEmpty() ||
+                this.display.getItemStack().getType() == Material.AIR ||
                         (isMegaOrSmall && player.getHealth() == 40) ||
                         (!isMegaOrSmall && player.getHealth() >= 20)
         )
@@ -103,7 +103,7 @@ public class HealthSpawner extends Spawner {
         player.setHealth(totalHealth);
         player.sendHealthUpdate();
         EntityRegainHealthEvent event = new EntityRegainHealthEvent(player, this.health, EntityRegainHealthEvent.RegainReason.CUSTOM);
-        event.callEvent();
+        Bukkit.getPluginManager().callEvent(event);
 
         this.display.setItemStack(new ItemStack(Material.AIR)); // Make invisible
         player.getWorld().playSound(player, "quake.items.health.pickup_"+this.health, 0.5f, 1f);
@@ -123,7 +123,7 @@ public class HealthSpawner extends Spawner {
 
     @Override
     public void respawn() {
-        if (!super.display.getItemStack().isEmpty()) return;
+        if (super.display.getItemStack().getType() != Material.AIR) return;
 
         display.setItemStack(this.itemForRespawn);
         display.getWorld().spawnParticle(Particle.INSTANT_EFFECT, display.getLocation(), 16, 0.5, 0.5, 0.5);

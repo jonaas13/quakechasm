@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -142,7 +142,7 @@ public abstract class Match implements ForwardingAudience {
         userState.initForMatch();
 
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            player.unlistPlayer(onlinePlayer);
+            player.hidePlayer(QuakePlugin.INSTANCE, onlinePlayer);
         }
 
         // This is needed to hide nametags
@@ -238,10 +238,10 @@ public abstract class Match implements ForwardingAudience {
         userState.reset();
 
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            player.listPlayer(onlinePlayer);
+            player.showPlayer(QuakePlugin.INSTANCE, onlinePlayer);
         }
 
-        player.sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
+        QuakePlugin.INSTANCE.adventure().player(player).sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
     }
     public void onDeath(Player victim, Entity attacker, DamageCause cause) {
         QuakeUserState victimState = QuakePlugin.INSTANCE.userStates.get(victim);
@@ -280,11 +280,16 @@ public abstract class Match implements ForwardingAudience {
     }
 
     public Audience getTeamAudience(Team team) {
-        return Audience.audience(this.getPlayersInTeam(team));
+        List<Player> teamPlayers = this.getPlayersInTeam(team);
+        return Audience.audience(teamPlayers.stream()
+            .map(p -> (Audience) QuakePlugin.INSTANCE.adventure().player(p))
+            .toList());
     }
 
     public @NotNull Iterable<? extends Audience> audiences() {
-        return this.players.keySet();
+        return this.players.keySet().stream()
+            .map(p -> (Audience) QuakePlugin.INSTANCE.adventure().player(p))
+            .toList();
     }
     
     public boolean isOwner(Player player) {

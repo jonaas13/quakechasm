@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -108,7 +108,7 @@ public class Jumppad implements Trigger {
 
     @Override
     public void onTrigger(Entity entity) {
-        if (this.triggered || entity.isSneaking()) return;
+        if (this.triggered || (entity instanceof Player && ((Player) entity).isSneaking())) return;
 
         // Fix for the overshoot problem
         new BukkitRunnable() {
@@ -128,7 +128,7 @@ public class Jumppad implements Trigger {
             player.setSprinting(false);
 
         Location iloc = entity.getLocation();
-        iloc.setY(iloc.y()+0.1);
+        iloc.setY(iloc.getY()+0.1);
         this.triggered = true;
 
         Location center = marker.getLocation();

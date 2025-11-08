@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -131,7 +131,7 @@ public class Powerup {
             Location playerLocation = player.getLocation().clone();
             playerLocation.setY(playerLocation.getY()+1);
 
-            if (playerLocation.y() > -64)
+            if (playerLocation.getY() > -64)
                 new PowerupSpawner(powerup.type, player.getWorld(), playerLocation, true, powerup.time);
 
             powerup.timer.cancel();

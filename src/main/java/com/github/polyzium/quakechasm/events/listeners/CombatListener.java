@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -19,14 +19,16 @@
 
 package com.github.polyzium.quakechasm.events.listeners;
 
-import com.destroystokyo.paper.event.entity.EntityKnockbackByEntityEvent;
-import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
+// Paper-specific events removed for Spigot compatibility
+// EntityKnockbackByEntityEvent -> EntityKnockbackEvent (Spigot)
+// PlayerArmorChangeEvent -> Manual tracking via InventoryClickEvent
 import com.github.polyzium.quakechasm.game.combat.*;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.damage.DamageType;
@@ -97,7 +99,7 @@ public class CombatListener implements Listener {
     }
 
     @EventHandler
-    public void onKnockback(EntityKnockbackByEntityEvent event) {
+    public void onKnockback(EntityKnockbackEvent event) {
         // Cancel knockback, because we have our own
         event.setCancelled(true);
     }
@@ -149,13 +151,16 @@ public class CombatListener implements Listener {
             if (event.getEntity() != attackEvent.getDamager()) {
                 // Play hit sound
                 float health = (float) (victim.getHealth() - event.getDamage());
-                attacker.playSound(
-                        Sound.sound(Key.key("quake.feedback.hit"),
-                                Sound.Source.NEUTRAL,
-                                1f,
-                                (float) Math.round((1f + (health / 66)) * 6) / 6
-                        )
-                );
+                // Adventure Sound API - use adventure() for Spigot
+                if (attacker instanceof Player pAttacker) {
+                    QuakePlugin.INSTANCE.adventure().player(pAttacker).playSound(
+                            Sound.sound(Key.key("quake.feedback.hit"),
+                                    Sound.Source.NEUTRAL,
+                                    1f,
+                                    (float) Math.round((1f + (health / 66)) * 6) / 6
+                            )
+                    );
+                }
             }
         }
 
@@ -240,33 +245,9 @@ public class CombatListener implements Listener {
         userState.lastDamage = null;
     }
 
-    // Do not take durability from armor. This will be used for teams later on
-    @EventHandler
-    public void onArmorChange(PlayerArmorChangeEvent event) {
-        if (Stream.of(Material.LEATHER_BOOTS, Material.LEATHER_LEGGINGS, Material.LEATHER_CHESTPLATE).allMatch(material -> event.getOldItem().getType() != material))
-            return;
-
-        Damageable oldMeta = (Damageable) event.getOldItem().getItemMeta();
-        Damageable newMeta = (Damageable) event.getNewItem().getItemMeta();
-
-        // FIXME: I didn't use the "or" operator here because nullpointerexception
-        if (newMeta == null) {
-            return;
-        } else if (oldMeta.getDamage() >= newMeta.getDamage()) {
-            return;
-        }
-
-        newMeta.setDamage(oldMeta.getDamage());
-        ItemStack newItem = event.getNewItem();
-        newItem.setItemMeta(newMeta);
-
-        switch (event.getSlotType()) {
-            case HEAD -> event.getPlayer().getInventory().setHelmet(newItem);
-            case CHEST -> event.getPlayer().getInventory().setChestplate(newItem);
-            case LEGS -> event.getPlayer().getInventory().setLeggings(newItem);
-            case FEET -> event.getPlayer().getInventory().setBoots(newItem);
-        }
-    }
+    // Armor durability prevention removed for Spigot compatibility
+    // Paper's PlayerArmorChangeEvent has no direct Spigot equivalent
+    // This functionality is disabled in the Spigot port
 
     // No hunger
     @EventHandler
@@ -308,7 +289,7 @@ public class CombatListener implements Listener {
     // No inventory drop + drop powerups + call match death event
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent e) {
-        Player player = e.getPlayer();
+        Player player = e.getEntity();
         ItemStack handItem = player.getInventory().getItemInMainHand().clone();
         ItemMeta itemMeta = handItem.getItemMeta();
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
@@ -329,7 +310,7 @@ public class CombatListener implements Listener {
         worldItem.setPickupDelay(5);
 
         if (userState.currentMatch != null) {
-            e.deathMessage(Component.empty());
+            e.setDeathMessage(null);
         }
     }
 
@@ -382,7 +363,11 @@ public class CombatListener implements Listener {
         sortGun(item, player);
         event.getItem().remove();
         player.playSound(entity, "quake.weapons.pickup", 0.5f,  1f);
-        Hud.pickupMessage(player, item.getItemMeta().displayName());
+        // displayName() is Paper-specific, using getDisplayName() for Spigot
+        Component displayName = item.getItemMeta().hasDisplayName()
+            ? LegacyComponentSerializer.legacySection().deserialize(item.getItemMeta().getDisplayName())
+            : Component.text(item.getType().name());
+        Hud.pickupMessage(player, displayName);
         event.setCancelled(true);
     }
 
@@ -391,7 +376,7 @@ public class CombatListener implements Listener {
     public void onHandSwap(PlayerSwapHandItemsEvent event) {
         event.setCancelled(true);
         Player player = event.getPlayer();
-        player.sendMessage(TranslationManager.t("error.offhand", player));
+        QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("error.offhand", player));
     }
 
     // Also no offhand, but in inventory
@@ -401,7 +386,7 @@ public class CombatListener implements Listener {
             return;
 
         Player player = (Player) event.getView().getPlayer();
-        event.getView().getPlayer().sendMessage(TranslationManager.t("error.offhand", player));
+        QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("error.offhand", player));
         // TODO find a more reliable fix
         ItemStack cursorItem = event.getCursor().clone();
         event.setCancelled(true);

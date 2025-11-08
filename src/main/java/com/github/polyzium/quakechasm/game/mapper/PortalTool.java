@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -33,8 +33,10 @@ import com.github.polyzium.quakechasm.misc.TranslationManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class PortalTool {
     
@@ -61,11 +63,12 @@ public class PortalTool {
         ItemStack tool = new ItemStack(Material.ENDER_PEARL);
         ItemMeta meta = tool.getItemMeta();
         
-        meta.displayName(TranslationManager.t("mapper.tool.portal.name", TranslationManager.FALLBACK)
+        Component displayName = TranslationManager.t("mapper.tool.portal.name", TranslationManager.FALLBACK)
             .color(NamedTextColor.LIGHT_PURPLE)
-            .decoration(TextDecoration.ITALIC, false));
+            .decoration(TextDecoration.ITALIC, false);
+        meta.setDisplayName(LegacyComponentSerializer.legacySection().serialize(displayName));
         
-        meta.lore(Arrays.asList(
+        java.util.List<Component> loreComponents = Arrays.asList(
             TranslationManager.t("mapper.tool.portal.lore.pointAtPortal", TranslationManager.FALLBACK)
                 .color(NamedTextColor.GRAY)
                 .decoration(TextDecoration.ITALIC, false),
@@ -84,7 +87,10 @@ public class PortalTool {
             TranslationManager.t("mapper.tool.portal.lore.leftClickCancel", TranslationManager.FALLBACK)
                 .color(NamedTextColor.GRAY)
                 .decoration(TextDecoration.ITALIC, false)
-        ));
+        );
+        meta.setLore(loreComponents.stream()
+            .map(c -> LegacyComponentSerializer.legacySection().serialize(c))
+            .collect(Collectors.toList()));
         
         meta.getPersistentDataContainer().set(
             new NamespacedKey(QuakePlugin.INSTANCE, "portal_tool"),

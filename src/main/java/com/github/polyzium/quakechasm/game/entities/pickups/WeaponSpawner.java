@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -21,6 +21,7 @@ package com.github.polyzium.quakechasm.game.entities.pickups;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
@@ -81,10 +82,9 @@ public class WeaponSpawner extends Spawner {
         ItemStack itemStack = new ItemStack(Material.CARROT_ON_A_STICK);
         ItemMeta weaponMeta = itemStack.getItemMeta();
         String weaponName = NAMES[index];
-        weaponMeta.displayName(
-                Component.text(weaponName).
-                        decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.byBoolean(false))
-        );
+        Component displayNameComponent = Component.text(weaponName)
+                .decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.byBoolean(false));
+        weaponMeta.setDisplayName(LegacyComponentSerializer.legacySection().serialize(displayNameComponent));
         weaponMeta.setCustomModelData(index);
 
         itemStack.setItemMeta(weaponMeta);
@@ -94,12 +94,13 @@ public class WeaponSpawner extends Spawner {
 
     public void onPickup(Player player) {
         ItemStack item = super.display.getItemStack();
-        if (item.isEmpty())
+        if (item.getType() == Material.AIR)
             return;
 
         ItemMeta weaponMeta = item.getItemMeta();
         int weaponIndex = weaponMeta.getCustomModelData();
-        weaponMeta.displayName(TranslationManager.t(NAMES[weaponIndex], player));
+        Component translatedName = TranslationManager.t(NAMES[weaponIndex], player);
+        weaponMeta.setDisplayName(LegacyComponentSerializer.legacySection().serialize(translatedName));
         item.setItemMeta(weaponMeta);
 
         this.itemForRespawn = item;
@@ -107,7 +108,7 @@ public class WeaponSpawner extends Spawner {
         CombatListener.sortGun(item, player);
         super.display.setItemStack(new ItemStack(Material.AIR)); // Make invisible
         player.getWorld().playSound(player, "quake.weapons.pickup", 0.5f, 1f);
-        Hud.pickupMessage(player, Objects.requireNonNull(weaponMeta.displayName()));
+        Hud.pickupMessage(player, translatedName);
 
         // Respawn in 5 seconds, or 30 seconds if team based
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
@@ -124,7 +125,7 @@ public class WeaponSpawner extends Spawner {
 
     @Override
     public void respawn() {
-        if (!super.display.getItemStack().isEmpty()) return;
+        if (super.display.getItemStack().getType() != Material.AIR) return;
 
         display.setItemStack(itemForRespawn);
         display.getWorld().spawnParticle(Particle.INSTANT_EFFECT, display.getLocation(), 16, 0.5, 0.5, 0.5);

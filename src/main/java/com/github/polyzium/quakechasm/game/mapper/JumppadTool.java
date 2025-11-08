@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -19,6 +19,7 @@
 
 package com.github.polyzium.quakechasm.game.mapper;
 
+import com.github.polyzium.quakechasm.QuakePlugin;
 import com.github.polyzium.quakechasm.game.entities.triggers.Jumppad;
 import com.github.polyzium.quakechasm.misc.MiscUtil;
 import com.github.polyzium.quakechasm.misc.TranslationManager;
@@ -157,7 +158,7 @@ public class JumppadTool {
         ArrayList<Vector> trajectory = MiscUtil.calculateTrajectory(loc, launchVec);
         Vector landingPos = trajectory.isEmpty() ? loc.toVector() : trajectory.get(trajectory.size() - 1);
         
-        player.showTitle(Title.title(
+        QuakePlugin.INSTANCE.adventure().player(player).showTitle(Title.title(
             Component.empty(),
             TranslationManager.t("mapper.tool.jumppad.subtitle.landing", player,
                 Placeholder.unparsed("location", String.format("%.1f %.1f %.1f",
@@ -166,7 +167,7 @@ public class JumppadTool {
     }
 
     public static void displayPowerMultiplier(Player player, double powerMultiplier) {
-        player.showTitle(Title.title(
+        QuakePlugin.INSTANCE.adventure().player(player).showTitle(Title.title(
             Component.empty(),
             TranslationManager.t("mapper.tool.jumppad.subtitle.power", player,
                 Placeholder.unparsed("power", String.format("%.1f", powerMultiplier))),

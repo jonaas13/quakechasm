@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -19,8 +19,11 @@
 
 package com.github.polyzium.quakechasm.events.listeners;
 
-import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
-import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
+// Paper-specific events removed for Spigot compatibility
+// EntityAddToWorldEvent -> EntitySpawnEvent + ChunkLoadEvent
+// EntityRemoveFromWorldEvent -> Removed (triggers loaded on plugin start)
+import org.bukkit.event.entity.EntitySpawnEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
 import com.github.polyzium.quakechasm.game.entities.QEntityUtil;
 import com.github.polyzium.quakechasm.game.entities.Trigger;
 import org.bukkit.*;
@@ -47,7 +50,7 @@ public class TriggerListener implements Listener {
 
             Location triggerLoc = trigger.getLocation();
             if (trigger.isDead()) {
-                Bukkit.getLogger().warning(String.format("Removing dead trigger %s at %.1f %.1f %.1f", trigger.getClass().getSimpleName(), triggerLoc.x(), triggerLoc.y(), triggerLoc.z()));
+                Bukkit.getLogger().warning(String.format("Removing dead trigger %s at %.1f %.1f %.1f", trigger.getClass().getSimpleName(), triggerLoc.getX(), triggerLoc.getY(), triggerLoc.getZ()));
                 trigger.remove();
                 QuakePlugin.INSTANCE.triggers.remove(trigger);
                 continue;
@@ -70,31 +73,29 @@ public class TriggerListener implements Listener {
     }
 
     @EventHandler
-    public void onEntityAdd(EntityAddToWorldEvent event) {
+    public void onEntitySpawn(EntitySpawnEvent event) {
         Entity entity = event.getEntity();
-        if (QEntityUtil.getEntityType(event.getEntity()) == null) return;
+        if (QEntityUtil.getEntityType(entity) == null) return;
 
         QuakePlugin.INSTANCE.loadTrigger(entity);
     }
 
     @EventHandler
-    public void onEntityRemove(EntityRemoveFromWorldEvent event) {
-        Trigger toRemove = null;
-
-        for (int i = 0; i < QuakePlugin.INSTANCE.triggers.size(); i++) {
-            Trigger trigger = QuakePlugin.INSTANCE.triggers.get(i);
-            if (event.getEntity() != trigger.getEntity()) continue;
-
-            if (trigger instanceof Spawner spawner) spawner.respawn();
-
-            toRemove = trigger;
-            break;
+    public void onChunkLoad(ChunkLoadEvent event) {
+        // Load triggers from newly loaded chunks
+        for (Entity entity : event.getChunk().getEntities()) {
+            if (QEntityUtil.getEntityType(entity) == null) continue;
+            
+            // Check if trigger already exists
+            boolean exists = QuakePlugin.INSTANCE.triggers.stream()
+                .anyMatch(trigger -> trigger.getEntity().equals(entity));
+            
+            if (!exists) {
+                QuakePlugin.INSTANCE.loadTrigger(entity);
+            }
         }
-
-        if (toRemove != null) {
-            toRemove.onUnload();
-            QuakePlugin.INSTANCE.triggers.remove(toRemove);
-        }
-
     }
+
+    // EntityRemoveFromWorldEvent removed for Spigot compatibility
+    // Triggers are now cleaned up via the periodic dead trigger check in onPlayerMove
 }

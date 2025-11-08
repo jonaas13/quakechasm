@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -34,6 +34,7 @@ import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
@@ -57,7 +58,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class QuakeUserState {
-    private Player player;
+    public Player player;
     public WeaponUserState weaponState;
     public Location portalLoc = null;
     public BukkitRunnable healthDecreaser;
@@ -127,7 +128,7 @@ public class QuakeUserState {
         
         // Clear medal display queue
         if (currentMedalBossbar != null) {
-            player.hideBossBar(currentMedalBossbar);
+            QuakePlugin.INSTANCE.adventure().player(player).hideBossBar(currentMedalBossbar);
             currentMedalBossbar = null;
         }
         if (currentMedalTimer != null) {
@@ -150,10 +151,9 @@ public class QuakeUserState {
         ItemStack machinegun = new ItemStack(Material.CARROT_ON_A_STICK);
         ItemMeta mgMeta = machinegun.getItemMeta();
         mgMeta.setCustomModelData(WeaponType.MACHINEGUN);
-        mgMeta.displayName(
-                TranslationManager.t("pickup.weapon.machinegun", this.player).
-                        decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.byBoolean(false))
-        );
+        Component displayName = TranslationManager.t("pickup.weapon.machinegun", this.player)
+                .decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.byBoolean(false));
+        mgMeta.setDisplayName(LegacyComponentSerializer.legacySection().serialize(displayName));
         machinegun.setItemMeta(mgMeta);
 
         weaponState.ammo[WeaponType.MACHINEGUN] = WeaponUtil.DEFAULT_AMMO[WeaponType.MACHINEGUN];
@@ -186,7 +186,7 @@ public class QuakeUserState {
                 this.currentMatch == null &&
                 (chatroom == Chatroom.MATCH || chatroom == Chatroom.TEAM)
         ) {
-            player.sendMessage(TranslationManager.t("error.chat.switchNoMatch.title", player,
+            QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("error.chat.switchNoMatch.title", player,
                     Placeholder.component("chatroom", TranslationManager.t("error.chat.switchNoMatch." + chatroom.name().toLowerCase() + "Adj", player).color(TextColor.color(chatroom.getColor())))
             ));
             return;
@@ -197,12 +197,12 @@ public class QuakeUserState {
                         this.currentMatch.allowedTeams().stream().allMatch(team -> team == Team.FREE) &&
                         chatroom == Chatroom.TEAM
         ) {
-            player.sendMessage(TranslationManager.t("error.match.notTeam", player));
+            QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("error.match.notTeam", player));
             return;
         }
 
         this.currentChat = chatroom;
-        player.sendMessage(TranslationManager.t("command.chat.switch.title", player,
+        QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("command.chat.switch.title", player,
                 Placeholder.component("chatroom", TranslationManager.t("command.chat.switch." + this.currentChat.name().toLowerCase() + "Adj", player).color(TextColor.color(this.currentChat.getColor())))
         ));
     }
@@ -258,7 +258,7 @@ public class QuakeUserState {
 
         String medalText = TranslationManager.tLegacy(medalType.getTranslationKey(), player) + " x" + count;
 
-        player.sendMessage(TranslationManager.t("game.medal.awarded", player,
+        QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("game.medal.awarded", player,
             Placeholder.unparsed("medal_text", medalText)).color(TextColor.color(0xFFD700)));
 
         if (currentlyDisplayedMedal == medalType) {
@@ -297,12 +297,12 @@ public class QuakeUserState {
                 BossBar.Overlay.PROGRESS
         );
         
-        player.showBossBar(currentMedalBossbar);
+        QuakePlugin.INSTANCE.adventure().player(player).showBossBar(currentMedalBossbar);
 
         currentMedalTimer = new BukkitRunnable() {
             @Override
             public void run() {
-                player.hideBossBar(currentMedalBossbar);
+                QuakePlugin.INSTANCE.adventure().player(player).hideBossBar(currentMedalBossbar);
                 currentMedalBossbar = null;
                 currentlyDisplayedMedal = null;
                 currentMedalTimer = null;
@@ -342,7 +342,7 @@ public class QuakeUserState {
             currentMedalTimer = new BukkitRunnable() {
                 @Override
                 public void run() {
-                    player.hideBossBar(currentMedalBossbar);
+                    QuakePlugin.INSTANCE.adventure().player(player).hideBossBar(currentMedalBossbar);
                     currentMedalBossbar = null;
                     currentlyDisplayedMedal = null;
                     currentMedalTimer = null;

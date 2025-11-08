@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -26,6 +26,7 @@ import com.github.polyzium.quakechasm.game.entities.Trigger;
 import com.github.polyzium.quakechasm.game.entities.pickups.*;
 import com.google.gson.reflect.TypeToken;
 import dev.jorel.commandapi.CommandAPI;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.TextColor;
@@ -39,6 +40,7 @@ import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.BoundingBox;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.joml.Matrix4d;
 import org.joml.Matrix4f;
 import com.github.polyzium.quakechasm.commands.Commands;
@@ -62,6 +64,16 @@ import java.util.Map;
 import java.util.logging.Level;
 
 public class QuakePlugin extends JavaPlugin {
+    private BukkitAudiences adventure;
+
+    @NonNull
+    public BukkitAudiences adventure() {
+        if (this.adventure == null) {
+            throw new IllegalStateException("Tried to access Adventure when the plugin was disabled!");
+        }
+        return this.adventure;
+    }
+
     public static QuakePlugin INSTANCE;
     public static Location LOBBY;
 
@@ -83,9 +95,9 @@ public class QuakePlugin extends JavaPlugin {
                     if (!(trigger instanceof DisplayPickup)) continue;
 
                     ItemDisplay pickupDisplay = ((DisplayPickup) trigger).getDisplay();
-                    if (pickupDisplay.isDead() && pickupDisplay.isEmpty()) {
+                    if (pickupDisplay.isDead() && pickupDisplay.getItemStack().getType() == Material.AIR) {
 //                        Location loc = pickupDisplay.getLocation();
-//                        getLogger().warning(String.format("A DisplayPickup at %.1f %.1f %.1f has been removed manually", loc.x(), loc.y(), loc.z()));
+//                        getLogger().warning(String.format("A DisplayPickup at %.1f %.1f %.1f has been removed manually", loc.getX(), loc.getY(), loc.getZ()));
                         triggers.remove(trigger);
                         return;
                     }
@@ -100,6 +112,36 @@ public class QuakePlugin extends JavaPlugin {
             }
         };
         rotator.runTaskTimer(this, 0, 20);
+    }
+
+    public void startEntityScanner() {
+        // Spigot workaround: Since we don't have EntityAddToWorldEvent,
+        // we need to periodically scan for new entities
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (World world : Bukkit.getWorlds()) {
+                    for (Entity entity : world.getEntities()) {
+                        String entityType = QEntityUtil.getEntityType(entity);
+                        if (entityType == null) continue;
+                        
+                        // Check if this entity is already tracked
+                        boolean alreadyTracked = false;
+                        for (Trigger trigger : triggers) {
+                            if (entity.equals(trigger.getEntity())) {
+                                alreadyTracked = true;
+                                break;
+                            }
+                        }
+                        
+                        // If not tracked, load it
+                        if (!alreadyTracked) {
+                            loadTrigger(entity);
+                        }
+                    }
+                }
+            }
+        }.runTaskTimer(this, 20, 100); // Run every 5 seconds (100 ticks)
     }
 
     public void startHudUpdater() {
@@ -325,7 +367,21 @@ public class QuakePlugin extends JavaPlugin {
     }
 
     public void init(boolean isReload) {
+        Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "========================================");
+        Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "QUAKECHASM - SPIGOT VERSION");
+        Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "========================================");
+        Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "This is an UNSUPPORTED Spigot-compatible version of Quakechasm for EVALUATION and TESTING purposes only.");
+        Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "It is strongly recommended that you DO NOT use this version of Quakechasm in production.");
+        Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Some functionality might appear as BROKEN or UNFINISHED.");
+        Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "NO SUPPORT will be provided for this version and NO BUGS will be fixed.");
+        Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Server admins are STRONGLY ENCOURAGED to switch to Paper for better performance, full feature support and updates.");
+        Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Download Paper at: https://papermc.io/");
+        Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "========================================");
+        
         getLogger().info("Quakechasm initializing");
+
+        // Adventure API, Spigot only
+        this.adventure = BukkitAudiences.create(this);
 
         // singleton pattern
         INSTANCE = this;
@@ -375,6 +431,7 @@ public class QuakePlugin extends JavaPlugin {
         getLogger().info("Loading triggers");
         this.loadTriggers();
         this.startRotatingPickups();
+        this.startEntityScanner(); // Spigot workaround for missing EntityAddToWorldEvent
         this.startHudUpdater();
 
         // commands
@@ -384,6 +441,12 @@ public class QuakePlugin extends JavaPlugin {
 
     public void halt(boolean isReload) {
         getLogger().info("Quakechasm is shutting down");
+
+        // Adventure API, Spigot only
+        if (this.adventure != null) {
+            this.adventure.close();
+            this.adventure = null;
+        }
 
         if (!isReload)
             CommandAPI.unregister("quake");
@@ -423,7 +486,8 @@ public class QuakePlugin extends JavaPlugin {
     public void reload() {
         this.halt(true);
         this.init(true);
-        Bukkit.getServer().broadcast(
+//        Bukkit.getServer().broadcast(
+        this.adventure.all().sendMessage(
                 Component.join(
                         JoinConfiguration.noSeparators(),
                         Component.text("[Quakechasm] ").color(TextColor.color(0xff0000)),

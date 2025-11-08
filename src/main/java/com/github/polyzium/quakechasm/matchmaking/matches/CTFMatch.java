@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -103,7 +103,7 @@ public class CTFMatch extends Match {
     public void join(Player player, Team team) {
         super.join(player, team);
         scores.put(player, 0);
-        player.showBossBar(this.infoBar);
+        QuakePlugin.INSTANCE.adventure().player(player).showBossBar(this.infoBar);
 
         Team playerTeam = this.players.get(player);
         this.sendMessage(
@@ -123,7 +123,7 @@ public class CTFMatch extends Match {
     public void leave(Player player) {
         super.leave(player);
         scores.remove(player);
-        player.hideBossBar(this.infoBar);
+        QuakePlugin.INSTANCE.adventure().player(player).hideBossBar(this.infoBar);
         this.updateScoreboard();
 
         if (players.isEmpty()) {
@@ -149,7 +149,7 @@ public class CTFMatch extends Match {
             @Override
             public void run() {
                 for (Player player : players) {
-                    player.showTitle(Title.title(
+                    QuakePlugin.INSTANCE.adventure().player(player).showTitle(Title.title(
                             TranslationManager.t(getNameKey(), player),
                             TranslationManager.t("match.countdown", player, Placeholder.unparsed("count", String.valueOf(count))),
                             Title.Times.times(Duration.ZERO, Duration.ofMillis(1200), Duration.ZERO)
@@ -184,7 +184,7 @@ public class CTFMatch extends Match {
 
         this.updateScoreboard();
         for (Player player : this.players.keySet()) {
-            player.showTitle(Title.title(
+            QuakePlugin.INSTANCE.adventure().player(player).showTitle(Title.title(
                     TranslationManager.t("match.start", player),
                     TranslationManager.t("match.ctf.startMessage", player, Placeholder.unparsed("capturelimit", String.valueOf(capturelimit))).color(TextColor.color(0xff0000)),
                     Title.Times.times(Duration.ZERO, Duration.ofSeconds(2), Duration.ofMillis(500))
@@ -194,7 +194,7 @@ public class CTFMatch extends Match {
 
     public void end() {
         for (Player player : this.players.keySet()) {
-            player.hideBossBar(this.infoBar);
+            QuakePlugin.INSTANCE.adventure().player(player).hideBossBar(this.infoBar);
         }
 
         this.map.cleanup();
@@ -247,7 +247,7 @@ public class CTFMatch extends Match {
         }
 
         for (Player matchPlayer : this.players.keySet()) {
-            matchPlayer.sendMessage(
+            QuakePlugin.INSTANCE.adventure().player(matchPlayer).sendMessage(
                     TranslationManager.t("match.ctf.flag.taken.title", matchPlayer,
                             Placeholder.unparsed("player_name", player.getName()),
                             Placeholder.parsed("flag_color", TranslationManager.tLegacy("match.ctf.flag.taken."+belongingFlagTeam.name().toLowerCase()+"Adj", matchPlayer)))
@@ -282,13 +282,13 @@ public class CTFMatch extends Match {
             if (entities.contains(trigger.getEntity()) && trigger instanceof CTFFlag flag && !flag.isDrop() && flag.getTeam() == team) {
                 for (Player player : this.players.keySet()) {
                     if (returningPlayer != null)
-                        player.sendMessage(
+                        QuakePlugin.INSTANCE.adventure().player(player).sendMessage(
                                 TranslationManager.t("match.ctf.flag.returnedByPlayer.title", player,
                                         Placeholder.unparsed("player_name", returningPlayer.getName()),
                                         Placeholder.parsed("flag_color", TranslationManager.tLegacy("match.ctf.flag.returnedByPlayer."+team.name().toLowerCase()+"Adj", player)))
                         );
                     else
-                        player.sendMessage(
+                        QuakePlugin.INSTANCE.adventure().player(player).sendMessage(
                                 TranslationManager.t("match.ctf.flag.returnedAuto.title", player,
                                         Placeholder.parsed("flag_color", TranslationManager.tLegacy("match.ctf.flag.returnedAuto."+team.name().toLowerCase()+"Adj", player)))
                         );
@@ -352,7 +352,7 @@ public class CTFMatch extends Match {
         }
 
         for (Player player : this.players.keySet()) {
-            player.sendMessage(
+            QuakePlugin.INSTANCE.adventure().player(player).sendMessage(
                     TranslationManager.t("match.ctf.flag.capture.title", player,
                             Placeholder.unparsed("player_name", capturer.getName()),
                             Placeholder.parsed("flag_color", TranslationManager.tLegacy("match.ctf.flag.capture."+capturerTeam.oppositeTeam().name().toLowerCase()+"Adj", player)))
@@ -377,7 +377,7 @@ public class CTFMatch extends Match {
             }
             
             // Show title with capture message and score
-            player.showTitle(Title.title(
+            QuakePlugin.INSTANCE.adventure().player(player).showTitle(Title.title(
                     TranslationManager.t("match.ctf.flag.capture.title", player,
                             Placeholder.unparsed("player_name", capturer.getName()),
                             Placeholder.parsed("flag_color", TranslationManager.tLegacy("match.ctf.flag.capture."+capturerTeam.oppositeTeam().name().toLowerCase()+"Adj", player))),
@@ -407,13 +407,13 @@ public class CTFMatch extends Match {
             for (Player player : this.players.keySet()) {
 
                 Team winner = captures[0] > captures[1] ? Team.RED : Team.BLUE;
-                player.showTitle(Title.title(
+                QuakePlugin.INSTANCE.adventure().player(player).showTitle(Title.title(
                         TranslationManager.t("match.team.wins.title", player,
                                 Placeholder.parsed("team_color", TranslationManager.tLegacy("match.team.wins."+winner.name().toLowerCase()+"Adj", player))),
                         Component.empty(),
                         Title.Times.times(Duration.ZERO, Duration.ofSeconds(3), Duration.ofMillis(500))
                 ));
-                player.sendMessage(this.getScoreboard());
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(this.getScoreboard());
             }
             this.end();
         }
@@ -470,7 +470,7 @@ public class CTFMatch extends Match {
         char redFlagIcon;
         if (flagCarriers[0] != null)
             redFlagIcon = Icons.RED_FLAG_TAKEN;
-        else if (getRedFlag().getDisplay().getItemStack().isEmpty())
+        else if (getRedFlag().getDisplay().getItemStack().getType() == Material.AIR)
             redFlagIcon = Icons.RED_FLAG_LOST;
         else
             redFlagIcon = Icons.RED_FLAG;
@@ -478,7 +478,7 @@ public class CTFMatch extends Match {
         char blueFlagIcon;
         if (flagCarriers[1] != null)
             blueFlagIcon = Icons.BLUE_FLAG_TAKEN;
-        else if (getBlueFlag().getDisplay().getItemStack().isEmpty())
+        else if (getBlueFlag().getDisplay().getItemStack().getType() == Material.AIR)
             blueFlagIcon = Icons.BLUE_FLAG_LOST;
         else
             blueFlagIcon = Icons.BLUE_FLAG;
@@ -513,7 +513,7 @@ public class CTFMatch extends Match {
     private void updateScoreboard() {
         for (Player player : players.keySet()) {
             Component header = getHeaderComponent();
-            player.sendPlayerListHeaderAndFooter(header, this.getScoreboard());
+            QuakePlugin.INSTANCE.adventure().player(player).sendPlayerListHeaderAndFooter(header, this.getScoreboard());
         }
     }
 
@@ -521,7 +521,7 @@ public class CTFMatch extends Match {
     public void onDeath(Player victim, Entity attacker, DamageCause cause) {
         super.onDeath(victim, attacker, cause);
         for (Player viewer : this.players.keySet()) {
-            viewer.sendMessage(getDeathMessage(victim, attacker, cause, viewer.locale()));
+            QuakePlugin.INSTANCE.adventure().player(viewer).sendMessage(getDeathMessage(victim, attacker, cause, TranslationManager.getPlayerLocale(viewer)));
         }
 
         if (attacker instanceof Player pAttacker && victim != attacker) {
@@ -537,7 +537,7 @@ public class CTFMatch extends Match {
             else
                 scores.put(pAttacker, oldScores - 1);
 
-            pAttacker.showTitle(Title.title(
+            QuakePlugin.INSTANCE.adventure().player(pAttacker).showTitle(Title.title(
                     TranslationManager.t("game.kill.message", pAttacker, Placeholder.unparsed("victim", victim.getName())),
                     Component.empty(),
                     Title.Times.times(Duration.ZERO, Duration.ofSeconds(3), Duration.ofMillis(500))
@@ -548,13 +548,13 @@ public class CTFMatch extends Match {
         }
 
         Location loc = victim.getLocation();
-        loc.setY(loc.y()+0.5);
+        loc.setY(loc.getY()+0.5);
         Team carryingFlagTeam = this.getCarryingFlagTeam(victim);
         if (carryingFlagTeam != null) {
-            if (victim.getLocation().y() > -64) { // If victim is the carrier and is above minimum level
+            if (victim.getLocation().getY() > -64) { // If victim is the carrier and is above minimum level
                 // Drop flag
                 new CTFFlag(carryingFlagTeam, true, this, loc);
-            } else if (victim.getLocation().y() < -64) {
+            } else if (victim.getLocation().getY() < -64) {
                 returnFlag(carryingFlagTeam, null);
             }
 

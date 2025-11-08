@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -95,7 +95,7 @@ public class FFAMatch extends Match {
         super.leave(player);
         scores.remove(player);
         this.updateScoreboard();
-        player.sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
+        QuakePlugin.INSTANCE.adventure().player(player).sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
 
         if (players.isEmpty()) {
             QuakePlugin.INSTANCE.getLogger().warning("Last player of match "+this.getNameKey()+", "+map.name+" has left. Ending match.");
@@ -115,7 +115,7 @@ public class FFAMatch extends Match {
             @Override
             public void run() {
                 for (Player player : players) {
-                    player.showTitle(Title.title(
+                    QuakePlugin.INSTANCE.adventure().player(player).showTitle(Title.title(
                             TranslationManager.t(getNameKey(), player),
                             TranslationManager.t("match.countdown", player, Placeholder.unparsed("count", String.valueOf(count))),
                             Title.Times.times(Duration.ZERO, Duration.ofMillis(1200), Duration.ZERO)
@@ -147,7 +147,7 @@ public class FFAMatch extends Match {
 
         this.updateScoreboard();
         for (Player player : this.players.keySet()) {
-            player.showTitle(Title.title(
+            QuakePlugin.INSTANCE.adventure().player(player).showTitle(Title.title(
                     TranslationManager.t("match.start", player),
                     TranslationManager.t("match.generic.startMessage", player, Placeholder.unparsed("fraglimit", String.valueOf(fraglimit))).color(TextColor.color(0xff0000)),
                     Title.Times.times(Duration.ZERO, Duration.ofSeconds(2), Duration.ofMillis(500))
@@ -189,7 +189,7 @@ public class FFAMatch extends Match {
         for (Player player : players.keySet()) {
             Component place = getPlaceComponent(player);
             place = place.append(TranslationManager.t("match.score.place", player, Placeholder.unparsed("score", String.valueOf(scores.get(player)))).color(TextColor.color(0xFFFFFF))).appendNewline();
-            player.sendPlayerListHeaderAndFooter(place, this.getScoreboard());
+            QuakePlugin.INSTANCE.adventure().player(player).sendPlayerListHeaderAndFooter(place, this.getScoreboard());
         }
     }
 
@@ -245,7 +245,7 @@ public class FFAMatch extends Match {
     public void onDeath(Player victim, Entity attacker, DamageCause cause) {
         super.onDeath(victim, attacker, cause);
         for (Player viewer : this.players.keySet()) {
-            viewer.sendMessage(getDeathMessage(victim, attacker, cause, viewer.locale()));
+            QuakePlugin.INSTANCE.adventure().player(viewer).sendMessage(getDeathMessage(victim, attacker, cause, TranslationManager.getPlayerLocale(viewer)));
         }
 
         if (!started) return;
@@ -259,7 +259,7 @@ public class FFAMatch extends Match {
 
             Component placeComponent = getPlaceComponent(pAttacker);
 
-            pAttacker.showTitle(Title.title(
+            QuakePlugin.INSTANCE.adventure().player(pAttacker).showTitle(Title.title(
                     TranslationManager.t("game.kill.message", pAttacker, Placeholder.unparsed("victim", victim.getName())),
                     placeComponent.append(TranslationManager.t("match.score.place", pAttacker, Placeholder.unparsed("score", String.valueOf(scores.get(pAttacker)))).color(TextColor.color(0xFFFFFF))),
                     Title.Times.times(Duration.ZERO, Duration.ofSeconds(3), Duration.ofMillis(500))
@@ -282,12 +282,12 @@ public class FFAMatch extends Match {
 
         if (winningScore == fraglimit) {
             for (Player player : this.players.keySet()) {
-                player.showTitle(Title.title(
+                QuakePlugin.INSTANCE.adventure().player(player).showTitle(Title.title(
                         TranslationManager.t("match.generic.wins", player, Placeholder.unparsed("winner", winningPlayer.getName())),
                         Component.empty(),
                         Title.Times.times(Duration.ZERO, Duration.ofSeconds(3), Duration.ofMillis(500))
                 ));
-                player.sendMessage(this.getScoreboard());
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(this.getScoreboard());
             }
 
             this.end();

@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -164,7 +164,7 @@ public class TranslationManager {
     }
 
     public Component translate(String key, Player player, TagResolver... placeholders) {
-        return translate(key, player.locale(), placeholders);
+        return translate(key, getPlayerLocale(player), placeholders);
     }
 
     public String translateLegacy(String key, Locale locale) {
@@ -172,7 +172,16 @@ public class TranslationManager {
     }
 
     public String translateLegacy(String key, Player player) {
-        return getTranslationString(key, player.locale());
+        return getTranslationString(key, getPlayerLocale(player));
+    }
+
+    public static Locale getPlayerLocale(Player player) {
+        String localeString = player.getLocale();
+        String[] parts = localeString.split("_", 2);
+        if (parts.length == 2) {
+            return new Locale(parts[0], parts[1]);
+        }
+        return new Locale(parts[0]);
     }
 
     public static Component t(String key, Locale locale, TagResolver... placeholders) {

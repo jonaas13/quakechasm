@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -44,11 +44,11 @@ public class PowerupBoard {
 
     public PowerupBoard(QuakeUserState state) {
         this.state = state;
-        this.board = new FastBoard(this.state.getPlayer());
+        this.board = new FastBoard(this.state.player);
     }
 
     public void rebuild() {
-        this.board = new FastBoard(state.getPlayer());
+        this.board = new FastBoard(state.player);
     }
 
     public void update() {

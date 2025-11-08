@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -42,9 +42,11 @@ public class SpawnerTool {
     public static ItemStack createRedFlagTool() {
         ItemStack item = new ItemStack(Material.RED_BANNER);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(TranslationManager.t("mapper.tool.spawner.name.redFlag", TranslationManager.FALLBACK)
+        
+        Component displayName = TranslationManager.t("mapper.tool.spawner.name.redFlag", TranslationManager.FALLBACK)
                 .color(NamedTextColor.RED)
-                .decoration(TextDecoration.ITALIC, false));
+                .decoration(TextDecoration.ITALIC, false);
+        meta.setDisplayName(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(displayName));
         
         NamespacedKey key = new NamespacedKey(QuakePlugin.INSTANCE, "spawner_tool");
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, "ctf_flag:red");
@@ -56,9 +58,11 @@ public class SpawnerTool {
     public static ItemStack createBlueFlagTool() {
         ItemStack item = new ItemStack(Material.BLUE_BANNER);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(TranslationManager.t("mapper.tool.spawner.name.blueFlag", TranslationManager.FALLBACK)
+        
+        Component displayName = TranslationManager.t("mapper.tool.spawner.name.blueFlag", TranslationManager.FALLBACK)
                 .color(NamedTextColor.BLUE)
-                .decoration(TextDecoration.ITALIC, false));
+                .decoration(TextDecoration.ITALIC, false);
+        meta.setDisplayName(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(displayName));
         
         NamespacedKey key = new NamespacedKey(QuakePlugin.INSTANCE, "spawner_tool");
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, "ctf_flag:blue");
@@ -76,10 +80,11 @@ public class SpawnerTool {
         ItemMeta toolMeta = toolItem.getItemMeta();
         Component name = TranslationManager.t(NAMES[weaponIndex], TranslationManager.FALLBACK);
 
-        toolMeta.displayName(TranslationManager.t("mapper.tool.spawner.name.weapon", TranslationManager.FALLBACK,
+        Component displayName = TranslationManager.t("mapper.tool.spawner.name.weapon", TranslationManager.FALLBACK,
                 net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.component("weapon", name))
                 .color(NamedTextColor.GOLD)
-                .decoration(TextDecoration.ITALIC, false));
+                .decoration(TextDecoration.ITALIC, false);
+        toolMeta.setDisplayName(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(displayName));
         
         NamespacedKey key = new NamespacedKey(QuakePlugin.INSTANCE, "spawner_tool");
         toolMeta.getPersistentDataContainer().set(key, PersistentDataType.STRING, "weapon:" + weaponIndex);
@@ -93,11 +98,12 @@ public class SpawnerTool {
         ItemMeta meta = item.getItemMeta();
         meta.setCustomModelData(ammoType);
         
-        meta.displayName(TranslationManager.t("mapper.tool.spawner.name.ammo", TranslationManager.FALLBACK,
+        Component displayName = TranslationManager.t("mapper.tool.spawner.name.ammo", TranslationManager.FALLBACK,
                 net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("ammo",
                     TranslationManager.tLegacy(AmmoSpawner.NAMES[ammoType], TranslationManager.FALLBACK)))
                 .color(NamedTextColor.YELLOW)
-                .decoration(TextDecoration.ITALIC, false));
+                .decoration(TextDecoration.ITALIC, false);
+        meta.setDisplayName(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(displayName));
         
         NamespacedKey key = new NamespacedKey(QuakePlugin.INSTANCE, "spawner_tool");
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, "ammo:" + ammoType);
@@ -126,9 +132,10 @@ public class SpawnerTool {
             default -> "mapper.tool.spawner.name.health.generic";
         };
         
-        meta.displayName(TranslationManager.t(healthKey, TranslationManager.FALLBACK)
+        Component displayName = TranslationManager.t(healthKey, TranslationManager.FALLBACK)
                 .color(NamedTextColor.GREEN)
-                .decoration(TextDecoration.ITALIC, false));
+                .decoration(TextDecoration.ITALIC, false);
+        meta.setDisplayName(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(displayName));
         
         NamespacedKey key = new NamespacedKey(QuakePlugin.INSTANCE, "spawner_tool");
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, "health:" + health);
@@ -155,9 +162,10 @@ public class SpawnerTool {
             default -> "mapper.tool.spawner.name.armor.generic";
         };
         
-        meta.displayName(TranslationManager.t(armorKey, TranslationManager.FALLBACK)
+        Component displayName = TranslationManager.t(armorKey, TranslationManager.FALLBACK)
                 .color(NamedTextColor.AQUA)
-                .decoration(TextDecoration.ITALIC, false));
+                .decoration(TextDecoration.ITALIC, false);
+        meta.setDisplayName(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(displayName));
         
         NamespacedKey key = new NamespacedKey(QuakePlugin.INSTANCE, "spawner_tool");
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, "armor:" + armor);
@@ -171,11 +179,12 @@ public class SpawnerTool {
         ItemMeta meta = item.getItemMeta();
         meta.setCustomModelData(type.ordinal());
         
-        meta.displayName(TranslationManager.t("mapper.tool.spawner.name.powerup", TranslationManager.FALLBACK,
+        Component displayName = TranslationManager.t("mapper.tool.spawner.name.powerup", TranslationManager.FALLBACK,
                 net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("powerup",
                     TranslationManager.tLegacy(Powerup.NAMES.get(type), TranslationManager.FALLBACK)))
                 .color(NamedTextColor.LIGHT_PURPLE)
-                .decoration(TextDecoration.ITALIC, false));
+                .decoration(TextDecoration.ITALIC, false);
+        meta.setDisplayName(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(displayName));
         
         NamespacedKey key = new NamespacedKey(QuakePlugin.INSTANCE, "spawner_tool");
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, "powerup:" + type.name());

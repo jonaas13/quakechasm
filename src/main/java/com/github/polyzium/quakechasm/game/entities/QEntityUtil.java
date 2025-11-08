@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -89,7 +89,7 @@ public abstract class QEntityUtil {
 
     public static Entity nearestEntity(Location loc, double radius, Predicate<Entity> predicate) {
         Entity nearestEntity = null;
-        for (Entity nearbyEntity : loc.getNearbyEntities(radius, radius, radius)) {
+        for (Entity nearbyEntity : loc.getWorld().getNearbyEntities(loc, radius, radius, radius)) {
             if (!predicate.test(nearbyEntity)) continue;
 
             if (nearestEntity == null || nearbyEntity.getLocation().distance(loc) < nearestEntity.getLocation().distance(loc))

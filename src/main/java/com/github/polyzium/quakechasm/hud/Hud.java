@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -19,6 +19,7 @@
 
 package com.github.polyzium.quakechasm.hud;
 
+import com.github.polyzium.quakechasm.QuakePlugin;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
@@ -42,7 +43,7 @@ public class Hud {
     }
 
     public static void pickupMessage(Player player, Component text) {
-        player.showTitle(
+        QuakePlugin.INSTANCE.adventure().player(player).showTitle(
                 Title.title(Component.empty(),
                         text,
                         Title.Times.times(Duration.ZERO, Duration.ZERO, Duration.ofSeconds(1))
@@ -102,7 +103,7 @@ public class Hud {
         );
 
         // Send to client
-        player.sendActionBar(
+        QuakePlugin.INSTANCE.adventure().player(player).sendActionBar(
             Component.join(JoinConfiguration.separator(Component.text(" ")), components).font(Key.key("hud"))
         );
 

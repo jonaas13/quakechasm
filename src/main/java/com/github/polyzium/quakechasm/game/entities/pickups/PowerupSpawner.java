@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -111,7 +111,7 @@ public class PowerupSpawner extends Spawner {
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
 
         ItemStack item = super.display.getItemStack();
-        if (item.isEmpty()) return;
+        if (item.getType() == Material.AIR) return;
         this.itemForRespawn = item;
 
         doPowerup(player, this.type, this.duration);
@@ -119,7 +119,7 @@ public class PowerupSpawner extends Spawner {
         this.despawn(userState.currentMatch);
         if (belongingMatch != null) {
             for (Player mPlayer : belongingMatch.getPlayers()) {
-                mPlayer.playSound(Sound.sound(Key.key(Powerup.SOUNDS.get(type)), Sound.Source.NEUTRAL, 0.5f, 1f), mPlayer);
+                QuakePlugin.INSTANCE.adventure().player(mPlayer).playSound(Sound.sound(Key.key(Powerup.SOUNDS.get(type)), Sound.Source.NEUTRAL, 0.5f, 1f));
             }
         } else
             player.getWorld().playSound(player, Powerup.SOUNDS.get(type), 0.5f, 1f);
@@ -139,13 +139,13 @@ public class PowerupSpawner extends Spawner {
     }
 
     public void respawn() {
-        if (!super.display.getItemStack().isEmpty() || this.isDrop) return;
+        if (super.display.getItemStack().getType() != Material.AIR || this.isDrop) return;
 
         display.setItemStack(this.itemForRespawn);
         display.getWorld().spawnParticle(Particle.INSTANT_EFFECT, display.getLocation(), 16, 0.5, 0.5, 0.5);
         if (belongingMatch != null) {
             for (Player mPlayer : belongingMatch.getPlayers()) {
-                mPlayer.playSound(Sound.sound(Key.key("quake.items.powerups.respawn"), Sound.Source.NEUTRAL, 0.5f, 1f), mPlayer);
+                QuakePlugin.INSTANCE.adventure().player(mPlayer).playSound(Sound.sound(Key.key("quake.items.powerups.respawn"), Sound.Source.NEUTRAL, 0.5f, 1f));
             }
         } else
             display.getWorld().playSound(display, "quake.items.powerups.respawn", 0.5f, 1f);
@@ -156,7 +156,7 @@ public class PowerupSpawner extends Spawner {
 
     public void despawn(Match match) {
         ItemStack item = super.display.getItemStack();
-        if (item.isEmpty()) return;
+        if (item.getType() == Material.AIR) return;
         this.itemForRespawn = item;
 
         this.belongingMatch = match;

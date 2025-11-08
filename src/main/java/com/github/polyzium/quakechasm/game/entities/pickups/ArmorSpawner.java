@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -89,7 +89,7 @@ public class ArmorSpawner extends Spawner {
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
 
         if (
-                this.display.getItemStack().isEmpty() ||
+                this.display.getItemStack().getType() == Material.AIR ||
                         userState.armor >= 200
         )
             return;
@@ -119,7 +119,7 @@ public class ArmorSpawner extends Spawner {
 
     @Override
     public void respawn() {
-        if (!super.display.getItemStack().isEmpty()) return;
+        if (super.display.getItemStack().getType() != Material.AIR) return;
 
         display.setItemStack(this.itemForRespawn);
         display.getWorld().spawnParticle(Particle.INSTANT_EFFECT, display.getLocation(), 16, 0.5, 0.5, 0.5);

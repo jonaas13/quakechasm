@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  *
  * Copyright (C) 2024-present Polyzium
  *
@@ -118,7 +118,7 @@ public class CTFFlag implements DisplayPickup {
     }
 
     public void respawn() {
-        if (!this.display.getItemStack().isEmpty() || this.isDrop) return;
+        if (this.display.getItemStack().getType() != Material.AIR || this.isDrop) return;
 
         display.setItemStack(displayItem(this.team));
         display.getWorld().spawnParticle(Particle.INSTANT_EFFECT, display.getLocation(), 16, 0.5, 0.5, 0.5);
@@ -137,7 +137,7 @@ public class CTFFlag implements DisplayPickup {
         if (this.match == null) return;
 
         ItemStack item = display.getItemStack();
-        if (item.isEmpty()) return;
+        if (item.getType() != Material.AIR) return;
 
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
         if (!(userState.currentMatch instanceof CTFMatch))

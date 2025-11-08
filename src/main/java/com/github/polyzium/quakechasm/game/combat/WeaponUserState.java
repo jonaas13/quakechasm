@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -103,7 +103,7 @@ public class WeaponUserState {
                                 WeaponUtil.fireBFG(player);
                                 break;
                             default:
-                                player.sendMessage(TranslationManager.t("error.weapon.unknown", player));
+                                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("error.weapon.unknown", player));
                                 cancel();
                                 return;
                         }

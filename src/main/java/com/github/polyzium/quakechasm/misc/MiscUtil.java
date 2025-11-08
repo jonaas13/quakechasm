@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -22,6 +22,7 @@ package com.github.polyzium.quakechasm.misc;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -139,7 +140,7 @@ public abstract class MiscUtil {
 
     public static void setNameForItemStack(ItemStack itemStack, Component name) {
         ItemMeta itemMeta = itemStack.getItemMeta();
-        itemMeta.displayName(name);
+        itemMeta.setDisplayName(LegacyComponentSerializer.legacySection().serialize(name));
         itemStack.setItemMeta(itemMeta);
     }
 }

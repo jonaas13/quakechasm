@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -153,7 +153,7 @@ public abstract class ProjectileUtil {
     public static void explodeCustom(Location impactLocation, Entity attacker, Entity hitEntity, double explosionRadius, double directDamage, double splashDamage, double knockback, DamageCause directCause, DamageCause splashCause) {
         boolean awardedAccuracy = false;
         
-        for (Entity entity : impactLocation.getWorld().getNearbyEntities(impactLocation, explosionRadius, explosionRadius, explosionRadius)) {
+        for (Entity entity : impactLocation.getWorld().getNearbyEntities( impactLocation, explosionRadius, explosionRadius, explosionRadius)) {
             if (!(entity instanceof LivingEntity victim)) continue;
 
             Location loc = entity.getLocation();

@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -19,6 +19,7 @@
 
 package com.github.polyzium.quakechasm.events.listeners;
 
+import org.bukkit.ChatColor;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -38,12 +39,21 @@ public class MiscListener implements Listener {
         Player joinedPlayer = event.getPlayer();
         for (QuakeUserState userState : QuakePlugin.INSTANCE.userStates.values()) {
             if (userState.currentMatch != null)
-                userState.getPlayer().unlistPlayer(joinedPlayer);
+                userState.getPlayer().hidePlayer(QuakePlugin.INSTANCE, joinedPlayer);
         }
 
         QuakePlugin.INSTANCE.initPlayer(joinedPlayer);
 
         joinedPlayer.teleport(QuakePlugin.LOBBY);
+
+        joinedPlayer.sendMessage(ChatColor.RED + "========================================");
+        joinedPlayer.sendMessage(ChatColor.RED + "!!! WARNING: UNSUPPORTED SPIGOT VERSION !!!");
+        joinedPlayer.sendMessage(ChatColor.RED + "========================================");
+        joinedPlayer.sendMessage(ChatColor.YELLOW + "This server uses an unsupported Spigot build of Quakechasm.");
+        joinedPlayer.sendMessage(ChatColor.YELLOW + "Some features may be broken or incomplete.");
+        joinedPlayer.sendMessage(ChatColor.YELLOW + "Please ask your server admin to switch to Paper for full support:");
+        joinedPlayer.sendMessage(ChatColor.GOLD + "https://papermc.io/");
+        joinedPlayer.sendMessage(ChatColor.RED + "========================================");
     }
 
     @EventHandler

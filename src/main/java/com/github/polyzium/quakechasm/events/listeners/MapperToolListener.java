@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -31,7 +31,9 @@ import com.github.polyzium.quakechasm.game.entities.triggers.Portal;
 import com.github.polyzium.quakechasm.matchmaking.Team;
 import com.github.polyzium.quakechasm.misc.MiscUtil;
 import com.github.polyzium.quakechasm.misc.TranslationManager;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -83,18 +85,22 @@ public class MapperToolListener implements Listener {
         ItemStack tool = new ItemStack(Material.BLAZE_ROD);
         ItemMeta meta = tool.getItemMeta();
         
-        meta.displayName(TranslationManager.t("mapper.tool.entity.name", TranslationManager.FALLBACK)
+        Component displayName = TranslationManager.t("mapper.tool.entity.name", TranslationManager.FALLBACK)
             .color(net.kyori.adventure.text.format.NamedTextColor.GOLD)
-            .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+            .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false);
+        meta.setDisplayName(LegacyComponentSerializer.legacySection().serialize(displayName));
         
-        meta.lore(java.util.List.of(
+        java.util.List<Component> loreComponents = java.util.List.of(
             TranslationManager.t("mapper.tool.entity.lore.leftClick", TranslationManager.FALLBACK)
                 .color(net.kyori.adventure.text.format.NamedTextColor.GRAY)
                 .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false),
             TranslationManager.t("mapper.tool.entity.lore.rightClick", TranslationManager.FALLBACK)
                 .color(net.kyori.adventure.text.format.NamedTextColor.GRAY)
                 .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false)
-        ));
+        );
+        meta.setLore(loreComponents.stream()
+            .map(c -> LegacyComponentSerializer.legacySection().serialize(c))
+            .collect(java.util.stream.Collectors.toList()));
         
         meta.getPersistentDataContainer().set(
             new NamespacedKey(QuakePlugin.INSTANCE, ENTITY_TOOL_KEY),
@@ -122,11 +128,12 @@ public class MapperToolListener implements Listener {
         ItemStack tool = new ItemStack(Material.STICK);
         ItemMeta meta = tool.getItemMeta();
         
-        meta.displayName(TranslationManager.t("mapper.tool.jumppad.name", TranslationManager.FALLBACK)
+        Component displayName = TranslationManager.t("mapper.tool.jumppad.name", TranslationManager.FALLBACK)
             .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)
-            .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+            .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false);
+        meta.setDisplayName(LegacyComponentSerializer.legacySection().serialize(displayName));
         
-        meta.lore(java.util.List.of(
+        java.util.List<Component> loreComponents = java.util.List.of(
             TranslationManager.t("mapper.tool.jumppad.lore.pointAtJumppad", TranslationManager.FALLBACK)
                 .color(net.kyori.adventure.text.format.NamedTextColor.GRAY)
                 .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false),
@@ -145,7 +152,10 @@ public class MapperToolListener implements Listener {
             TranslationManager.t("mapper.tool.jumppad.lore.leftClickCancel", TranslationManager.FALLBACK)
                 .color(net.kyori.adventure.text.format.NamedTextColor.GRAY)
                 .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false)
-        ));
+        );
+        meta.setLore(loreComponents.stream()
+            .map(c -> LegacyComponentSerializer.legacySection().serialize(c))
+            .collect(java.util.stream.Collectors.toList()));
         
         meta.getPersistentDataContainer().set(
             new NamespacedKey(QuakePlugin.INSTANCE, JUMPPAD_TOOL_KEY),
@@ -213,11 +223,12 @@ public class MapperToolListener implements Listener {
             case SPECTATOR -> "mapper.tool.spawnpoint.team.spectator";
         };
         
-        meta.displayName(TranslationManager.t(teamKey, TranslationManager.FALLBACK)
+        Component displayName = TranslationManager.t(teamKey, TranslationManager.FALLBACK)
             .color(net.kyori.adventure.text.format.NamedTextColor.GOLD)
-            .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+            .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false);
+        meta.setDisplayName(LegacyComponentSerializer.legacySection().serialize(displayName));
         
-        meta.lore(java.util.List.of(
+        java.util.List<Component> loreComponents = java.util.List.of(
             TranslationManager.t("mapper.tool.spawnpoint.lore.rightClick", TranslationManager.FALLBACK)
                 .color(net.kyori.adventure.text.format.NamedTextColor.GRAY)
                 .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false),
@@ -225,7 +236,10 @@ public class MapperToolListener implements Listener {
                 Placeholder.unparsed("team", TranslationManager.tLegacy(teamNameKey, TranslationManager.FALLBACK)))
                 .color(net.kyori.adventure.text.format.NamedTextColor.GRAY)
                 .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false)
-        ));
+        );
+        meta.setLore(loreComponents.stream()
+            .map(c -> LegacyComponentSerializer.legacySection().serialize(c))
+            .collect(java.util.stream.Collectors.toList()));
 
         meta.getPersistentDataContainer().set(
             new NamespacedKey(QuakePlugin.INSTANCE, SPAWNPOINT_TOOL_KEY),
@@ -277,7 +291,7 @@ public class MapperToolListener implements Listener {
         
         Team team = getSpawnpointTeam(item);
         if (team == null) {
-            player.sendMessage(TranslationManager.t("mapper.tool.spawnpoint.message.invalid", player)
+            QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.spawnpoint.message.invalid", player)
                 .color(net.kyori.adventure.text.format.NamedTextColor.RED));
             return;
         }
@@ -320,7 +334,7 @@ public class MapperToolListener implements Listener {
             case SPECTATOR -> "mapper.tool.spawnpoint.team.spectator";
         };
         
-        player.sendMessage(TranslationManager.t("mapper.tool.spawnpoint.message.placed", player,
+        QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.spawnpoint.message.placed", player,
             Placeholder.unparsed("team", TranslationManager.tLegacy(teamNameKey, player)),
             Placeholder.unparsed("location", String.format("%.1f %.1f %.1f",
                 spawnLoc.getX(), spawnLoc.getY(), spawnLoc.getZ())))
@@ -340,7 +354,7 @@ public class MapperToolListener implements Listener {
         if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK) {
             if (userState.movingEntity != null) {
                 userState.movingEntity = null;
-                player.sendMessage(TranslationManager.t("mapper.tool.entity.message.cancelled", player)
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.entity.message.cancelled", player)
                     .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW));
             } else {
                 Trigger target = EntityTool.getTargetEntity(player);
@@ -364,15 +378,13 @@ public class MapperToolListener implements Listener {
                     org.bukkit.util.BoundingBox offsetBox = userState.movingEntity.getOffsetBoundingBox();
                     double minYOffset = offsetBox != null ? -offsetBox.getMinY() : 1.0;
 
-                    newLocation.set(
-                        Math.floor(newLocation.x()) + 0.5,
-                        Math.floor(newLocation.y()) + minYOffset,
-                        Math.floor(newLocation.z()) + 0.5
-                    );
+                    newLocation.setX(Math.floor(newLocation.getX()) + 0.5);
+                    newLocation.setY(Math.floor(newLocation.getY()) + minYOffset);
+                    newLocation.setZ(Math.floor(newLocation.getZ()) + 0.5);
                     
                     EntityTool.stopMovingEntity(player, userState.movingEntity, newLocation);
                 } else {
-                    player.sendMessage(TranslationManager.t("mapper.tool.entity.message.noBlock", player)
+                    QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.entity.message.noBlock", player)
                         .color(net.kyori.adventure.text.format.NamedTextColor.RED));
                 }
                 
@@ -394,22 +406,22 @@ public class MapperToolListener implements Listener {
         if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK) {
             if (userState.jumppadPlacementLoc != null) {
                 userState.jumppadPlacementLoc = null;
-                player.sendMessage(TranslationManager.t("mapper.tool.jumppad.message.cancelled", player)
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.jumppad.message.cancelled", player)
                     .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW));
             } else if (userState.settingLandingPos && userState.editingJumppad != null) {
                 userState.editingJumppad = null;
                 userState.settingLandingPos = false;
-                player.sendMessage(TranslationManager.t("mapper.tool.jumppad.message.editCancelled", player)
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.jumppad.message.editCancelled", player)
                     .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW));
             } else {
                 Trigger target = EntityTool.getTargetEntity(player);
                 if (target instanceof Jumppad jumppad) {
                     userState.editingJumppad = jumppad;
                     userState.settingLandingPos = true;
-                    player.sendMessage(TranslationManager.t("mapper.tool.jumppad.message.clickLanding", player)
+                    QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.jumppad.message.clickLanding", player)
                         .color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
                 } else {
-                    player.sendMessage(TranslationManager.t("mapper.tool.jumppad.message.pointAtJumppad", player)
+                    QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.jumppad.message.pointAtJumppad", player)
                         .color(net.kyori.adventure.text.format.NamedTextColor.RED));
                 }
             }
@@ -417,7 +429,7 @@ public class MapperToolListener implements Listener {
             org.bukkit.util.RayTraceResult blockRayTrace = player.rayTraceBlocks(100.0);
             
             if (blockRayTrace == null || blockRayTrace.getHitBlock() == null) {
-                player.sendMessage(TranslationManager.t("mapper.tool.jumppad.message.noBlock", player)
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.jumppad.message.noBlock", player)
                     .color(net.kyori.adventure.text.format.NamedTextColor.RED));
                 return;
             }
@@ -425,11 +437,9 @@ public class MapperToolListener implements Listener {
             org.bukkit.util.Vector hitPosition = blockRayTrace.getHitPosition();
             Location targetLoc = hitPosition.toLocation(player.getWorld());
 
-            targetLoc.set(
-                Math.floor(targetLoc.x()) + 0.5,
-                Math.floor(targetLoc.y()),
-                Math.floor(targetLoc.z()) + 0.5
-            );
+            targetLoc.setX(Math.floor(targetLoc.getX()) + 0.5);
+            targetLoc.setY(Math.floor(targetLoc.getY()));
+            targetLoc.setZ(Math.floor(targetLoc.getZ()) + 0.5);
             
             if (userState.settingLandingPos && userState.editingJumppad != null) {
                 Location jumppadLoc = userState.editingJumppad.getLocation();
@@ -441,7 +451,7 @@ public class MapperToolListener implements Listener {
 
                     new Jumppad(jumppadLoc, launchVec);
                     
-                    player.sendMessage(TranslationManager.t("mapper.tool.jumppad.message.updated", player,
+                    QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.jumppad.message.updated", player,
                         Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", targetLoc.getX(), targetLoc.getY(), targetLoc.getZ())),
                         Placeholder.unparsed("power", String.format("%.1f", userState.jumppadPowerMultiplier)))
                         .color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
@@ -449,7 +459,7 @@ public class MapperToolListener implements Listener {
                     userState.editingJumppad = null;
                     userState.settingLandingPos = false;
                 } else {
-                    player.showTitle(Title.title(
+                    QuakePlugin.INSTANCE.adventure().player(player).showTitle(Title.title(
                         net.kyori.adventure.text.Component.empty(),
                         TranslationManager.t("mapper.tool.jumppad.message.trajectoryFailed", player)
                             .color(net.kyori.adventure.text.format.NamedTextColor.RED),
@@ -458,7 +468,7 @@ public class MapperToolListener implements Listener {
                 }
             } else if (userState.jumppadPlacementLoc == null) {
                 userState.jumppadPlacementLoc = targetLoc;
-                player.sendMessage(TranslationManager.t("mapper.tool.jumppad.message.locationSet", player,
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.jumppad.message.locationSet", player,
                     Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", targetLoc.getX(), targetLoc.getY(), targetLoc.getZ())))
                     .color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
             } else {
@@ -468,7 +478,7 @@ public class MapperToolListener implements Listener {
                 if (launchVec != null) {
                     new Jumppad(jumppadLoc, launchVec);
                     
-                    player.sendMessage(TranslationManager.t("mapper.tool.jumppad.message.created", player,
+                    QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.jumppad.message.created", player,
                         Placeholder.unparsed("location1", String.format("%.1f %.1f %.1f", jumppadLoc.getX(), jumppadLoc.getY(), jumppadLoc.getZ())),
                         Placeholder.unparsed("location2", String.format("%.1f %.1f %.1f", targetLoc.getX(), targetLoc.getY(), targetLoc.getZ())),
                         Placeholder.unparsed("power", String.format("%.1f", userState.jumppadPowerMultiplier)))
@@ -476,7 +486,7 @@ public class MapperToolListener implements Listener {
                     
                     userState.jumppadPlacementLoc = null;
                 } else {
-                    player.showTitle(Title.title(
+                    QuakePlugin.INSTANCE.adventure().player(player).showTitle(Title.title(
                         net.kyori.adventure.text.Component.empty(),
                         TranslationManager.t("mapper.tool.jumppad.message.trajectoryFailed", player)
                             .color(net.kyori.adventure.text.format.NamedTextColor.RED),
@@ -557,11 +567,9 @@ public class MapperToolListener implements Listener {
                         org.bukkit.util.BoundingBox offsetBox = userState.movingEntity.getOffsetBoundingBox();
                         double minYOffset = offsetBox != null ? -offsetBox.getMinY() : 1.0;
                         
-                        targetLocation.set(
-                            Math.floor(targetLocation.x()) + 0.5,
-                            Math.floor(targetLocation.y()) + minYOffset,
-                            Math.floor(targetLocation.z()) + 0.5
-                        );
+                        targetLocation.setX(Math.floor(targetLocation.getX()) + 0.5);
+                        targetLocation.setY(Math.floor(targetLocation.getY()) + minYOffset);
+                        targetLocation.setZ(Math.floor(targetLocation.getZ()) + 0.5);
 
                         if (offsetBox != null) {
                             org.bukkit.util.BoundingBox previewBox = offsetBox.clone().shift(targetLocation.toVector());
@@ -597,11 +605,9 @@ public class MapperToolListener implements Listener {
 
                     if (blockRayTrace != null && blockRayTrace.getHitBlock() != null) {
                         Location targetLoc = blockRayTrace.getHitPosition().toLocation(player.getWorld());
-                        targetLoc.set(
-                            Math.floor(targetLoc.x()) + 0.5,
-                            Math.floor(targetLoc.y()),
-                            Math.floor(targetLoc.z()) + 0.5
-                        );
+                        targetLoc.setX(Math.floor(targetLoc.getX()) + 0.5);
+                        targetLoc.setY(Math.floor(targetLoc.getY()));
+                        targetLoc.setZ(Math.floor(targetLoc.getZ()) + 0.5);
                         
                         Vector newLaunchVec = JumppadTool.calculateLaunchVector(
                             userState.editingJumppad.getLocation(),
@@ -630,11 +636,9 @@ public class MapperToolListener implements Listener {
 
                     if (blockRayTrace != null && blockRayTrace.getHitBlock() != null) {
                         Location targetLoc = blockRayTrace.getHitPosition().toLocation(player.getWorld());
-                        targetLoc.set(
-                            Math.floor(targetLoc.x()) + 0.5,
-                            Math.floor(targetLoc.y()),
-                            Math.floor(targetLoc.z()) + 0.5
-                        );
+                        targetLoc.setX(Math.floor(targetLoc.getX()) + 0.5);
+                        targetLoc.setY(Math.floor(targetLoc.getY()));
+                        targetLoc.setZ(Math.floor(targetLoc.getZ()) + 0.5);
                         
                         Vector launchVec = JumppadTool.calculateLaunchVector(jpLoc, targetLoc, userState.jumppadPowerMultiplier);
                         if (launchVec != null) {
@@ -673,25 +677,25 @@ public class MapperToolListener implements Listener {
         if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK) {
             if (toolData.state == PortalTool.PortalToolState.PLACING_PORTAL) {
                 toolData.reset();
-                player.sendMessage(TranslationManager.t("mapper.tool.portal.message.placementCancelled", player)
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.portal.message.placementCancelled", player)
                     .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW));
             } else if (toolData.state == PortalTool.PortalToolState.SETTING_TARGET) {
                 toolData.reset();
-                player.sendMessage(TranslationManager.t("mapper.tool.portal.message.targetCancelled", player)
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.portal.message.targetCancelled", player)
                     .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW));
             } else if (toolData.state == PortalTool.PortalToolState.EDITING_TARGET) {
                 toolData.reset();
-                player.sendMessage(TranslationManager.t("mapper.tool.portal.message.editCancelled", player)
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.portal.message.editCancelled", player)
                     .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW));
             } else {
                 Trigger target = EntityTool.getTargetEntity(player);
                 if (target instanceof Portal portal) {
                     toolData.state = PortalTool.PortalToolState.EDITING_TARGET;
                     toolData.editingPortal = portal;
-                    player.sendMessage(TranslationManager.t("mapper.tool.portal.message.clickTarget", player)
+                    QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.portal.message.clickTarget", player)
                         .color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
                 } else {
-                    player.sendMessage(TranslationManager.t("mapper.tool.portal.message.pointAtPortal", player)
+                    QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.portal.message.pointAtPortal", player)
                         .color(net.kyori.adventure.text.format.NamedTextColor.RED));
                 }
             }
@@ -699,7 +703,7 @@ public class MapperToolListener implements Listener {
             org.bukkit.util.RayTraceResult blockRayTrace = player.rayTraceBlocks(100.0);
             
             if (blockRayTrace == null || blockRayTrace.getHitBlock() == null) {
-                player.sendMessage(TranslationManager.t("mapper.tool.portal.message.noBlock", player)
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.portal.message.noBlock", player)
                     .color(net.kyori.adventure.text.format.NamedTextColor.RED));
                 return;
             }
@@ -707,11 +711,9 @@ public class MapperToolListener implements Listener {
             org.bukkit.util.Vector hitPosition = blockRayTrace.getHitPosition();
             Location targetLoc = hitPosition.toLocation(player.getWorld());
 
-            targetLoc.set(
-                Math.floor(targetLoc.x()) + 0.5,
-                Math.floor(targetLoc.y()),
-                Math.floor(targetLoc.z()) + 0.5
-            );
+            targetLoc.setX(Math.floor(targetLoc.getX()) + 0.5);
+            targetLoc.setY(Math.floor(targetLoc.getY()));
+            targetLoc.setZ(Math.floor(targetLoc.getZ()) + 0.5);
 
             float exitYaw = player.getLocation().getYaw();
             exitYaw = (exitYaw % 360 + 360) % 360;
@@ -727,7 +729,7 @@ public class MapperToolListener implements Listener {
 
                 new Portal(portalLoc, targetLoc);
                 
-                player.sendMessage(TranslationManager.t("mapper.tool.portal.message.targetUpdated", player,
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.portal.message.targetUpdated", player,
                     Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", targetLoc.getX(), targetLoc.getY(), targetLoc.getZ())))
                     .color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
                 
@@ -737,7 +739,7 @@ public class MapperToolListener implements Listener {
                 
                 new Portal(portalLoc, targetLoc);
                 
-                player.sendMessage(TranslationManager.t("mapper.tool.portal.message.created", player,
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.portal.message.created", player,
                     Placeholder.unparsed("location1", String.format("%.1f %.1f %.1f", portalLoc.getX(), portalLoc.getY(), portalLoc.getZ())),
                     Placeholder.unparsed("location2", String.format("%.1f %.1f %.1f", targetLoc.getX(), targetLoc.getY(), targetLoc.getZ())))
                     .color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
@@ -746,7 +748,7 @@ public class MapperToolListener implements Listener {
             } else {
                 toolData.state = PortalTool.PortalToolState.SETTING_TARGET;
                 toolData.portalLocation = targetLoc;
-                player.sendMessage(TranslationManager.t("mapper.tool.portal.message.locationSet", player,
+                QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.portal.message.locationSet", player,
                     Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", targetLoc.getX(), targetLoc.getY(), targetLoc.getZ())))
                     .color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
             }
@@ -777,11 +779,9 @@ public class MapperToolListener implements Listener {
 
                     if (blockRayTrace != null && blockRayTrace.getHitBlock() != null) {
                         Location targetLoc = blockRayTrace.getHitPosition().toLocation(player.getWorld());
-                        targetLoc.set(
-                            Math.floor(targetLoc.x()) + 0.5,
-                            Math.floor(targetLoc.y()),
-                            Math.floor(targetLoc.z()) + 0.5
-                        );
+                        targetLoc.setX(Math.floor(targetLoc.getX()) + 0.5);
+                        targetLoc.setY(Math.floor(targetLoc.getY()));
+                        targetLoc.setZ(Math.floor(targetLoc.getZ()) + 0.5);
 
                         float exitYaw = player.getLocation().getYaw();
                         exitYaw = (exitYaw % 360 + 360) % 360;
@@ -820,11 +820,9 @@ public class MapperToolListener implements Listener {
 
                     if (blockRayTrace != null && blockRayTrace.getHitBlock() != null) {
                         Location targetLoc = blockRayTrace.getHitPosition().toLocation(player.getWorld());
-                        targetLoc.set(
-                            Math.floor(targetLoc.x()) + 0.5,
-                            Math.floor(targetLoc.y()),
-                            Math.floor(targetLoc.z()) + 0.5
-                        );
+                        targetLoc.setX(Math.floor(targetLoc.getX()) + 0.5);
+                        targetLoc.setY(Math.floor(targetLoc.getY()));
+                        targetLoc.setZ(Math.floor(targetLoc.getZ()) + 0.5);
 
                         float exitYaw = player.getLocation().getYaw();
                         exitYaw = (exitYaw % 360 + 360) % 360;
@@ -897,7 +895,7 @@ public class MapperToolListener implements Listener {
                                 angleEnd.getX(), angleEnd.getY(), angleEnd.getZ(),
                                 org.bukkit.Color.fromRGB(0xFF0000), TOOL_UPDATE_TICKS, 16);
 
-                            player.showTitle(net.kyori.adventure.title.Title.title(
+                            QuakePlugin.INSTANCE.adventure().player(player).showTitle(net.kyori.adventure.title.Title.title(
                                 net.kyori.adventure.text.Component.empty(),
                                 TranslationManager.t("mapper.tool.portal.subtitle.target", player,
                                     Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", targetLoc.getX(), targetLoc.getY(), targetLoc.getZ())),
@@ -920,7 +918,7 @@ public class MapperToolListener implements Listener {
         
         String toolType = SpawnerTool.getSpawnerToolType(item);
         if (toolType == null) {
-            player.sendMessage(TranslationManager.t("mapper.tool.spawner.message.invalid", player)
+            QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.spawner.message.invalid", player)
                 .color(net.kyori.adventure.text.format.NamedTextColor.RED));
             return;
         }
@@ -931,12 +929,11 @@ public class MapperToolListener implements Listener {
 
         SpawnerTool.placeSpawner(toolType, spawnLoc);
 
-        String spawnerName = item.getItemMeta().displayName() != null
-            ? net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
-                .serialize(item.getItemMeta().displayName())
+        String spawnerName = item.getItemMeta().hasDisplayName()
+            ? item.getItemMeta().getDisplayName()
             : toolType;
         
-        player.sendMessage(TranslationManager.t("mapper.tool.spawner.message.placed", player,
+        QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.spawner.message.placed", player,
             Placeholder.unparsed("spawner", spawnerName),
             Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", spawnLoc.getX(), spawnLoc.getY(), spawnLoc.getZ())))
             .color(net.kyori.adventure.text.format.NamedTextColor.GREEN));

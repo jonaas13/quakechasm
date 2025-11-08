@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -23,6 +23,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import com.github.polyzium.quakechasm.QuakePlugin;
 import com.github.polyzium.quakechasm.game.combat.DamageCause;
 import com.github.polyzium.quakechasm.matchmaking.Team;
 import com.github.polyzium.quakechasm.matchmaking.map.QMap;
@@ -44,7 +45,7 @@ public class DebugMatch extends Match {
     public void join(Player player, Team team) {
         super.join(player, team);
 
-        player.sendMessage(TranslationManager.t("match.debug.disclaimer", player).color(TextColor.color(0xff0000)));
+        QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("match.debug.disclaimer", player).color(TextColor.color(0xff0000)));
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -80,7 +80,7 @@ public class EntityTool {
 
     public static void displayEntityInfo(Player player, Trigger trigger) {
         if (trigger == null) {
-            player.showTitle(Title.title(
+            QuakePlugin.INSTANCE.adventure().player(player).showTitle(Title.title(
                 Component.empty(),
                 Component.text(TranslationManager.tLegacy("mapper.tool.entity.subtitle.noEntity", player)).color(NamedTextColor.GRAY),
                 Title.Times.times(Duration.ZERO, Duration.ofMillis(500), Duration.ofMillis(200))
@@ -94,9 +94,9 @@ public class EntityTool {
         
         Component subtitle = TranslationManager.t("mapper.tool.entity.subtitle.entityInfo", player,
             Placeholder.unparsed("entity_type", entityType != null ? entityType : "unknown"),
-            Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", loc.x(), loc.y(), loc.z())));
+            Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", loc.getX(), loc.getY(), loc.getZ())));
         
-        player.showTitle(Title.title(
+        QuakePlugin.INSTANCE.adventure().player(player).showTitle(Title.title(
             Component.empty(),
             subtitle,
             Title.Times.times(Duration.ZERO, Duration.ofMillis(500), Duration.ofMillis(200))
@@ -105,7 +105,7 @@ public class EntityTool {
 
     public static void removeEntity(Player player, Trigger trigger) {
         if (trigger == null) {
-            player.sendMessage(TranslationManager.t("mapper.tool.entity.message.noEntity", player)
+            QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.entity.message.noEntity", player)
                 .color(NamedTextColor.RED));
             return;
         }
@@ -116,28 +116,28 @@ public class EntityTool {
         trigger.remove();
         QuakePlugin.INSTANCE.triggers.remove(trigger);
         
-        player.sendMessage(TranslationManager.t("mapper.tool.entity.message.removed", player,
+        QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.entity.message.removed", player,
             Placeholder.unparsed("entity_type", entityType != null ? entityType : "entity"),
-            Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", loc.x(), loc.y(), loc.z())))
+            Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", loc.getX(), loc.getY(), loc.getZ())))
             .color(NamedTextColor.GREEN));
     }
 
     public static void startMovingEntity(Player player, Trigger trigger) {
         if (trigger == null) {
-            player.sendMessage(TranslationManager.t("mapper.tool.entity.message.noEntityMove", player)
+            QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.entity.message.noEntityMove", player)
                 .color(NamedTextColor.RED));
             return;
         }
         
         String entityType = QEntityUtil.getEntityType(trigger.getEntity());
-        player.sendMessage(TranslationManager.t("mapper.tool.entity.message.startedMoving", player,
+        QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.entity.message.startedMoving", player,
             Placeholder.unparsed("entity_type", entityType != null ? entityType : "entity"))
             .color(NamedTextColor.GREEN));
     }
 
     public static void stopMovingEntity(Player player, Trigger trigger, Location newLocation) {
         if (trigger == null) {
-            player.sendMessage(TranslationManager.t("mapper.tool.entity.message.noEntityMoving", player)
+            QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.entity.message.noEntityMoving", player)
                 .color(NamedTextColor.RED));
             return;
         }
@@ -146,9 +146,9 @@ public class EntityTool {
         entity.teleport(newLocation);
         
         String entityType = QEntityUtil.getEntityType(entity);
-        player.sendMessage(TranslationManager.t("mapper.tool.entity.message.placed", player,
+        QuakePlugin.INSTANCE.adventure().player(player).sendMessage(TranslationManager.t("mapper.tool.entity.message.placed", player,
             Placeholder.unparsed("entity_type", entityType != null ? entityType : "entity"),
-            Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", newLocation.x(), newLocation.y(), newLocation.z())))
+            Placeholder.unparsed("location", String.format("%.1f %.1f %.1f", newLocation.getX(), newLocation.getY(), newLocation.getZ())))
             .color(NamedTextColor.GREEN));
     }
 

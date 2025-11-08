@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -317,7 +317,7 @@ public abstract class WeaponUtil {
         }
         
         Block hitBlock = ray.getHitBlock();
-        if (hitBlock != null && !hitBlock.isEmpty()) {
+        if (hitBlock != null && hitBlock.getType() != Material.AIR) {
             Vector hitPos = ray.getHitPosition();
             Location hitLocation = new Location(world, hitPos.getX(), hitPos.getY(), hitPos.getZ());
             impact.accept(hitLocation, hitBlock);
@@ -330,7 +330,7 @@ public abstract class WeaponUtil {
         }
         
         Block hitBlock = ray.getHitBlock();
-        if (hitBlock != null && !hitBlock.isEmpty()) {
+        if (hitBlock != null && hitBlock.getType() != Material.AIR) {
             Vector hitPos = ray.getHitPosition();
             Vector hitNormal = ray.getHitBlockFace() != null ? ray.getHitBlockFace().getDirection() : new Vector(0, 1, 0);
             Location hitLocation = new Location(world, hitPos.getX(), hitPos.getY(), hitPos.getZ());
@@ -451,7 +451,7 @@ public abstract class WeaponUtil {
         }
 
         Location playerLoc = player.getLocation();
-        playerLoc.setY(playerLoc.y() + (player.getHeight()-0.4));
+        playerLoc.setY(playerLoc.getY() + (player.getHeight()-0.4));
         Vector hitPos = ray.getHitPosition();
         Location hitLoc = new Location(player.getWorld(), hitPos.getX(), hitPos.getY(), hitPos.getZ());
 
@@ -524,7 +524,7 @@ public abstract class WeaponUtil {
             knockback(player.getLocation(), victim, 1.5);
         }
         Location playerLoc = player.getLocation();
-        playerLoc.setY(playerLoc.y() + (player.getHeight()-0.4));
+        playerLoc.setY(playerLoc.getY() + (player.getHeight()-0.4));
         Vector hitPos = ray.getHitPosition();
         Location hitLoc = new Location(player.getWorld(), hitPos.getX(), hitPos.getY(), hitPos.getZ());
 
@@ -596,7 +596,7 @@ public abstract class WeaponUtil {
                 ploc.getWorld().spawnParticle(Particle.COMPOSTER, ploc, 4, 0.5,0.5,0.5, 1);
 
                 if (this.ticks % 2 == 0) {
-                    for (Entity entity : ploc.getNearbyEntities(10, 10, 10)) {
+                    for (Entity entity : ploc.getWorld().getNearbyEntities(ploc, 10, 10, 10)) {
                         if (!(entity instanceof LivingEntity livingEntity) || !hasLineOfSight(projectile, livingEntity) || entity == player) continue;
                         if (livingEntity instanceof Player victim) {
                             QuakeUserState attackerState = QuakePlugin.INSTANCE.userStates.get(player);

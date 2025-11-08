@@ -1,5 +1,5 @@
 /*
- * Quakechasm, a Quake minigame plugin for Minecraft servers running PaperMC
+ * Quakechasm, a Quake minigame plugin for Minecraft servers running Spigot
  * 
  * Copyright (C) 2024-present Polyzium
  * 
@@ -19,6 +19,8 @@
 
 package com.github.polyzium.quakechasm.game.entities.pickups;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
@@ -54,7 +56,7 @@ public class ItemSpawner extends Spawner {
 
     public void onPickup(Player player) {
         ItemStack item = super.display.getItemStack();
-        if (item.isEmpty())
+        if (item.getType() == Material.AIR)
             return;
 
         this.itemForRespawn = item;
@@ -68,7 +70,10 @@ public class ItemSpawner extends Spawner {
         }
         super.display.setItemStack(new ItemStack(Material.AIR)); // Make invisible
         player.getWorld().playSound(player, "quake.weapons.pickup", 0.5f, 1f);
-        Hud.pickupMessage(player, Objects.requireNonNull(item.getItemMeta().displayName()));
+        Component displayName = item.getItemMeta().hasDisplayName()
+            ? LegacyComponentSerializer.legacySection().deserialize(item.getItemMeta().getDisplayName())
+            : Component.text(item.getType().name());
+        Hud.pickupMessage(player, displayName);
 
         // Respawn in 5 seconds, or 30 seconds if team based
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
@@ -85,7 +90,7 @@ public class ItemSpawner extends Spawner {
 
     @Override
     public void respawn() {
-        if (!super.display.getItemStack().isEmpty()) return;
+        if (super.display.getItemStack().getType() != Material.AIR) return;
 
         display.setItemStack(itemForRespawn);
         display.getWorld().spawnParticle(Particle.INSTANT_EFFECT, display.getLocation(), 16, 0.5, 0.5, 0.5);
