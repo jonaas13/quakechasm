@@ -1,2 +1,2 @@
-rootProject.name = "quake"
+rootProject.name = "quakechasm"
 

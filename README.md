@@ -5,7 +5,7 @@
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.8-green)](https://papermc.io/)
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://adoptium.net/)
 
-Quakechasm (formerly DarkChronics-Quake) is a feature-rich implementation of the Quake minigame for modern Minecraft servers running Paper. Built from the ground up with extensibility, versatility, and entertainment value at its core, Quakechasm brings the authentic Quake experience to Minecraft like never before.
+Quakechasm (formerly DarkChronics-Quake) is a feature-rich implementation of the Quake minigame for modern Minecraft servers running Paper. Built from the ground up with versatility and entertainment value at its core, Quakechasm brings the authentic Quake experience to Minecraft like never before.
 
 ## Why Quakechasm over other Quake plugins?
 
@@ -22,6 +22,7 @@ Quakechasm implements mechanics from Quake 3/Live that are not found in any othe
 - Visual particles and customizable sounds for extra flavor
 - Multi-team spawnpoint system for different game modes
 - Custom death messages inspired by the Quake games
+- Bunnyhopping/strafejumping (experimental)
 - ... and potentially more to come!
 
 **This plugin is under development.** Expect bugs and stability issues as Quakechasm is being refined and expanded. Your feedback is appreciated!
@@ -33,20 +34,23 @@ Quakechasm implements mechanics from Quake 3/Live that are not found in any othe
 - Dependencies:
   - [CommandAPI](https://github.com/JorelAli/CommandAPI) for commands
   - [WorldEdit](https://enginehub.org/worldedit) for map creation and management
-
-## Building
-
-### Prerequisites
-- Java Development Kit (JDK) 21 or higher
-- Git
-
-### Build instructions
-
-(TODO)
-
 ## Installation
 
-(TODO)
+1. Install the required dependencies (see above).
+2. Download the latest `quakechasm-<version>-all.jar` from the GitHub releases page (or build it yourself) and drop it into the server’s `plugins/` folder.
+3. Start or restart the server. Quakechasm will create `plugins/Quakechasm/config.json` and other data files on first launch.
+4. Resource pack:
+   - The plugin expects a custom resource pack for weapon models, HUD elements, sounds, etc.
+   - [A sample pack](http://tilde.club/~polyzium/resourcepack.zip) is provided for reference, but because it contains Quake 3-inspired assets you should assemble your own pack before going live. Weapon models are released under the CC BY-NC-SA 4.0 license.
+   - Distribute the finished pack using your usual workflow (`resource-pack` in `server.properties`, link prompt plugins, etc.).
+
+## Building (optional)
+
+You only need these steps if you prefer compiling the plugin yourself.
+
+1. Install JDK 21+ and Git.
+2. Clone the repository.
+3. Run `./gradlew build` (or `gradlew.bat build` on Windows) to produce `build/libs/quakechasm-<version>-all.jar`.
 
 ## Contributing
 

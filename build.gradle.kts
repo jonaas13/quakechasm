@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.polyzium"
-version = "1.0.0-alpha"
+version = "1.0.0-beta1"
 
 repositories {
     mavenCentral()
