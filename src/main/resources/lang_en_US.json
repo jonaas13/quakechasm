@@ -162,7 +162,8 @@
       "wrongType": "<red>Wrong powerup type, use either of: <types></red>"
     },
     "weapon": {
-      "unknown": "This weapon is unknown or not yet implemented"
+      "unknown": "This weapon is unknown or not yet implemented",
+      "cannotDrop": "<red>You cannot drop weapons!</red>"
     },
     "worldEdit": "<red>WorldEdit is either not installed or loaded</red>",
     "wrongType": "<red>Wrong type, use either of: <types></red>"

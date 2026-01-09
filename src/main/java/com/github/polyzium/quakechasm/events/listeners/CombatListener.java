@@ -36,6 +36,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
@@ -415,5 +416,20 @@ public class CombatListener implements Listener {
         Player player = event.getPlayer();
 
         player.setWalkSpeed(sprinting ? QuakePlugin.INSTANCE.config.player.walkSpeed/1.3f : QuakePlugin.INSTANCE.config.player.walkSpeed);
+    }
+
+    // Prevent weapon dropping to fix ammo duplication exploit
+    @EventHandler
+    public void onPlayerDropItem(PlayerDropItemEvent event) {
+        ItemStack item = event.getItemDrop().getItemStack();
+        Player player = event.getPlayer();
+        // Check if the dropped item is a weapon (CARROT_ON_A_STICK with custom model data)
+        if (item.getType() == Material.CARROT_ON_A_STICK &&
+            item.getItemMeta() != null &&
+            item.getItemMeta().hasCustomModelData()
+        ) {
+            event.setCancelled(true);
+            player.sendMessage(TranslationManager.t("error.weapon.cannotDrop", player));
+        }
     }
 }
