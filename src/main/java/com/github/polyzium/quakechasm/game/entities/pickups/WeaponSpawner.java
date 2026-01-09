@@ -127,7 +127,7 @@ public class WeaponSpawner extends Spawner {
         if (!super.display.getItemStack().isEmpty()) return;
 
         display.setItemStack(itemForRespawn);
-        display.getWorld().spawnParticle(Particle.INSTANT_EFFECT, display.getLocation(), 16, 0.5, 0.5, 0.5);
+        display.getWorld().spawnParticle(Particle.INSTANT_EFFECT, display.getLocation(), 16, 0.5, 0.5, 0.5, 0, new Particle.Spell(Color.fromRGB(0xffffff), 1));
         display.getWorld().playSound(display, "quake.items.respawn", 0.5f, 1f);
 
         if (this.respawnTask != null)

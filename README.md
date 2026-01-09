@@ -2,7 +2,7 @@
 ## The Next-Generation Evolution of Quake in Minecraft
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue)](https://www.gnu.org/licenses/agpl-3.0)
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.8-green)](https://papermc.io/)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-green)](https://papermc.io/)
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://adoptium.net/)
 
 Quakechasm (formerly DarkChronics-Quake) is a feature-rich implementation of the Quake minigame for modern Minecraft servers running Paper. Built from the ground up with versatility and entertainment value at its core, Quakechasm brings the authentic Quake experience to Minecraft like never before.
@@ -29,7 +29,7 @@ Quakechasm implements mechanics from Quake 3/Live that are not found in any othe
 
 ## Requirements
 
-- Paper 1.21.8 or newer
+- Paper 1.21.11 or newer
 - Java 21 or higher
 - Dependencies:
   - [CommandAPI](https://github.com/JorelAli/CommandAPI) for commands

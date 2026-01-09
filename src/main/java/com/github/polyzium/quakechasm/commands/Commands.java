@@ -538,7 +538,7 @@ public abstract class Commands {
                             QuakePlugin.INSTANCE.maps.add(qMap);
 
                             for (Spawnpoint spawnPoint : spawnPoints) {
-                                world.spawnParticle(Particle.INSTANT_EFFECT, spawnPoint.pos, 64, 0.5, 0.5, 0.5);
+                                world.spawnParticle(Particle.INSTANT_EFFECT, spawnPoint.pos, 64, 0.5, 0.5, 0.5, 0, new Particle.Spell(Color.fromRGB(0xffffff), 1));
                                 world.setBlockData(spawnPoint.pos, Material.AIR.createBlockData());
                             }
 

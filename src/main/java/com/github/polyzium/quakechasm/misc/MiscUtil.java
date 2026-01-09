@@ -46,7 +46,7 @@ public abstract class MiscUtil {
             targetLoc.getWorld().playSound(targetLoc, "quake.world.tele_out", 1, 1);
 
         world.spawnParticle(Particle.DUST, targetLoc, 32, 0.25, 1, 0.25, 1, new Particle.DustOptions(Color.fromRGB(0xFF00FF), 1));
-        world.spawnParticle(Particle.INSTANT_EFFECT, targetLoc, 32, 0.25, 1, 0.25, 1);
+        world.spawnParticle(Particle.INSTANT_EFFECT, targetLoc, 32, 0.25, 1, 0.25, 1, new Particle.Spell(Color.fromRGB(0xffffff), 1));
     }
 
     public static ArrayList<Vector> calculateTrajectory(Location startLoc, Vector initialVelocity) {

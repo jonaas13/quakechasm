@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.polyzium"
-version = "1.0.0-beta1"
+version = "1.0.0-beta2"
 
 repositories {
     mavenCentral()
@@ -14,12 +14,12 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
-    compileOnly("dev.jorel:commandapi-paper-core:11.0.0")
+    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    compileOnly("dev.jorel:commandapi-paper-core:11.1.0")
     implementation("org.apache.commons:commons-lang3:3.14.0")
-    compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.2.18")
+    compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.18")
     implementation("fr.mrmicky:fastboard:2.1.5")
-    paperweight.paperDevBundle("1.21.8-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
 }
 
 java {
