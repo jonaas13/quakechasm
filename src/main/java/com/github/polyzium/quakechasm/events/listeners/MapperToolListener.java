@@ -494,6 +494,9 @@ public class MapperToolListener implements Listener {
         ItemStack oldItem = player.getInventory().getItem(event.getPreviousSlot());
         
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        if (userState == null) {
+            return;
+        }
 
         if (isJumppadTool(oldItem) && (userState.jumppadPlacementLoc != null || userState.settingLandingPos)) {
             int slotDiff = event.getNewSlot() - event.getPreviousSlot();

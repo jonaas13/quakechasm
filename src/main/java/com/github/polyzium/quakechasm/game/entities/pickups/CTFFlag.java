@@ -140,6 +140,8 @@ public class CTFFlag implements DisplayPickup {
         if (item.isEmpty()) return;
 
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        if (userState == null) return;
+
         if (!(userState.currentMatch instanceof CTFMatch))
             return;
 

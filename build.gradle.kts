@@ -18,7 +18,6 @@ dependencies {
     compileOnly("dev.jorel:commandapi-paper-core:11.1.0")
     implementation("org.apache.commons:commons-lang3:3.14.0")
     compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.18")
-    implementation("fr.mrmicky:fastboard:2.1.5")
     paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
 }
 

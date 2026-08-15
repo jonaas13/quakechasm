@@ -25,6 +25,7 @@ import com.google.gson.annotations.SerializedName;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Locale;
 
 public class PluginConfig {
@@ -38,6 +39,9 @@ public class PluginConfig {
 
     @SerializedName("player")
     public PlayerConfig player;
+
+    @SerializedName("matchmaking")
+    public MatchmakingConfig matchmaking;
 
     public static class LocaleConfig {
         @SerializedName("fallback")
@@ -77,10 +81,77 @@ public class PluginConfig {
         public float walkSpeed = 0.4f;
     }
 
+    public static class MatchmakingConfig {
+        @SerializedName("mode")
+        public String mode = "manual";
+
+        @SerializedName("defaultMode")
+        public String defaultMode = "ffa";
+
+        @SerializedName("defaultNeedPlayers")
+        public int defaultNeedPlayers = 2;
+
+        @SerializedName("defaultScoreLimit")
+        public int defaultScoreLimit = 10;
+
+        @SerializedName("defaultMaxPlayers")
+        public int defaultMaxPlayers = 0;
+
+        @SerializedName("autoJoinDelayTicks")
+        public long autoJoinDelayTicks = 5;
+
+        @SerializedName("keepConfiguredMatchesReady")
+        public boolean keepConfiguredMatchesReady = true;
+
+        @SerializedName("maintenanceIntervalTicks")
+        public long maintenanceIntervalTicks = 200;
+
+        @SerializedName("setups")
+        public ArrayList<GameSetupConfig> setups = new ArrayList<>();
+
+        public boolean createsMatchesAutomatically() {
+            return mode != null && (mode.equalsIgnoreCase("startup") || mode.equalsIgnoreCase("autoplay"));
+        }
+
+        public boolean joinsPlayersAutomatically() {
+            return mode != null && mode.equalsIgnoreCase("autoplay");
+        }
+    }
+
+    public static class GameSetupConfig {
+        @SerializedName("map")
+        public String map;
+
+        @SerializedName("mode")
+        public String mode;
+
+        @SerializedName("needPlayers")
+        public Integer needPlayers;
+
+        @SerializedName("scoreLimit")
+        public Integer scoreLimit;
+
+        @SerializedName("privacy")
+        public String privacy;
+
+        @SerializedName("password")
+        public String password;
+
+        @SerializedName("createOnStartup")
+        public Boolean createOnStartup;
+
+        @SerializedName("autoJoin")
+        public Boolean autoJoin;
+
+        @SerializedName("maxPlayers")
+        public Integer maxPlayers;
+    }
+
     public PluginConfig() {
         this.locale = new LocaleConfig();
         this.lobby = new LobbyConfig();
         this.player = new PlayerConfig();
+        this.matchmaking = new MatchmakingConfig();
     }
 
     public static PluginConfig load() throws IOException {
@@ -114,6 +185,13 @@ public class PluginConfig {
             if (config.locale == null) config.locale = new LocaleConfig();
             if (config.lobby == null) config.lobby = new LobbyConfig();
             if (config.player == null) config.player = new PlayerConfig();
+            if (config.matchmaking == null) config.matchmaking = new MatchmakingConfig();
+            if (config.matchmaking.setups == null) config.matchmaking.setups = new ArrayList<>();
+            if (config.matchmaking.defaultNeedPlayers < 1) config.matchmaking.defaultNeedPlayers = 1;
+            if (config.matchmaking.defaultScoreLimit < 1) config.matchmaking.defaultScoreLimit = 1;
+            if (config.matchmaking.defaultMaxPlayers < 0) config.matchmaking.defaultMaxPlayers = 0;
+            if (config.matchmaking.autoJoinDelayTicks < 1) config.matchmaking.autoJoinDelayTicks = 1;
+            if (config.matchmaking.maintenanceIntervalTicks < 20) config.matchmaking.maintenanceIntervalTicks = 20;
             
             INSTANCE = config;
             QuakePlugin.INSTANCE.getLogger().info("Configuration loaded successfully");

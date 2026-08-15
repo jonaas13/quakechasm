@@ -52,6 +52,21 @@ You only need these steps if you prefer compiling the plugin yourself.
 2. Clone the repository.
 3. Run `./gradlew build` (or `gradlew.bat build` on Windows) to produce `build/libs/quakechasm-<version>-all.jar`.
 
+## Matchmaking and autoplay
+
+Quakechasm separates game setup defaults from match commands. Each map gets an effective setup from `plugins/Quakechasm/config.json`: either a map-specific entry in `matchmaking.setups`, or a default derived from the map's first recommended mode and needed player count.
+
+Set `matchmaking.mode` to `startup` to create configured matches automatically, or `autoplay` to also put joining players directly into a public configured match.
+
+Useful commands:
+
+- `/quake` or `/quake menu`: open the match browser.
+- `/quake matchmaking join`: join the best visible public match.
+- `/quake matchmaking list`: list visible matches.
+- `/quake setup list`: show effective map setups.
+- `/quake setup create <map>`: create the configured match for one map.
+- `/quake matchmaking rebuild`: create any missing configured startup matches.
+
 ## Contributing
 
 Contributions are welcome. Please feel free to submit pull requests or open issues for bugs and feature requests.

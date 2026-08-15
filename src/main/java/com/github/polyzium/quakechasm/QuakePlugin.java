@@ -44,6 +44,7 @@ import org.joml.Matrix4f;
 import com.github.polyzium.quakechasm.commands.Commands;
 import com.github.polyzium.quakechasm.game.entities.triggers.Jumppad;
 import com.github.polyzium.quakechasm.game.entities.triggers.Portal;
+import com.github.polyzium.quakechasm.matchmaking.MatchmakingService;
 import com.github.polyzium.quakechasm.matchmaking.matches.MatchManager;
 import com.github.polyzium.quakechasm.matchmaking.Team;
 import com.github.polyzium.quakechasm.matchmaking.map.QMap;
@@ -70,6 +71,7 @@ public class QuakePlugin extends JavaPlugin {
     private float rotatorAngle;
     public ArrayList<QMap> maps;
     public MatchManager matchManager;
+    public MatchmakingService matchmakingService;
     public TranslationManager translationManager;
     public PluginConfig config;
 
@@ -233,6 +235,10 @@ public class QuakePlugin extends JavaPlugin {
     }
 
     public QMap getMap(String name) {
+        if (this.maps == null) {
+            return null;
+        }
+
         for (QMap map : this.maps) {
             if (map.name.equals(name)) {
                 return map;
@@ -321,7 +327,7 @@ public class QuakePlugin extends JavaPlugin {
             return;
         }
 
-        this.maps = maps;
+        this.maps = maps != null ? maps : new ArrayList<>(8);
     }
 
     public void init(boolean isReload) {
@@ -345,6 +351,7 @@ public class QuakePlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new TriggerListener(), this);
         getServer().getPluginManager().registerEvents(new CombatListener(), this);
         getServer().getPluginManager().registerEvents(new MapperToolListener(), this);
+        getServer().getPluginManager().registerEvents(new MatchBrowserListener(), this);
 
         // lobby
         getLogger().info("Initializing lobby world");
@@ -362,6 +369,8 @@ public class QuakePlugin extends JavaPlugin {
         // other stuff
         getLogger().info("Initializing match manager");
         this.matchManager = new MatchManager();
+        getLogger().info("Initializing matchmaking service");
+        this.matchmakingService = new MatchmakingService(this);
         getLogger().info("Initializing translation manager");
         try {
             this.translationManager = new TranslationManager();
@@ -374,6 +383,8 @@ public class QuakePlugin extends JavaPlugin {
         this.loadMaps();
         getLogger().info("Loading triggers");
         this.loadTriggers();
+        getLogger().info("Starting matchmaking service");
+        this.matchmakingService.start();
         this.startRotatingPickups();
         this.startHudUpdater();
 
@@ -387,6 +398,9 @@ public class QuakePlugin extends JavaPlugin {
 
         if (!isReload)
             CommandAPI.unregister("quake");
+        if (this.matchmakingService != null) {
+            this.matchmakingService.stop();
+        }
         HandlerList.unregisterAll(this);
         getServer().getScheduler().cancelTasks(this);
 

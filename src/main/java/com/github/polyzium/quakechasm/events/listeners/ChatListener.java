@@ -40,6 +40,7 @@ public class ChatListener implements Listener {
     public void onChat(AsyncChatEvent event) {
         Player player = event.getPlayer();
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        if (userState == null) return;
 
         String messageText = PlainTextComponentSerializer.plainText().serialize(event.message());
 
@@ -106,6 +107,7 @@ public class ChatListener implements Listener {
 
     public void chatMatch(AsyncChatEvent event) {
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(event.getPlayer());
+        if (userState == null || userState.currentMatch == null) return;
 
         event.viewers().clear();
         event.viewers().add(Audience.audience(userState.currentMatch));
@@ -123,6 +125,7 @@ public class ChatListener implements Listener {
     public void chatTeam(AsyncChatEvent event) {
         Player player = event.getPlayer();
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        if (userState == null || userState.currentMatch == null) return;
 
         event.viewers().clear();
         event.viewers().add(Audience.audience(userState.currentMatch.getTeamAudience(

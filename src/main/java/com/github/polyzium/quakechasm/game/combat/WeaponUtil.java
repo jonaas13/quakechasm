@@ -349,13 +349,19 @@ public abstract class WeaponUtil {
 
         if (cause == DamageCause.RAILGUN && attacker instanceof Player attackerPlayer) {
             QuakeUserState attackerState = QuakePlugin.INSTANCE.userStates.get(attackerPlayer);
-            attackerState.consecutiveRailgunHits++;
-            attackerState.checkImpressiveMedal();
+            if (attackerState != null) {
+                attackerState.consecutiveRailgunHits++;
+                attackerState.checkImpressiveMedal();
+            }
         }
 
         victim.setNoDamageTicks(0);
-        if (victim instanceof Player player && player.getGameMode() != GameMode.CREATIVE)
-            QuakePlugin.INSTANCE.userStates.get(player).lastDamage = new DamageData(attacker, amount, cause);
+        if (victim instanceof Player player && player.getGameMode() != GameMode.CREATIVE) {
+            QuakeUserState victimState = QuakePlugin.INSTANCE.userStates.get(player);
+            if (victimState != null) {
+                victimState.lastDamage = new DamageData(attacker, amount, cause);
+            }
+        }
 
 //        victim.damage(amount, attacker);
         victim.damage(amount, DamageSource.builder(DamageType.GENERIC).withDirectEntity(attacker).withCausingEntity(attacker).build());

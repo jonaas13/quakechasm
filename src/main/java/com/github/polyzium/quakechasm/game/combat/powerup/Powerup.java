@@ -29,6 +29,7 @@ import com.github.polyzium.quakechasm.QuakePlugin;
 import com.github.polyzium.quakechasm.QuakeUserState;
 import com.github.polyzium.quakechasm.game.entities.pickups.PowerupSpawner;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 
 public class Powerup {
@@ -54,6 +55,10 @@ public class Powerup {
         this.time = time;
 
         QuakeUserState state = QuakePlugin.INSTANCE.userStates.get(player);
+        if (state == null) {
+            throw new IllegalArgumentException("Cannot apply powerup to untracked player " + player.getName());
+        }
+
         Powerup self = this;
         this.timer = new BukkitRunnable() {
             @Override
@@ -116,6 +121,8 @@ public class Powerup {
 
     public static boolean hasPowerup(Player player, PowerupType type) {
         QuakeUserState state = QuakePlugin.INSTANCE.userStates.get(player);
+        if (state == null) return false;
+
         for (Powerup powerup : state.activePowerups)
             if (powerup.getType() == type) return true;
 
@@ -124,10 +131,9 @@ public class Powerup {
 
     public static void dropPowerups(Player player) {
         QuakeUserState state = QuakePlugin.INSTANCE.userStates.get(player);
+        if (state == null) return;
 
-        for (int i = 0; i < state.activePowerups.size(); i++) {
-            Powerup powerup = state.activePowerups.get(i);
-//        for (Powerup powerup : state.activePowerups) {
+        for (Powerup powerup : new ArrayList<>(state.activePowerups)) {
             Location playerLocation = player.getLocation().clone();
             playerLocation.setY(playerLocation.getY()+1);
 
@@ -135,8 +141,8 @@ public class Powerup {
                 new PowerupSpawner(powerup.type, player.getWorld(), playerLocation, true, powerup.time);
 
             powerup.timer.cancel();
-            state.hud.powerupBoard.update();
-            state.activePowerups.remove(powerup);
         }
+        state.activePowerups.clear();
+        state.hud.powerupBoard.update();
     }
 }

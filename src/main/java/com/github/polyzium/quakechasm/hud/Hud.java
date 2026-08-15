@@ -101,12 +101,14 @@ public class Hud {
                 )
         );
 
+        Component powerups = this.powerupBoard.draw();
+        if (!powerups.equals(Component.empty())) {
+            components.add(powerups);
+        }
+
         // Send to client
         player.sendActionBar(
             Component.join(JoinConfiguration.separator(Component.text(" ")), components).font(Key.key("hud"))
         );
-
-        // Call others (powerups, etc)
-        this.powerupBoard.draw();
     }
 }

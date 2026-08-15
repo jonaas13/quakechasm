@@ -43,14 +43,16 @@ public class MiscListener implements Listener {
 
         QuakePlugin.INSTANCE.initPlayer(joinedPlayer);
 
-        joinedPlayer.teleport(QuakePlugin.LOBBY);
+        if (!QuakePlugin.INSTANCE.matchmakingService.autoJoin(joinedPlayer)) {
+            joinedPlayer.teleport(QuakePlugin.LOBBY);
+        }
     }
 
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
-        if (userState.currentMatch != null) userState.currentMatch.leave(player);
+        if (userState != null && userState.currentMatch != null) userState.currentMatch.leave(player);
 
         QuakePlugin.INSTANCE.userStates.remove(player);
 
@@ -73,6 +75,7 @@ public class MiscListener implements Listener {
 
         // Immobilize when match is ending (prevents walking speed bypass hacks)
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        if (userState == null) return;
         if (userState.currentMatch != null && userState.currentMatch.matchEnding) {
             event.setCancelled(true);
             return;

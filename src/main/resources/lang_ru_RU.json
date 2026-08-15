@@ -331,10 +331,11 @@
       "owner": "<gray>(Владелец: <owner_name>)</gray>",
       "matchmaking": "<gray>(Подбор игроков)</gray>",
       "entry": "<blue>[<index>]</blue> <privacy_icon> <white><match_type></white> <gray>-</gray> <white><map_name></white> <gray>-</gray> <white><player_count> игроков</white><owner_info> ",
-      "joinButton": "<click:run_command:/quake match join <index>><hover:show_text:'Нажмите, чтобы присоединиться'><green>[Присоединиться]</green></hover></click>"
+      "joinButton": "<click:run_command:/quake matchmaking join <index>><hover:show_text:'Нажмите, чтобы присоединиться'><green>[Присоединиться]</green></hover></click>"
     }
   },
   "matchmaking": {
+    "mapUnfit": "<red>Карта <map_name> не подходит для <mode></red>",
     "match": {
       "accept": {
         "title": "Ваша игра готова!",
@@ -349,7 +350,23 @@
         "statusBarInit": "Поиск матчей: 00:00",
         "statusBar": "Поиск матчей: <time>",
         "message": "Поиск матчей... \nИспользуйте \"/quake matchmaking cancel\", чтобы остановить поиск"
-      }
+      },
+      "leaderStarted": " начал поиск матчей: режим <mode>, карты <maps>",
+      "acceptPrompt": "Введите \"/quake matchmaking accept\", чтобы принять матч.",
+      "mapInfo": "<map_name> | <mode>"
+    },
+    "rebuild": {
+      "created": "<green>Создано настроенных матчей: <count>.</green>"
+    }
+  },
+  "setup": {
+    "list": {
+      "empty": "<yellow>Нет доступных настроек карт.</yellow>",
+      "title": "<blue><bold>Настройки игр</bold></blue>",
+      "entry": "<gray><map_name></gray> <white><display_name></white> <gray>mode=<mode> need=<need_players> score=<score_limit> startup=<startup> autojoin=<autojoin></gray>"
+    },
+    "create": {
+      "created": "<green>Создан настроенный матч <mode> на <map_name>.</green>"
     }
   },
   "menu": {
@@ -422,6 +439,11 @@
       "left": "<player_name> покинул"
     },
     "prefix": "[ГРУППА] ",
+    "status": {
+      "joined": " присоединился",
+      "left": " покинул",
+      "newLeader": " - новый лидер группы"
+    },
     "title": "Группа"
   },
   "pickup": {
@@ -465,19 +487,6 @@
   },
   "plugin": {
     "reload": "Плагин перезагружен"
-  },
-  "party": {
-    "joined": " присоединился",
-    "left": " покинул",
-    "newLeader": " - новый лидер группы"
-  },
-  "matchmaking": {
-    "mapUnfit": "<red>Карта <map_name> не подходит для <mode></red>",
-    "search": {
-      "leaderStarted": " начал поиск матчей: режим <mode>, карты <maps>",
-      "acceptPrompt": "Введите \"/quake matchmaking accept\", чтобы принять матч.",
-      "mapInfo": "<map_name> | <mode>"
-    }
   },
   "scoreboard": {
     "team": {

@@ -30,6 +30,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import com.github.polyzium.quakechasm.QuakePlugin;
+import com.github.polyzium.quakechasm.QuakeUserState;
 import com.github.polyzium.quakechasm.game.combat.WeaponUserState;
 import com.github.polyzium.quakechasm.game.entities.QEntityUtil;
 import com.github.polyzium.quakechasm.hud.Hud;
@@ -97,7 +98,10 @@ public class AmmoSpawner extends Spawner {
 
     @Override
     public void onPickup(Player player) {
-        WeaponUserState weaponState = QuakePlugin.INSTANCE.userStates.get(player).weaponState;
+        QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        if (userState == null) return;
+
+        WeaponUserState weaponState = userState.weaponState;
         if (this.display.getItemStack().isEmpty() || weaponState.ammo[ammoType] >= 200) return;
 
         this.itemForRespawn = this.display.getItemStack();

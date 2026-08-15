@@ -23,7 +23,6 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.TextColor;
-import fr.mrmicky.fastboard.adventure.FastBoard;
 import com.github.polyzium.quakechasm.QuakeUserState;
 import com.github.polyzium.quakechasm.game.combat.powerup.Powerup;
 import com.github.polyzium.quakechasm.game.combat.powerup.PowerupType;
@@ -33,8 +32,8 @@ import java.util.EnumMap;
 
 public class PowerupBoard {
     QuakeUserState state;
-    FastBoard board;
-    private boolean needsUpdate;
+    private boolean needsUpdate = true;
+    private Component cachedComponent = Component.empty();
     public static EnumMap<PowerupType, Character> ICONS = new EnumMap<>(PowerupType.class);
     static {
         ICONS.put(PowerupType.QUAD_DAMAGE, Icons.QUAD_DAMAGE);
@@ -44,43 +43,40 @@ public class PowerupBoard {
 
     public PowerupBoard(QuakeUserState state) {
         this.state = state;
-        this.board = new FastBoard(this.state.getPlayer());
     }
 
     public void rebuild() {
-        this.board = new FastBoard(state.getPlayer());
+        this.update();
     }
 
     public void update() {
         this.needsUpdate = true;
     }
 
-    public void draw() {
-        if (board.isDeleted() && state.activePowerups.isEmpty() || !needsUpdate)
-            return;
-
-        if (state.activePowerups.isEmpty()) {
-            board.delete();
-            return;
-        } else if (board.isDeleted()) {
-            rebuild();
+    public Component draw() {
+        if (!needsUpdate) {
+            return cachedComponent;
         }
 
-        ArrayList<Component> lines = new ArrayList<>(3);
+        if (state.activePowerups.isEmpty()) {
+            cachedComponent = Component.empty();
+            needsUpdate = false;
+            return cachedComponent;
+        }
+
+        ArrayList<Component> powerups = new ArrayList<>(state.activePowerups.size());
         for (int i = 0; i < state.activePowerups.size(); i++) {
             Powerup powerup = state.activePowerups.get(i);
 
             Component icon = Component.text(ICONS.get(powerup.getType())).font(Key.key("hud"));
-            Component time = Component.text(powerup.getTime()).color(TextColor.color(TextColor.color(0xff3f3f))).font(Key.key("hud"));
+            Component time = Component.text(powerup.getTime()).color(TextColor.color(0xff3f3f)).font(Key.key("hud"));
             Component component = Component.join(JoinConfiguration.noSeparators(), icon, time);
 
-            lines.add(Component.empty());
-            lines.add(component);
-            lines.add(Component.empty());
-            lines.add(Component.empty());
+            powerups.add(component);
         }
-        board.updateLines(lines);
 
+        cachedComponent = Component.join(JoinConfiguration.separator(Component.text(" ")), powerups);
         this.needsUpdate = false;
+        return cachedComponent;
     }
 }

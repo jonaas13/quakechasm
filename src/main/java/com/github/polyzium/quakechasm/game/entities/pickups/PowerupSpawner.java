@@ -92,9 +92,12 @@ public class PowerupSpawner extends Spawner {
         Powerup powerup2;
 
         QuakeUserState state = QuakePlugin.INSTANCE.userStates.get(player);
+        if (state == null) return;
+
         for (Powerup powerup : state.activePowerups) {
             if (powerup.getType() == type) {
                 powerup.extendDuration(time);
+                state.hud.powerupBoard.update();
 
                 found = true;
                 break;
@@ -103,12 +106,14 @@ public class PowerupSpawner extends Spawner {
         if (!found) {
             powerup2 = new Powerup(player, type, time);
             state.activePowerups.add(powerup2);
+            state.hud.powerupBoard.update();
         }
     }
 
     @Override
     public void onPickup(Player player) {
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        if (userState == null) return;
 
         ItemStack item = super.display.getItemStack();
         if (item.isEmpty()) return;

@@ -87,6 +87,7 @@ public class ArmorSpawner extends Spawner {
     @Override
     public void onPickup(Player player) {
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        if (userState == null) return;
 
         if (
                 this.display.getItemStack().isEmpty() ||

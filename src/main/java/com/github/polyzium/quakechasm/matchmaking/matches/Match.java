@@ -132,11 +132,17 @@ public abstract class Match implements ForwardingAudience {
             return;
         }
 
-        players.put(player, resolvedTeam);
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
-        userState.currentMatch = this;
+        if (userState == null) {
+            QuakePlugin.INSTANCE.getLogger().warning("Player attempted to join a match before their Quake state was initialized");
+            return;
+        }
 
         Location spawn = map.getRandomSpawnpoint(resolvedTeam);
+
+        players.put(player, resolvedTeam);
+        userState.currentMatch = this;
+
         player.teleport(spawn);
         MiscUtil.teleEffect(spawn, false);
         userState.initForMatch();

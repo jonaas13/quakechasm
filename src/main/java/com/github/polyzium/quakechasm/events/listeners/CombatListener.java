@@ -108,12 +108,15 @@ public class CombatListener implements Listener {
         // Emulate the behavior of Gauntlet from Quake 3 via melee hits
         boolean isMeleeDamage = event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK && event.getDamageSource().getDamageType().getTranslationKey().equals("player"); // With damage caused via damageCustom, getTranslationKey() will return "generic"
         // 2025-11-08: armor stands are bugged for some reason so do not use the gauntlet when it's an armor stand
-        if (event instanceof EntityDamageByEntityEvent attackEvent && !(attackEvent.getEntity() instanceof ArmorStand) && isMeleeDamage) {
+        if (event instanceof EntityDamageByEntityEvent attackEvent
+                && attackEvent.getEntity() instanceof LivingEntity victim
+                && !(attackEvent.getEntity() instanceof ArmorStand)
+                && isMeleeDamage) {
             event.setCancelled(true);
             Entity attacker = attackEvent.getDamager();
             boolean hasQuad = attacker instanceof Player attackerPlayer && Powerup.hasPowerup(attackerPlayer, PowerupType.QUAD_DAMAGE);
             int amount = hasQuad ? 30 : 10;
-            WeaponUtil.damageCustom((LivingEntity) attackEvent.getEntity(), amount, attacker, DamageCause.GAUNTLET);
+            WeaponUtil.damageCustom(victim, amount, attacker, DamageCause.GAUNTLET);
             attacker.getWorld().playSound(attacker, "quake.weapons.gauntlet", 1f, 1);
             if (attacker instanceof Player attackerPlayer && Powerup.hasPowerup(attackerPlayer, PowerupType.QUAD_DAMAGE))
                 attacker.getWorld().playSound(attacker, "quake.items.powerups.quad_damage.fire", 0.5f, 1f);
@@ -191,7 +194,7 @@ public class CombatListener implements Listener {
         ) return;
 
         Player player = (Player) event.getEntity();
-        assert userState != null;
+        if (userState == null) return;
 
         // Calculate armor factor
         // But first, cancel vanilla armor
@@ -233,7 +236,7 @@ public class CombatListener implements Listener {
 
             if (event instanceof EntityDamageByEntityEvent attackEvent && attackEvent.getDamager() instanceof Player attacker) {
                 QuakeUserState attackerState = QuakePlugin.INSTANCE.userStates.get(attacker);
-                if (userState.lastDamage.getCause() == DamageCause.GAUNTLET)
+                if (attackerState != null && userState.lastDamage != null && userState.lastDamage.getCause() == DamageCause.GAUNTLET)
                     attackerState.awardMedal(MedalType.HUMILIATION);
             }
         }
@@ -285,6 +288,7 @@ public class CombatListener implements Listener {
 
         if (event.getEntity().getType() != EntityType.PLAYER) return;
         QuakeUserState state = QuakePlugin.INSTANCE.userStates.get((Player) event.getEntity());
+        if (state == null) return;
         state.startHealthDecreaser();
     }
 
@@ -293,7 +297,7 @@ public class CombatListener implements Listener {
     public void onRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
-        if (userState.currentMatch == null) {
+        if (userState == null || userState.currentMatch == null) {
             event.setRespawnLocation(QuakePlugin.LOBBY);
             return;
         }
@@ -313,6 +317,8 @@ public class CombatListener implements Listener {
         ItemStack handItem = player.getInventory().getItemInMainHand().clone();
         ItemMeta itemMeta = handItem.getItemMeta();
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        if (userState == null) return;
+
         userState.armor = 0;
         if (itemMeta != null && itemMeta.hasCustomModelData() && handItem.getType() == Material.CARROT_ON_A_STICK) {
             int modelData = itemMeta.getCustomModelData();
@@ -337,7 +343,10 @@ public class CombatListener implements Listener {
     public static void sortGun(ItemStack gunItem, Player player) {
         int modelData = gunItem.getItemMeta().getCustomModelData();
         PlayerInventory inv = player.getInventory();
-        WeaponUserState weaponState = QuakePlugin.INSTANCE.userStates.get(player).weaponState;
+        QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        if (userState == null) return;
+
+        WeaponUserState weaponState = userState.weaponState;
 
         // Find the gun, regardless of its NBT/PDC
         Optional<ItemStack> foundGun = Arrays.stream(inv.getContents()).filter(Objects::nonNull).filter(

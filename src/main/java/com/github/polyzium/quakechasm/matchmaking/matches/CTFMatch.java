@@ -75,8 +75,14 @@ public class CTFMatch extends Match {
     }
     
     private void initCTF() {
-        getRedFlag().prepareForMatch(this);
-        getBlueFlag().prepareForMatch(this);
+        CTFFlag redFlag = getRedFlag();
+        CTFFlag blueFlag = getBlueFlag();
+        if (redFlag == null || blueFlag == null) {
+            throw new IllegalStateException("CTF map " + map.name + " requires one red and one blue base flag");
+        }
+
+        redFlag.prepareForMatch(this);
+        blueFlag.prepareForMatch(this);
 
         this.infoBar = BossBar.bossBar(Component.empty(), 0, BossBar.Color.WHITE, BossBar.Overlay.PROGRESS);
         this.updateInfo();
@@ -202,29 +208,11 @@ public class CTFMatch extends Match {
     }
 
     public CTFFlag getRedFlag() {
-        Collection<Entity> entities = map.world.getNearbyEntities(map.bounds);
-        for (Trigger trigger : QuakePlugin.INSTANCE.triggers) {
-            if (entities.contains(trigger.getEntity())) {
-                if (trigger instanceof CTFFlag flag && flag.getTeam() == Team.RED && !flag.isDrop()) {
-                    return flag;
-                }
-            }
-        }
-
-        return null;
+        return map.getBaseCTFFlag(Team.RED);
     }
 
     public CTFFlag getBlueFlag() {
-        Collection<Entity> entities = map.world.getNearbyEntities(map.bounds);
-        for (Trigger trigger : QuakePlugin.INSTANCE.triggers) {
-            if (entities.contains(trigger.getEntity())) {
-                if (trigger instanceof CTFFlag flag && flag.getTeam() == Team.BLUE && !flag.isDrop()) {
-                    return flag;
-                }
-            }
-        }
-
-        return null;
+        return map.getBaseCTFFlag(Team.BLUE);
     }
 
     public void grabFlag(Team belongingFlagTeam, Player player) {
@@ -319,12 +307,18 @@ public class CTFMatch extends Match {
             case RED -> {
                 // Player carrying a blue flag triggers the red flag pickup
                 flagCarriers[1] = null;
-                getBlueFlag().respawn();
+                CTFFlag blueFlag = getBlueFlag();
+                if (blueFlag != null) {
+                    blueFlag.respawn();
+                }
             }
             case BLUE -> {
                 // Player carrying a red flag triggers the blue flag pickup
                 flagCarriers[0] = null;
-                getRedFlag().respawn();
+                CTFFlag redFlag = getRedFlag();
+                if (redFlag != null) {
+                    redFlag.respawn();
+                }
             }
             default -> throw new IllegalArgumentException("Non-red/non-blue attempted to capture the flag");
         }
@@ -467,10 +461,13 @@ public class CTFMatch extends Match {
     }
 
     private void updateInfo() {
+        CTFFlag redFlag = getRedFlag();
+        CTFFlag blueFlag = getBlueFlag();
+
         char redFlagIcon;
         if (flagCarriers[0] != null)
             redFlagIcon = Icons.RED_FLAG_TAKEN;
-        else if (getRedFlag().getDisplay().getItemStack().isEmpty())
+        else if (redFlag == null || redFlag.getDisplay().getItemStack().isEmpty())
             redFlagIcon = Icons.RED_FLAG_LOST;
         else
             redFlagIcon = Icons.RED_FLAG;
@@ -478,7 +475,7 @@ public class CTFMatch extends Match {
         char blueFlagIcon;
         if (flagCarriers[1] != null)
             blueFlagIcon = Icons.BLUE_FLAG_TAKEN;
-        else if (getBlueFlag().getDisplay().getItemStack().isEmpty())
+        else if (blueFlag == null || blueFlag.getDisplay().getItemStack().isEmpty())
             blueFlagIcon = Icons.BLUE_FLAG_LOST;
         else
             blueFlagIcon = Icons.BLUE_FLAG;

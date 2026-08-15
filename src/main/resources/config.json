@@ -12,5 +12,16 @@
   },
   "player": {
     "walkSpeed": 0.4
+  },
+  "matchmaking": {
+    "mode": "manual",
+    "defaultMode": "ffa",
+    "defaultNeedPlayers": 2,
+    "defaultScoreLimit": 10,
+    "defaultMaxPlayers": 0,
+    "autoJoinDelayTicks": 5,
+    "keepConfiguredMatchesReady": true,
+    "maintenanceIntervalTicks": 200,
+    "setups": []
   }
 }

@@ -32,6 +32,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import com.github.polyzium.quakechasm.QuakePlugin;
+import com.github.polyzium.quakechasm.QuakeUserState;
 import com.github.polyzium.quakechasm.game.entities.QEntityUtil;
 import com.github.polyzium.quakechasm.hud.Hud;
 import com.github.polyzium.quakechasm.misc.TranslationManager;
@@ -82,6 +83,9 @@ public class HealthSpawner extends Spawner {
 
     @Override
     public void onPickup(Player player) {
+        QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        if (userState == null) return;
+
         boolean isMegaOrSmall = this.health == 20 || this.health == 1;
         if (
                 this.display.getItemStack().isEmpty() ||

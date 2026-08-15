@@ -23,6 +23,7 @@ import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import com.github.polyzium.quakechasm.game.entities.QEntityUtil;
 import com.github.polyzium.quakechasm.game.entities.Trigger;
+import com.github.polyzium.quakechasm.QuakeUserState;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -55,13 +56,16 @@ public class TriggerListener implements Listener {
 
             Player player = event.getPlayer();
             World world = player.getLocation().getWorld();
-            if (!world.getName().equals(trigger.getEntity().getWorld().getName())) return;
+            if (!world.getName().equals(trigger.getEntity().getWorld().getName())) continue;
             BoundingBox bb = trigger.getOffsetBoundingBox();
             Vector triggerMin = triggerLoc.toVector().add(bb.getMin());
             Vector triggerMax = triggerLoc.toVector().add(bb.getMax());
             BoundingBox absoluteBb = BoundingBox.of(triggerMin, triggerMax);
 
-            boolean holdingEntityTool = QuakePlugin.INSTANCE.userStates.get(player).holdingEntityTool;
+            QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+            if (userState == null) return;
+
+            boolean holdingEntityTool = userState.holdingEntityTool;
 
             if (absoluteBb.overlaps(player.getBoundingBox()) && !player.isDead() && player.getGameMode() != GameMode.SPECTATOR && !holdingEntityTool) {
                 trigger.onTrigger(player);

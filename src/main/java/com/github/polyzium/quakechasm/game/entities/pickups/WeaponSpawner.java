@@ -93,6 +93,9 @@ public class WeaponSpawner extends Spawner {
     }
 
     public void onPickup(Player player) {
+        QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        if (userState == null) return;
+
         ItemStack item = super.display.getItemStack();
         if (item.isEmpty())
             return;
@@ -110,7 +113,6 @@ public class WeaponSpawner extends Spawner {
         Hud.pickupMessage(player, Objects.requireNonNull(weaponMeta.displayName()));
 
         // Respawn in 5 seconds, or 30 seconds if team based
-        QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
         int respawnTimeTicks = 5*20;
         if (userState.currentMatch != null && (userState.currentMatch.getTeamOfPlayer(player) != Team.FREE)) {
             respawnTimeTicks = 30*20;

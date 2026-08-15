@@ -24,8 +24,10 @@ import com.github.polyzium.quakechasm.game.mapper.PortalTool;
 import com.github.polyzium.quakechasm.game.mapper.SpawnerTool;
 import com.github.polyzium.quakechasm.game.entities.pickups.*;
 import com.github.polyzium.quakechasm.matchmaking.factory.*;
+import com.github.polyzium.quakechasm.matchmaking.menu.MatchBrowserMenu;
 import com.github.polyzium.quakechasm.matchmaking.matches.FFAMatch;
 import com.github.polyzium.quakechasm.matchmaking.matches.MatchPrivacy;
+import com.github.polyzium.quakechasm.matchmaking.setup.GameSetup;
 import com.github.polyzium.quakechasm.misc.Chatroom;
 import com.github.polyzium.quakechasm.misc.MiscUtil;
 import com.github.polyzium.quakechasm.misc.TranslationManager;
@@ -36,6 +38,7 @@ import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.Region;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.*;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BoundingBox;
 import joptsimple.internal.Strings;
@@ -64,10 +67,142 @@ import com.github.polyzium.quakechasm.matchmaking.map.Spawnpoint;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Level;
 
 import static com.github.polyzium.quakechasm.game.combat.WeaponUtil.spawnParticlesLine;
 
 public abstract class Commands {
+    private static String[] getMapNameSuggestions() {
+        if (QuakePlugin.INSTANCE.maps == null) {
+            return new String[0];
+        }
+
+        return QuakePlugin.INSTANCE.maps.stream()
+                .map(map -> map.name)
+                .toArray(String[]::new);
+    }
+
+    private static String[] getMatchModeSuggestions() {
+        return new String[]{"debug", "ffa", "tdm", "ctf"};
+    }
+
+    private static MatchPrivacy parsePrivacy(String privacy) {
+        try {
+            return MatchPrivacy.valueOf(privacy.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static void joinMatch(Player player, Match match, String password) {
+        QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        if (userState == null || userState.currentMatch != null) {
+            player.sendMessage(TranslationManager.t("error.match.already", player));
+            return;
+        }
+
+        if (match == null) {
+            player.sendMessage(TranslationManager.t("error.noSuchMatch", player));
+            return;
+        }
+
+        if (match.matchEnding || !match.canJoin(player, password)) {
+            if (match.getPrivacy() == MatchPrivacy.PASSWORD) {
+                player.sendMessage(TranslationManager.t("match.privacy.incorrectPassword", player));
+            } else if (match.getPrivacy() == MatchPrivacy.INVITE_ONLY) {
+                player.sendMessage(TranslationManager.t("match.privacy.inviteRequired", player));
+            } else {
+                player.sendMessage(TranslationManager.t("match.privacy.cannotJoin", player));
+            }
+            return;
+        }
+
+        try {
+            match.join(player, null);
+        } catch (RuntimeException e) {
+            QuakePlugin.INSTANCE.getLogger().log(Level.WARNING, "Failed to join " + player.getName() + " to match on " + match.getMap().name, e);
+            player.sendMessage(TranslationManager.t("error.generic", player));
+        }
+    }
+
+    private static void sendMatchList(CommandSender sender, boolean showAll) {
+        MatchManager matchManager = QuakePlugin.INSTANCE.matchManager;
+        Player player = sender instanceof Player ? (Player) sender : null;
+
+        List<Match> matchesToShow;
+        if (showAll && (player == null || player.hasPermission("quake.admin"))) {
+            matchesToShow = matchManager.matches;
+        } else if (player != null) {
+            matchesToShow = matchManager.getVisibleMatches(player);
+        } else {
+            matchesToShow = matchManager.matches.stream()
+                    .filter(m -> m.getPrivacy() != MatchPrivacy.INVITE_ONLY)
+                    .toList();
+        }
+
+        if (matchesToShow.isEmpty()) {
+            if (player != null)
+                sender.sendMessage(TranslationManager.t("error.noMatches", player));
+            else
+                sender.sendMessage(TranslationManager.t("error.noMatches", TranslationManager.FALLBACK));
+            return;
+        }
+
+        for (int i = 0; i < matchesToShow.size(); i++) {
+            Match match = matchesToShow.get(i);
+            Locale locale = player != null ? player.locale() : TranslationManager.FALLBACK;
+
+            Component privacyIcon = switch (match.getPrivacy()) {
+                case PUBLIC -> TranslationManager.t("match.list.privacy.public", locale);
+                case PASSWORD -> TranslationManager.t("match.list.privacy.password", locale);
+                case INVITE_ONLY -> TranslationManager.t("match.list.privacy.inviteOnly", locale);
+            };
+
+            Component ownerInfo = match.getOwnerId() != null ?
+                    TranslationManager.t("match.list.owner", locale,
+                            Placeholder.unparsed("owner_name", Bukkit.getOfflinePlayer(match.getOwnerId()).getName())) :
+                    TranslationManager.t("match.list.matchmaking", locale);
+
+            String matchTypeTranslated = TranslationManager.tLegacy(match.getNameKey(), locale);
+
+            Component joinButton = TranslationManager.t("match.list.joinButton", locale,
+                    Placeholder.parsed("index", String.valueOf(i)));
+
+            Component matchEntry = TranslationManager.t("match.list.entry", locale,
+                    Placeholder.unparsed("index", String.valueOf(i)),
+                    Placeholder.component("privacy_icon", privacyIcon),
+                    Placeholder.unparsed("match_type", matchTypeTranslated),
+                    Placeholder.unparsed("map_name", match.getMap().displayName),
+                    Placeholder.unparsed("player_count", String.valueOf(match.getPlayers().size())),
+                    Placeholder.component("owner_info", ownerInfo)
+            ).append(joinButton);
+
+            sender.sendMessage(matchEntry);
+        }
+    }
+
+    private static void sendSetupList(CommandSender sender) {
+        Locale locale = sender instanceof Player player ? player.locale() : TranslationManager.FALLBACK;
+        List<GameSetup> setups = QuakePlugin.INSTANCE.matchmakingService.getSetups();
+
+        if (setups.isEmpty()) {
+            sender.sendMessage(TranslationManager.t("setup.list.empty", locale));
+            return;
+        }
+
+        sender.sendMessage(TranslationManager.t("setup.list.title", locale));
+        for (GameSetup setup : setups) {
+            sender.sendMessage(TranslationManager.t("setup.list.entry", locale,
+                    Placeholder.unparsed("map_name", setup.getMap().name),
+                    Placeholder.unparsed("display_name", setup.getMap().displayName),
+                    Placeholder.unparsed("mode", setup.getMode()),
+                    Placeholder.unparsed("need_players", String.valueOf(setup.getNeedPlayers())),
+                    Placeholder.unparsed("score_limit", String.valueOf(setup.getScoreLimit())),
+                    Placeholder.unparsed("startup", String.valueOf(setup.shouldCreateOnStartup())),
+                    Placeholder.unparsed("autojoin", String.valueOf(setup.shouldAutoJoin()))));
+        }
+    }
+
     public static Component getDeprecationMessage() {
         return MiniMessage.miniMessage().deserialize(
                 "<red>This command is deprecated in favor of the <underlined><blue><click:run_command:/quake map toolkit><hover:show_text:'Click to get the toolkit'>Mapper Toolkit.</hover></click></blue></underlined>"
@@ -693,7 +828,7 @@ public abstract class Commands {
 
 
         StringArgument matchModeArg = (StringArgument) new StringArgument("mode")
-                .includeSuggestions(ArgumentSuggestions.strings("debug", "ffa", "tdm", "ctf"));
+                .includeSuggestions(ArgumentSuggestions.strings(getMatchModeSuggestions()));
         IntegerArgument needPlayersArg = new IntegerArgument("needPlayers");
         CommandAPICommand matchCmd = new CommandAPICommand("match")
                 .withSubcommand(new CommandAPICommand("create")
@@ -702,11 +837,7 @@ public abstract class Commands {
                                 matchModeArg,
                                 needPlayersArg,
                                 new StringArgument("mapName")
-                                        .includeSuggestions(ArgumentSuggestions.strings(info ->
-                                                QuakePlugin.INSTANCE.maps.stream()
-                                                        .map(map -> map.name)
-                                                        .toArray(String[]::new)
-                                        )),
+                                        .includeSuggestions(ArgumentSuggestions.strings(info -> getMapNameSuggestions())),
                                 new StringArgument("privacy")
                                         .includeSuggestions(ArgumentSuggestions.strings("public", "password", "invite_only"))
                                         .setOptional(true),
@@ -725,18 +856,14 @@ public abstract class Commands {
                                 return;
                             }
 
-                            for (Match match : QuakePlugin.INSTANCE.matchManager.matches) {
-                                if (match.getMap().name.equals(mapName)) {
-                                    player.sendMessage(TranslationManager.t("error.match.mapOccupied", player,
-                                        Placeholder.unparsed("map_name", mapName)));
-                                    return;
-                                }
+                            if (map.getMatch() != null) {
+                                player.sendMessage(TranslationManager.t("error.match.mapOccupied", player,
+                                    Placeholder.unparsed("map_name", mapName)));
+                                return;
                             }
 
-                            MatchPrivacy privacy;
-                            try {
-                                privacy = MatchPrivacy.valueOf(privacyStr.toUpperCase());
-                            } catch (IllegalArgumentException e) {
+                            MatchPrivacy privacy = parsePrivacy(privacyStr);
+                            if (privacy == null) {
                                 player.sendMessage(TranslationManager.t("match.privacy.invalid", player));
                                 return;
                             }
@@ -746,13 +873,7 @@ public abstract class Commands {
                                 return;
                             }
 
-                            MatchFactory matchFactory = switch (mode) {
-                                case "debug" -> new DebugMatchFactory();
-                                case "ffa" -> new FFAMatchFactory();
-                                case "tdm" -> new TDMMatchFactory();
-                                case "ctf" -> new CTFMatchFactory();
-                                default -> null;
-                            };
+                            MatchFactory matchFactory = GameSetup.factoryForMode(mode);
                             if (matchFactory == null) {
                                 player.sendMessage(TranslationManager.t("error.invalidMode", player,
                                     Placeholder.unparsed("mode", mode)));
@@ -760,12 +881,11 @@ public abstract class Commands {
                             }
 
                             MatchManager matchManager = QuakePlugin.INSTANCE.matchManager;
-                            Match match = matchManager.newMatch(matchFactory, map, player.getUniqueId(), privacy, password);
+                            Match match = QuakePlugin.INSTANCE.matchmakingService.createMatch(mode, needPlayers, map, player.getUniqueId(), privacy, password);
                             if (match == null) {
                                 player.sendMessage(TranslationManager.t("error.generic", player));
                                 return;
                             }
-                            match.setNeedPlayers(needPlayers);
 
                             List<Match> visibleMatches = matchManager.getVisibleMatches(player);
                             int displayIndex = visibleMatches.indexOf(match);
@@ -789,11 +909,6 @@ public abstract class Commands {
                         )
                         .executesPlayer((player, args) -> {
                             MatchManager matchManager = QuakePlugin.INSTANCE.matchManager;
-                            QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
-                            if (userState.currentMatch != null) {
-                                player.sendMessage(TranslationManager.t("error.match.already", player));
-                                return;
-                            }
 
                             int index = (int) args.get("index");
                             String password = (String) args.getOrDefault("password", () -> null);
@@ -804,18 +919,7 @@ public abstract class Commands {
                                 return;
                             }
 
-                            if (!match.canJoin(player, password)) {
-                                if (match.getPrivacy() == MatchPrivacy.PASSWORD) {
-                                    player.sendMessage(TranslationManager.t("match.privacy.incorrectPassword", player));
-                                } else if (match.getPrivacy() == MatchPrivacy.INVITE_ONLY) {
-                                    player.sendMessage(TranslationManager.t("match.privacy.inviteRequired", player));
-                                } else {
-                                    player.sendMessage(TranslationManager.t("match.privacy.cannotJoin", player));
-                                }
-                                return;
-                            }
-
-                            match.join(player, null);
+                            joinMatch(player, match, password);
                         })
                 )
                 .withSubcommand(new CommandAPICommand("leave")
@@ -833,60 +937,9 @@ public abstract class Commands {
                         .withPermission("quake.player")
                         .withArguments(new LiteralArgument("--all").setOptional(true))
                         .executes((sender, args) -> {
-                            MatchManager matchManager = QuakePlugin.INSTANCE.matchManager;
                             Player player = sender instanceof Player ? (Player) sender : null;
                             boolean showAll = args.get("--all") != null && (player == null || player.hasPermission("quake.admin"));
-                            
-                            List<Match> matchesToShow;
-                            if (showAll) {
-                                matchesToShow = matchManager.matches;
-                            } else if (player != null) {
-                                matchesToShow = matchManager.getVisibleMatches(player);
-                            } else {
-                                matchesToShow = matchManager.matches.stream()
-                                        .filter(m -> m.getPrivacy() != MatchPrivacy.INVITE_ONLY)
-                                        .toList();
-                            }
-
-                            if (matchesToShow.isEmpty()) {
-                                if (player != null)
-                                    sender.sendMessage(TranslationManager.t("error.noMatches", player));
-                                else
-                                    sender.sendMessage(TranslationManager.t("error.noMatches", TranslationManager.FALLBACK));
-                                return;
-                            }
-
-                            for (int i = 0; i < matchesToShow.size(); i++) {
-                                Match match = matchesToShow.get(i);
-                                Locale locale = sender instanceof Player ? ((Player)sender).locale() : TranslationManager.FALLBACK;
-                                
-                                Component privacyIcon = switch (match.getPrivacy()) {
-                                    case PUBLIC -> TranslationManager.t("match.list.privacy.public", locale);
-                                    case PASSWORD -> TranslationManager.t("match.list.privacy.password", locale);
-                                    case INVITE_ONLY -> TranslationManager.t("match.list.privacy.inviteOnly", locale);
-                                };
-                                
-                                Component ownerInfo = match.getOwnerId() != null ?
-                                    TranslationManager.t("match.list.owner", locale,
-                                        Placeholder.unparsed("owner_name", Bukkit.getOfflinePlayer(match.getOwnerId()).getName())) :
-                                    TranslationManager.t("match.list.matchmaking", locale);
-
-                                String matchTypeTranslated = TranslationManager.tLegacy(match.getNameKey(), locale);
-
-                                Component joinButton = TranslationManager.t("match.list.joinButton", locale,
-                                    Placeholder.parsed("index", String.valueOf(i)));
-
-                                Component matchEntry = TranslationManager.t("match.list.entry", locale,
-                                    Placeholder.unparsed("index", String.valueOf(i)),
-                                    Placeholder.component("privacy_icon", privacyIcon),
-                                    Placeholder.unparsed("match_type", matchTypeTranslated),
-                                    Placeholder.unparsed("map_name", match.getMap().displayName),
-                                    Placeholder.unparsed("player_count", String.valueOf(match.getPlayers().size())),
-                                    Placeholder.component("owner_info", ownerInfo)
-                                ).append(joinButton);
-
-                                sender.sendMessage(matchEntry);
-                            }
+                            sendMatchList(sender, showAll);
                         })
                 )
                 .withSubcommand(new CommandAPICommand("invite")
@@ -1255,6 +1308,97 @@ public abstract class Commands {
                         })
                 );
 
+        CommandAPICommand matchmakingCmd = new CommandAPICommand("matchmaking")
+                .withPermission("quake.player")
+                .withSubcommand(new CommandAPICommand("list")
+                        .executes((sender, args) -> {
+                            sendMatchList(sender, false);
+                        })
+                )
+                .withSubcommand(new CommandAPICommand("join")
+                        .withArguments(
+                                new IntegerArgument("index").setOptional(true),
+                                new StringArgument("password").setOptional(true)
+                        )
+                        .executesPlayer((player, args) -> {
+                            Integer index = (Integer) args.getOrDefault("index", () -> null);
+                            String password = (String) args.getOrDefault("password", () -> null);
+
+                            Match match;
+                            if (index == null) {
+                                match = QuakePlugin.INSTANCE.matchmakingService.findBestJoinableMatch(player);
+                            } else {
+                                match = QuakePlugin.INSTANCE.matchManager.getVisibleMatch(player, index);
+                            }
+
+                            joinMatch(player, match, password);
+                        })
+                )
+                .withSubcommand(new CommandAPICommand("menu")
+                        .executesPlayer((player, args) -> {
+                            MatchBrowserMenu.open(player);
+                        })
+                )
+                .withSubcommand(new CommandAPICommand("rebuild")
+                        .withPermission("quake.admin")
+                        .executes((sender, args) -> {
+                            int created = QuakePlugin.INSTANCE.matchmakingService.createConfiguredMatches();
+                            if (QuakePlugin.INSTANCE.config.matchmaking.joinsPlayersAutomatically()) {
+                                QuakePlugin.INSTANCE.matchmakingService.autoJoinAvailablePlayers();
+                            }
+
+                            Locale locale = sender instanceof Player player ? player.locale() : TranslationManager.FALLBACK;
+                            sender.sendMessage(TranslationManager.t("matchmaking.rebuild.created", locale,
+                                    Placeholder.unparsed("count", String.valueOf(created))));
+                        })
+                );
+
+        CommandAPICommand setupCmd = new CommandAPICommand("setup")
+                .withPermission("quake.player")
+                .withSubcommand(new CommandAPICommand("list")
+                        .executes((sender, args) -> {
+                            sendSetupList(sender);
+                        })
+                )
+                .withSubcommand(new CommandAPICommand("create")
+                        .withPermission("quake.admin")
+                        .withArguments(new StringArgument("mapName")
+                                .includeSuggestions(ArgumentSuggestions.strings(info -> getMapNameSuggestions())))
+                        .executes((sender, args) -> {
+                            String mapName = (String) args.get("mapName");
+                            QMap map = QuakePlugin.INSTANCE.getMap(mapName);
+                            Locale locale = sender instanceof Player player ? player.locale() : TranslationManager.FALLBACK;
+
+                            if (map == null) {
+                                sender.sendMessage(TranslationManager.t("error.noSuchMap", locale));
+                                return;
+                            }
+
+                            if (map.getMatch() != null) {
+                                sender.sendMessage(TranslationManager.t("error.match.mapOccupied", locale,
+                                        Placeholder.unparsed("map_name", mapName)));
+                                return;
+                            }
+
+                            GameSetup setup = QuakePlugin.INSTANCE.matchmakingService.getSetupForMap(map);
+                            Match match = QuakePlugin.INSTANCE.matchmakingService.createMatch(setup, null);
+                            if (match == null) {
+                                sender.sendMessage(TranslationManager.t("error.generic", locale));
+                                return;
+                            }
+
+                            sender.sendMessage(TranslationManager.t("setup.create.created", locale,
+                                    Placeholder.unparsed("map_name", setup.getMap().name),
+                                    Placeholder.unparsed("mode", setup.getMode())));
+                        })
+                );
+
+        CommandAPICommand menuCmd = new CommandAPICommand("menu")
+                .withPermission("quake.player")
+                .executesPlayer((player, args) -> {
+                    MatchBrowserMenu.open(player);
+                });
+
         CommandAPICommand entityCmd = new CommandAPICommand("entity")
                 .withPermission("quake.mapper")
                 .withSubcommands(
@@ -1327,12 +1471,18 @@ public abstract class Commands {
 
         new CommandAPICommand("quake")
                 .withAliases("quakechasm")
+                .executesPlayer((player, args) -> {
+                    MatchBrowserMenu.open(player);
+                })
                 .withSubcommands(
                         entityCmd,
                         reloadCmd,
                         giveCmd,
                         mapCmd,
                         matchCmd,
+                        matchmakingCmd,
+                        setupCmd,
+                        menuCmd,
                         chatCmd,
                         test
                 )

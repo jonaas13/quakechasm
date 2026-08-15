@@ -331,10 +331,11 @@
       "owner": "<gray>(Owner: <owner_name>)</gray>",
       "matchmaking": "<gray>(Matchmaking)</gray>",
       "entry": "<blue>[<index>]</blue> <privacy_icon> <white><match_type></white> <gray>-</gray> <white><map_name></white> <gray>-</gray> <white><player_count> players</white><owner_info> ",
-      "joinButton": "<click:run_command:/quake match join <index>><hover:show_text:'Click to join'><green>[Join]</green></hover></click>"
+      "joinButton": "<click:run_command:/quake matchmaking join <index>><hover:show_text:'Click to join'><green>[Join]</green></hover></click>"
     }
   },
   "matchmaking": {
+    "mapUnfit": "<red>Map <map_name> is unfit for <mode></red>",
     "match": {
       "accept": {
         "title": "Your game is ready!",
@@ -349,7 +350,23 @@
         "statusBarInit": "Searching for matches: 00:00",
         "statusBar": "Searching for matches: <time>",
         "message": "Searching for matches... \nUse \"/quake matchmaking cancel\" to stop searching"
-      }
+      },
+      "leaderStarted": " started search for matches: mode <mode>, maps <maps>",
+      "acceptPrompt": "Type \"/quake matchmaking accept\" to accept the match.",
+      "mapInfo": "<map_name> | <mode>"
+    },
+    "rebuild": {
+      "created": "<green>Created <count> configured match(es).</green>"
+    }
+  },
+  "setup": {
+    "list": {
+      "empty": "<yellow>No map setups are available.</yellow>",
+      "title": "<blue><bold>Game Setups</bold></blue>",
+      "entry": "<gray><map_name></gray> <white><display_name></white> <gray>mode=<mode> need=<need_players> score=<score_limit> startup=<startup> autojoin=<autojoin></gray>"
+    },
+    "create": {
+      "created": "<green>Created configured <mode> match on <map_name>.</green>"
     }
   },
   "menu": {
@@ -422,6 +439,11 @@
       "left": "<player_name> left"
     },
     "prefix": "[PARTY] ",
+    "status": {
+      "joined": " joined",
+      "left": " left",
+      "newLeader": " is the new party leader"
+    },
     "title": "Party"
   },
   "pickup": {
@@ -465,19 +487,6 @@
   },
   "plugin": {
     "reload": "Plugin reloaded"
-  },
-  "party": {
-    "joined": " joined",
-    "left": " left",
-    "newLeader": " is the new party leader"
-  },
-  "matchmaking": {
-    "mapUnfit": "<red>Map <map_name> is unfit for <mode></red>",
-    "search": {
-      "leaderStarted": " started search for matches: mode <mode>, maps <maps>",
-      "acceptPrompt": "Type \"/quake matchmaking accept\" to accept the match.",
-      "mapInfo": "<map_name> | <mode>"
-    }
   },
   "scoreboard": {
     "team": {

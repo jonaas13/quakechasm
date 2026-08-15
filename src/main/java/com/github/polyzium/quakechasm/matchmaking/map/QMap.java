@@ -38,6 +38,7 @@ import com.github.polyzium.quakechasm.matchmaking.Team;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
 import static com.github.polyzium.quakechasm.misc.MiscUtil.chunkIntersectsBoundingBox;
@@ -92,23 +93,58 @@ public class QMap {
     }
 
     public Location getRandomSpawnpoint(Team team) {
-        Predicate<Spawnpoint> belongsToTeam = spawnpoint -> spawnpoint.allowedTeams.contains(team);
-        Predicate<Spawnpoint> freeIfTeam = spawnpoint -> ((team == Team.RED || team == Team.BLUE) && spawnpoint.allowedTeams.contains(Team.FREE));
-        Predicate<Spawnpoint> teamIfFree = spawnpoint -> (team == Team.FREE && (spawnpoint.allowedTeams.contains(Team.RED) || spawnpoint.allowedTeams.contains(Team.BLUE)));
+        List<Spawnpoint> allowedSpawnpoints = getSpawnpointsFor(team);
 
-        List<Spawnpoint> allowedSpawnpoints = this.spawnPoints.stream()
-                .filter(
-                        sp -> belongsToTeam.test(sp) || freeIfTeam.test(sp) || teamIfFree.test(sp)
-                )
-                .toList();
+        if (allowedSpawnpoints.isEmpty()) {
+            throw new IllegalStateException("Map " + name + " has no spawnpoints for team " + team);
+        }
 
         Spawnpoint spawnPoint = allowedSpawnpoints.get(
-                (int) (Math.random() * (allowedSpawnpoints.size() - 1))
+                ThreadLocalRandom.current().nextInt(allowedSpawnpoints.size())
         );
 
         Location spLoc = spawnPoint.pos;
 
         return spLoc;
+    }
+
+    public List<Spawnpoint> getSpawnpointsFor(Team team) {
+        if (this.spawnPoints == null) {
+            return List.of();
+        }
+
+        Predicate<Spawnpoint> belongsToTeam = spawnpoint -> spawnpoint.allowedTeams.contains(team);
+        Predicate<Spawnpoint> freeIfTeam = spawnpoint -> ((team == Team.RED || team == Team.BLUE) && spawnpoint.allowedTeams.contains(Team.FREE));
+        Predicate<Spawnpoint> teamIfFree = spawnpoint -> (team == Team.FREE && (spawnpoint.allowedTeams.contains(Team.RED) || spawnpoint.allowedTeams.contains(Team.BLUE)));
+
+        return this.spawnPoints.stream()
+                .filter(
+                        sp -> belongsToTeam.test(sp) || freeIfTeam.test(sp) || teamIfFree.test(sp)
+                )
+                .toList();
+    }
+
+    public boolean hasSpawnpointFor(Team team) {
+        return !getSpawnpointsFor(team).isEmpty();
+    }
+
+    public CTFFlag getBaseCTFFlag(Team team) {
+        if (team != Team.RED && team != Team.BLUE) {
+            return null;
+        }
+
+        Collection<Entity> entities = this.world.getNearbyEntities(this.bounds);
+        for (Trigger trigger : QuakePlugin.INSTANCE.triggers) {
+            if (entities.contains(trigger.getEntity()) && trigger instanceof CTFFlag flag && flag.getTeam() == team && !flag.isDrop()) {
+                return flag;
+            }
+        }
+
+        return null;
+    }
+
+    public boolean hasBaseCTFFlags() {
+        return getBaseCTFFlag(Team.RED) != null && getBaseCTFFlag(Team.BLUE) != null;
     }
 
     public void despawnPowerups(Match match) {
