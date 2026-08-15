@@ -202,9 +202,32 @@ public abstract class Commands {
                     Placeholder.unparsed("mode", setup.getMode()),
                     Placeholder.unparsed("need_players", String.valueOf(setup.getNeedPlayers())),
                     Placeholder.unparsed("score_limit", String.valueOf(setup.getScoreLimit())),
+                    Placeholder.unparsed("time_limit", Match.formatTime(setup.getTimeLimitSeconds())),
+                    Placeholder.unparsed("max_players", setup.hasPlayerLimit() ? String.valueOf(setup.getMaxPlayers()) : "unlimited"),
                     Placeholder.unparsed("startup", String.valueOf(setup.shouldCreateOnStartup())),
                     Placeholder.unparsed("autojoin", String.valueOf(setup.shouldAutoJoin()))));
         }
+    }
+
+    private static Match getCommandMatch(CommandSender sender, Integer index) {
+        MatchManager matchManager = QuakePlugin.INSTANCE.matchManager;
+        if (index != null) {
+            if (sender instanceof Player player) {
+                return matchManager.getVisibleMatch(player, index);
+            }
+
+            if (index < 0 || index >= matchManager.matches.size()) {
+                return null;
+            }
+            return matchManager.matches.get(index);
+        }
+
+        if (!(sender instanceof Player player)) {
+            return null;
+        }
+
+        QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        return userState == null ? null : userState.currentMatch;
     }
 
     public static Component getDeprecationMessage() {
@@ -946,6 +969,38 @@ public abstract class Commands {
                             sendMatchList(sender, showAll);
                         })
                 )
+                .withSubcommand(new CommandAPICommand("start")
+                        .withPermission("quake.admin")
+                        .withArguments(new IntegerArgument("index").setOptional(true))
+                        .executes((sender, args) -> {
+                            Locale locale = sender instanceof Player player ? player.locale() : TranslationManager.FALLBACK;
+                            Integer index = (Integer) args.getOrDefault("index", () -> null);
+                            Match match = getCommandMatch(sender, index);
+
+                            if (match == null) {
+                                sender.sendMessage(TranslationManager.t("error.noSuchMatch", locale));
+                                return;
+                            }
+
+                            if (match.hasStarted()) {
+                                sender.sendMessage(TranslationManager.t("match.manage.start.alreadyStarted", locale));
+                                return;
+                            }
+
+                            if (match.getPlayers().isEmpty()) {
+                                sender.sendMessage(TranslationManager.t("match.manage.start.empty", locale));
+                                return;
+                            }
+
+                            if (!match.startNow()) {
+                                sender.sendMessage(TranslationManager.t("error.generic", locale));
+                                return;
+                            }
+
+                            sender.sendMessage(TranslationManager.t("match.manage.start.started", locale,
+                                    Placeholder.unparsed("map_name", match.getMap().getDisplayName())));
+                        })
+                )
                 .withSubcommand(new CommandAPICommand("invite")
                         .withPermission("quake.player")
                         .withArguments(new EntitySelectorArgument.OnePlayer("player"))
@@ -1222,7 +1277,7 @@ public abstract class Commands {
                                                     return userState.currentMatch.getManageableProperties().keySet().toArray(String[]::new);
                                                 }
                                             }
-                                            return new String[]{"fraglimit", "capturelimit", "needPlayers"};
+                                            return new String[]{"fraglimit", "capturelimit", "needPlayers", "timeLimitSeconds", "maxPlayers"};
                                         })),
                                 new IntegerArgument("value")
                         )
@@ -1267,7 +1322,7 @@ public abstract class Commands {
                                             return userState.currentMatch.getManageableProperties().keySet().toArray(String[]::new);
                                         }
                                     }
-                                    return new String[]{"fraglimit", "capturelimit", "needPlayers"};
+                                    return new String[]{"fraglimit", "capturelimit", "needPlayers", "timeLimitSeconds", "maxPlayers"};
                                 }))
                                 .setOptional(true))
                         .executesPlayer((player, args) -> {

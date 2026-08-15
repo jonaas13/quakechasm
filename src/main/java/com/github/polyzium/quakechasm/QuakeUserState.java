@@ -77,6 +77,7 @@ public class QuakeUserState {
     public long lastKillTime = 0;
     public int consecutiveRailgunHits = 0;
     public boolean lastKillWasMidair = false;
+    public long lastSafeZoneWarningMillis = 0;
     
     // Medal display queue
     private MedalType currentlyDisplayedMedal = null;

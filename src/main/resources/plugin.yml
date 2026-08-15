@@ -2,6 +2,7 @@ name: Quakechasm
 version: 1.0.0-beta1
 main: com.github.polyzium.quakechasm.QuakePlugin
 depend: [CommandAPI, WorldEdit]
+softdepend: [PlaceholderAPI, Vault]
 description: Quake minigame plugin for Minecraft servers running PaperMC
 author: Polyzium
 website: https://github.com/polyzium/quakechasm

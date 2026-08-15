@@ -158,6 +158,16 @@ public class QMap {
                 .toList();
     }
 
+    public List<Spawnpoint> getStrictSpawnpointsFor(Team team) {
+        if (this.spawnPoints == null) {
+            return List.of();
+        }
+
+        return this.spawnPoints.stream()
+                .filter(spawnpoint -> spawnpoint.allowedTeams != null && spawnpoint.allowedTeams.contains(team))
+                .toList();
+    }
+
     public boolean hasSpawnpointFor(Team team) {
         return !getSpawnpointsFor(team).isEmpty();
     }

@@ -85,6 +85,25 @@ public class FFAMatch extends Match {
     }
 
     @Override
+    public boolean startNow() {
+        if (started || matchEnding || players.isEmpty()) {
+            return false;
+        }
+
+        if (warmupTask != null) {
+            warmupTask.cancel();
+            warmupTask = null;
+        }
+        start();
+        return true;
+    }
+
+    @Override
+    protected boolean hasWarmupPhase() {
+        return true;
+    }
+
+    @Override
     public void join(Player player, Team team) {
         super.join(player, team);
         scores.put(player, 0);
@@ -161,6 +180,7 @@ public class FFAMatch extends Match {
 
         started = true;
         warmupSeconds = -1;
+        startMatchTimer();
 
         this.updateScoreboard();
         for (Player player : this.players.keySet()) {
@@ -249,6 +269,10 @@ public class FFAMatch extends Match {
             lines.add(sidebarLine("scoreboard.limit.frags",
                     Placeholder.unparsed("limit", String.valueOf(fraglimit))));
         }
+        if (hasTimeLimit()) {
+            lines.add(sidebarLine("scoreboard.limit.time",
+                    Placeholder.unparsed("time", getFormattedTimeRemaining())));
+        }
         lines.add(sidebarLine("scoreboard.players.title"));
 
         List<Map.Entry<Player, Integer>> sortedScores = new ArrayList<>(scores.entrySet());
@@ -275,6 +299,52 @@ public class FFAMatch extends Match {
         warmupTask.cancel();
         warmupTask = null;
         warmupSeconds = -1;
+    }
+
+    @Override
+    protected void onMatchTimerTick() {
+        updateScoreboard();
+    }
+
+    @Override
+    protected void onTimeLimitReached() {
+        if (matchEnding) {
+            return;
+        }
+
+        List<Map.Entry<Player, Integer>> sortedList = new ArrayList<>(scores.entrySet());
+        sortedList.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+
+        if (sortedList.isEmpty()) {
+            end();
+            return;
+        }
+
+        int winningScore = sortedList.get(0).getValue();
+        List<Player> leaders = sortedList.stream()
+                .filter(entry -> entry.getValue() == winningScore)
+                .map(Map.Entry::getKey)
+                .toList();
+
+        for (Player player : this.players.keySet()) {
+            if (leaders.size() == 1) {
+                player.showTitle(Title.title(
+                        TranslationManager.t("match.generic.wins", player,
+                                Placeholder.unparsed("winner", leaders.get(0).getName())),
+                        TranslationManager.t("match.time.limitReached", player),
+                        Title.Times.times(Duration.ZERO, Duration.ofSeconds(3), Duration.ofMillis(500))
+                ));
+            } else {
+                player.showTitle(Title.title(
+                        TranslationManager.t("match.time.tied", player),
+                        TranslationManager.t("match.time.limitReached", player),
+                        Title.Times.times(Duration.ZERO, Duration.ofSeconds(3), Duration.ofMillis(500))
+                ));
+            }
+            player.sendMessage(this.getScoreboard());
+        }
+
+        end();
     }
 
     public Pair<Integer, Boolean> getPlace(Player player) {

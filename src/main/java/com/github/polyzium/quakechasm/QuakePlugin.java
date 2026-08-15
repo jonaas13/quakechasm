@@ -24,6 +24,7 @@ import com.github.polyzium.quakechasm.game.entities.DisplayPickup;
 import com.github.polyzium.quakechasm.game.entities.QEntityUtil;
 import com.github.polyzium.quakechasm.game.entities.Trigger;
 import com.github.polyzium.quakechasm.game.entities.pickups.*;
+import com.github.polyzium.quakechasm.hud.LobbyScoreboard;
 import com.google.gson.reflect.TypeToken;
 import dev.jorel.commandapi.CommandAPI;
 import net.kyori.adventure.text.Component;
@@ -74,6 +75,7 @@ public class QuakePlugin extends JavaPlugin {
     public MatchmakingService matchmakingService;
     public TranslationManager translationManager;
     public PluginConfig config;
+    public LobbyScoreboard lobbyScoreboard;
 
     public void startRotatingPickups() {
         this.rotatorAngle = 0;
@@ -114,6 +116,24 @@ public class QuakePlugin extends JavaPlugin {
                 }
             }
         }.runTaskTimer(this, 0, 1);
+    }
+
+    public void startLobbyScoreboardUpdater() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (lobbyScoreboard == null) {
+                    return;
+                }
+
+                for (Map.Entry<Player, QuakeUserState> entry : userStates.entrySet()) {
+                    QuakeUserState userState = entry.getValue();
+                    if (userState != null && userState.currentMatch == null) {
+                        lobbyScoreboard.apply(entry.getKey());
+                    }
+                }
+            }
+        }.runTaskTimer(this, 0, 100);
     }
 
     public void loadTrigger(Entity entity) {
@@ -174,6 +194,9 @@ public class QuakePlugin extends JavaPlugin {
         player.setWalkSpeed(config.player.walkSpeed);
         player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(20);
         this.userStates.put(player, new QuakeUserState(player));
+        if (this.lobbyScoreboard != null) {
+            this.lobbyScoreboard.apply(player);
+        }
     }
 
     public void instantiateStates() {
@@ -344,6 +367,7 @@ public class QuakePlugin extends JavaPlugin {
             getLogger().severe("Failed to load configuration: " + e.getMessage());
             throw new RuntimeException(e);
         }
+        this.lobbyScoreboard = new LobbyScoreboard();
 
         // events
         getServer().getPluginManager().registerEvents(new MiscListener(), this);
@@ -387,6 +411,7 @@ public class QuakePlugin extends JavaPlugin {
         this.matchmakingService.start();
         this.startRotatingPickups();
         this.startHudUpdater();
+        this.startLobbyScoreboardUpdater();
 
         // commands
         if (!isReload)

@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 
 public class PluginConfig {
@@ -49,6 +50,12 @@ public class PluginConfig {
 
     @SerializedName("gui")
     public GuiConfig gui;
+
+    @SerializedName("scoreboard1")
+    public LobbyScoreboardConfig scoreboard1;
+
+    @SerializedName("teamSafeZone")
+    public TeamSafeZoneConfig teamSafeZone;
 
     public static class LocaleConfig {
         @SerializedName("fallback")
@@ -108,8 +115,11 @@ public class PluginConfig {
         @SerializedName("defaultScoreLimit")
         public int defaultScoreLimit = 10;
 
+        @SerializedName("defaultTimeLimitSeconds")
+        public int defaultTimeLimitSeconds = 300;
+
         @SerializedName("defaultMaxPlayers")
-        public int defaultMaxPlayers = 0;
+        public int defaultMaxPlayers = 50;
 
         @SerializedName("autoJoinDelayTicks")
         public long autoJoinDelayTicks = 5;
@@ -199,6 +209,32 @@ public class PluginConfig {
         public int maxPlayerRows = 8;
     }
 
+    public static class LobbyScoreboardConfig {
+        @SerializedName("title")
+        public String title = " <gradient:#fa7f05:#f79514><bold>Minearchy</bold></gradient>";
+
+        @SerializedName("lines")
+        public ArrayList<String> lines = new ArrayList<>(List.of(
+                " ",
+                "&f🛡 %vault_prefix%",
+                "&f👤 &f%player%",
+                "&f🏷%vault_suffix%",
+                " ",
+                " <gradient:#fa7f05:#f79514>minearchy.com</gradient>"
+        ));
+    }
+
+    public static class TeamSafeZoneConfig {
+        @SerializedName("enabled")
+        public boolean enabled = true;
+
+        @SerializedName("radius")
+        public double radius = 8.0;
+
+        @SerializedName("message")
+        public String message = "You can't enter the enemy safe zone.";
+    }
+
     public static class GameSetupConfig {
         @SerializedName("map")
         public String map;
@@ -211,6 +247,9 @@ public class PluginConfig {
 
         @SerializedName("scoreLimit")
         public Integer scoreLimit;
+
+        @SerializedName("timeLimitSeconds")
+        public Integer timeLimitSeconds;
 
         @SerializedName("privacy")
         public String privacy;
@@ -234,6 +273,8 @@ public class PluginConfig {
         this.player = new PlayerConfig();
         this.matchmaking = new MatchmakingConfig();
         this.gui = new GuiConfig();
+        this.scoreboard1 = new LobbyScoreboardConfig();
+        this.teamSafeZone = new TeamSafeZoneConfig();
     }
 
     public static PluginConfig load() throws IOException {
@@ -260,7 +301,7 @@ public class PluginConfig {
             }
         }
 
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        Gson gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
         String configJson = Files.readString(configFile.toPath(), StandardCharsets.UTF_8);
         JsonObject configRoot = JsonParser.parseString(configJson).getAsJsonObject();
         PluginConfig config = gson.fromJson(configRoot, PluginConfig.class);
@@ -282,6 +323,7 @@ public class PluginConfig {
                 {"matchmaking", "fallbackMode"},
                 {"matchmaking", "defaultNeedPlayers"},
                 {"matchmaking", "defaultScoreLimit"},
+                {"matchmaking", "defaultTimeLimitSeconds"},
                 {"matchmaking", "defaultMaxPlayers"},
                 {"matchmaking", "autoJoinDelayTicks"},
                 {"matchmaking", "keepConfiguredMatchesReady"},
@@ -306,7 +348,14 @@ public class PluginConfig {
                 {"gui", "scoreboard", "showMap"},
                 {"gui", "scoreboard", "showScoreLimit"},
                 {"gui", "scoreboard", "splitWaitingPlayers"},
-                {"gui", "scoreboard", "maxPlayerRows"}
+                {"gui", "scoreboard", "maxPlayerRows"},
+                {"scoreboard1"},
+                {"scoreboard1", "title"},
+                {"scoreboard1", "lines"},
+                {"teamSafeZone"},
+                {"teamSafeZone", "enabled"},
+                {"teamSafeZone", "radius"},
+                {"teamSafeZone", "message"}
         });
         boolean missingFallbackMode = isMissing(configRoot, new String[]{"matchmaking", "fallbackMode"});
         boolean hasLegacyDefaultMode = !isMissing(configRoot, new String[]{"matchmaking", "defaultMode"});
@@ -360,8 +409,12 @@ public class PluginConfig {
             config.matchmaking.defaultScoreLimit = 1;
             changed = true;
         }
-        if (config.matchmaking.defaultMaxPlayers < 0) {
-            config.matchmaking.defaultMaxPlayers = 0;
+        if (config.matchmaking.defaultTimeLimitSeconds < 0) {
+            config.matchmaking.defaultTimeLimitSeconds = 0;
+            changed = true;
+        }
+        if (config.matchmaking.defaultMaxPlayers <= 0) {
+            config.matchmaking.defaultMaxPlayers = 50;
             changed = true;
         }
         if (config.matchmaking.autoJoinDelayTicks < 1) {
@@ -402,6 +455,41 @@ public class PluginConfig {
         }
         if (config.gui.scoreboard.maxPlayerRows > 12) {
             config.gui.scoreboard.maxPlayerRows = 12;
+            changed = true;
+        }
+        if (config.scoreboard1 == null) {
+            config.scoreboard1 = new LobbyScoreboardConfig();
+            changed = true;
+        }
+        if (config.scoreboard1.title == null || config.scoreboard1.title.isBlank()) {
+            config.scoreboard1.title = new LobbyScoreboardConfig().title;
+            changed = true;
+        }
+        if (config.scoreboard1.lines == null) {
+            config.scoreboard1.lines = new LobbyScoreboardConfig().lines;
+            changed = true;
+        }
+        LobbyScoreboardConfig lobbyScoreboardDefaults = new LobbyScoreboardConfig();
+        if (" <#fa7f05>&lMinearchy</#f79514>".equals(config.scoreboard1.title)) {
+            config.scoreboard1.title = lobbyScoreboardDefaults.title;
+            changed = true;
+        }
+        for (int i = 0; i < config.scoreboard1.lines.size(); i++) {
+            if (" <#fa7f05>minearchy.com</#f79514>".equals(config.scoreboard1.lines.get(i))) {
+                config.scoreboard1.lines.set(i, lobbyScoreboardDefaults.lines.getLast());
+                changed = true;
+            }
+        }
+        if (config.teamSafeZone == null) {
+            config.teamSafeZone = new TeamSafeZoneConfig();
+            changed = true;
+        }
+        if (config.teamSafeZone.radius < 0) {
+            config.teamSafeZone.radius = 0;
+            changed = true;
+        }
+        if (config.teamSafeZone.message == null || config.teamSafeZone.message.isBlank()) {
+            config.teamSafeZone.message = new TeamSafeZoneConfig().message;
             changed = true;
         }
 

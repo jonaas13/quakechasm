@@ -69,7 +69,7 @@ Example:
     "fallbackMode": "ffa",
     "defaultNeedPlayers": 2,
     "defaultScoreLimit": 10,
-    "defaultMaxPlayers": 0,
+    "defaultMaxPlayers": 50,
     "autoJoinDelayTicks": 5,
     "keepConfiguredMatchesReady": true,
     "maintenanceIntervalTicks": 200,
@@ -110,6 +110,7 @@ Useful commands:
 - `/quake matchmaking list`: list visible matches.
 - `/quake setup list`: show effective map setups.
 - `/quake setup create <map>`: create the configured match for one map.
+- `/quake match start [index]`: manually start your current match, or the indexed match, as an admin/op.
 - `/quake matchmaking rebuild`: create any missing configured startup matches.
 
 ## Contributing

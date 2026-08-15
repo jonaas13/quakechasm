@@ -25,7 +25,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.*;
@@ -37,6 +36,7 @@ import org.bukkit.scoreboard.Criteria;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Scoreboard;
 import org.jetbrains.annotations.NotNull;
 import com.github.polyzium.quakechasm.PluginConfig;
@@ -46,9 +46,11 @@ import com.github.polyzium.quakechasm.game.combat.DamageCause;
 import com.github.polyzium.quakechasm.game.combat.DeathMessages;
 import com.github.polyzium.quakechasm.matchmaking.Team;
 import com.github.polyzium.quakechasm.matchmaking.map.QMap;
+import com.github.polyzium.quakechasm.matchmaking.map.Spawnpoint;
 import com.github.polyzium.quakechasm.misc.Chatroom;
 import com.github.polyzium.quakechasm.misc.MiscUtil;
 import com.github.polyzium.quakechasm.misc.Pair;
+import com.github.polyzium.quakechasm.misc.ScoreboardText;
 import com.github.polyzium.quakechasm.misc.TranslationManager;
 
 import java.lang.reflect.Field;
@@ -70,10 +72,17 @@ public abstract class Match implements ForwardingAudience {
     private static final int STATIC_BRANDING_LINES = 1;
     public boolean matchEnding = false;
 
+    @QManageable(name = "timeLimitSeconds", min = 0, max = 3600, description = "Match time limit in seconds, 0 disables the timer")
+    protected int timeLimitSeconds = 300;
+    private BukkitTask matchTimerTask = null;
+    private int remainingTimeSeconds = -1;
+
     protected UUID ownerId;
     protected MatchPrivacy privacy;
     protected String passwordHash;
     protected HashSet<UUID> invitedPlayers;
+    @QManageable(name = "maxPlayers", min = 0, max = 500, description = "Maximum players allowed in the match, 0 disables the limit")
+    protected int maxPlayers = 0;
     
     public Match(QMap map) {
         this(map, null, MatchPrivacy.PUBLIC, null);
@@ -135,8 +144,35 @@ public abstract class Match implements ForwardingAudience {
     public abstract void setScoreLimit(int scoreLimit);
     public abstract void setNeedPlayers(int needPlayers);
 
+    public void setTimeLimitSeconds(int timeLimitSeconds) {
+        this.timeLimitSeconds = Math.max(0, timeLimitSeconds);
+        if (hasStarted()) {
+            startMatchTimer();
+        }
+    }
+
     public boolean hasStarted() {
         return false;
+    }
+
+    public boolean startNow() {
+        return false;
+    }
+
+    protected boolean hasWarmupPhase() {
+        return false;
+    }
+
+    public void setMaxPlayers(int maxPlayers) {
+        this.maxPlayers = Math.max(0, maxPlayers);
+    }
+
+    public int getMaxPlayers() {
+        return maxPlayers;
+    }
+
+    public boolean hasPlayerLimit() {
+        return maxPlayers > 0;
     }
 
     public void join(Player player, Team team) {
@@ -180,6 +216,9 @@ public abstract class Match implements ForwardingAudience {
         refreshPlayerListVisibility();
 
         userState.switchChat(Chatroom.MATCH);
+        if (hasWarmupPhase() && !hasStarted()) {
+            broadcastWarmupJoin(player);
+        }
         this.sendMessage(TranslationManager.t("match.player.joined", TranslationManager.FALLBACK,
             Placeholder.unparsed("player_name", player.getName())));
     }
@@ -193,6 +232,7 @@ public abstract class Match implements ForwardingAudience {
     }
     public void end() {
         matchEnding = true;
+        stopMatchTimer();
 
         clearInvites();
 
@@ -258,7 +298,6 @@ public abstract class Match implements ForwardingAudience {
             userState.currentMatch = null;
             userState.switchChat(Chatroom.GLOBAL);
         }
-        player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
 
         // Restore normal movement speeds
         player.setWalkSpeed(QuakePlugin.INSTANCE.config.player.walkSpeed);
@@ -267,6 +306,9 @@ public abstract class Match implements ForwardingAudience {
         player.teleport(QuakePlugin.LOBBY);
         if (userState != null) {
             userState.reset();
+        }
+        if (QuakePlugin.INSTANCE.lobbyScoreboard != null) {
+            QuakePlugin.INSTANCE.lobbyScoreboard.apply(player);
         }
 
         refreshPlayerListVisibility();
@@ -288,6 +330,58 @@ public abstract class Match implements ForwardingAudience {
         List<Team> allowedTeams = this.allowedTeams();
         return allowedTeams.contains(Team.RED) && allowedTeams.contains(Team.BLUE);
     };
+
+    public boolean isEnemySafeZone(Player player, Location location) {
+        if (!isTeamMatch()) {
+            return false;
+        }
+
+        Team playerTeam = getTeamOfPlayer(player);
+        if (playerTeam == null) {
+            return false;
+        }
+
+        Team enemyTeam = switch (playerTeam) {
+            case RED -> Team.BLUE;
+            case BLUE -> Team.RED;
+            default -> null;
+        };
+
+        return enemyTeam != null && isInsideTeamSafeZone(enemyTeam, location);
+    }
+
+    public boolean isInsideTeamSafeZone(Team team, Location location) {
+        PluginConfig.TeamSafeZoneConfig config = QuakePlugin.INSTANCE.config.teamSafeZone;
+        if (config == null || !config.enabled || config.radius <= 0 || location == null) {
+            return false;
+        }
+
+        double radiusSquared = config.radius * config.radius;
+        List<Spawnpoint> spawnpoints = map.getStrictSpawnpointsFor(team);
+        for (Spawnpoint spawnpoint : spawnpoints) {
+            if (spawnpoint.pos == null || spawnpoint.pos.getWorld() != location.getWorld()) {
+                continue;
+            }
+
+            double dx = location.getX() - spawnpoint.pos.getX();
+            double dz = location.getZ() - spawnpoint.pos.getZ();
+            if (dx * dx + dz * dz <= radiusSquared) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected void broadcastWarmupJoin(Player player) {
+        String maxPlayersText = hasPlayerLimit() ? String.valueOf(maxPlayers) : "unlimited";
+        String mode = TranslationManager.tLegacy(getNameKey(), TranslationManager.FALLBACK);
+        Bukkit.broadcastMessage("§8[§cQuake§8] §f" + player.getName()
+                + " joined " + mode
+                + " on " + map.getDisplayName()
+                + " §7(" + players.size() + "/" + maxPlayersText + " players)");
+    }
+
     public static Component getDeathMessage(Player victim, Entity attacker, DamageCause cause, Locale locale) {
         // TODO Vault API for prefixes and shit
         Component component;
@@ -410,6 +504,10 @@ public abstract class Match implements ForwardingAudience {
 
     
     public boolean canJoin(Player player, String password) {
+        if (hasPlayerLimit() && !players.containsKey(player) && players.size() >= maxPlayers) {
+            return false;
+        }
+
         if (player.hasPermission("quake.admin")) {
             return true;
         }
@@ -434,19 +532,22 @@ public abstract class Match implements ForwardingAudience {
     public Map<String, Object> getManageableProperties() {
         Map<String, Object> properties = new HashMap<>();
         Class<?> clazz = this.getClass();
-        
-        for (Field field : clazz.getDeclaredFields()) {
-            if (field.isAnnotationPresent(QManageable.class)) {
-                QManageable annotation = field.getAnnotation(QManageable.class);
-                try {
-                    field.setAccessible(true);
-                    properties.put(annotation.name(), field.get(this));
-                } catch (IllegalAccessException e) {
-                    QuakePlugin.INSTANCE.getLogger().warning(
-                        "Failed to access manageable field: " + field.getName()
-                    );
+
+        while (clazz != null && Match.class.isAssignableFrom(clazz)) {
+            for (Field field : clazz.getDeclaredFields()) {
+                if (field.isAnnotationPresent(QManageable.class)) {
+                    QManageable annotation = field.getAnnotation(QManageable.class);
+                    try {
+                        field.setAccessible(true);
+                        properties.put(annotation.name(), field.get(this));
+                    } catch (IllegalAccessException e) {
+                        QuakePlugin.INSTANCE.getLogger().warning(
+                            "Failed to access manageable field: " + field.getName()
+                        );
+                    }
                 }
             }
+            clazz = clazz.getSuperclass();
         }
         
         return properties;
@@ -454,32 +555,38 @@ public abstract class Match implements ForwardingAudience {
 
     public void setManageableProperty(String propertyName, Object value) throws IllegalArgumentException {
         Class<?> clazz = this.getClass();
-        
-        for (Field field : clazz.getDeclaredFields()) {
-            if (field.isAnnotationPresent(QManageable.class)) {
-                QManageable annotation = field.getAnnotation(QManageable.class);
-                
-                if (annotation.name().equals(propertyName)) {
-                    try {
-                        field.setAccessible(true);
 
-                        if (value instanceof Integer) {
-                            int intValue = (Integer) value;
-                            if (intValue < annotation.min() || intValue > annotation.max()) {
-                                throw new IllegalArgumentException(
-                                    String.format("Value %d is out of range [%d, %d]",
-                                        intValue, annotation.min(), annotation.max())
-                                );
+        while (clazz != null && Match.class.isAssignableFrom(clazz)) {
+            for (Field field : clazz.getDeclaredFields()) {
+                if (field.isAnnotationPresent(QManageable.class)) {
+                    QManageable annotation = field.getAnnotation(QManageable.class);
+
+                    if (annotation.name().equals(propertyName)) {
+                        try {
+                            field.setAccessible(true);
+
+                            if (value instanceof Integer) {
+                                int intValue = (Integer) value;
+                                if (intValue < annotation.min() || intValue > annotation.max()) {
+                                    throw new IllegalArgumentException(
+                                        String.format("Value %d is out of range [%d, %d]",
+                                            intValue, annotation.min(), annotation.max())
+                                    );
+                                }
                             }
+
+                            field.set(this, value);
+                            if ("timeLimitSeconds".equals(propertyName) && value instanceof Integer intValue) {
+                                setTimeLimitSeconds(intValue);
+                            }
+                            return;
+                        } catch (IllegalAccessException e) {
+                            throw new IllegalArgumentException("Cannot access property: " + propertyName);
                         }
-                        
-                        field.set(this, value);
-                        return;
-                    } catch (IllegalAccessException e) {
-                        throw new IllegalArgumentException("Cannot access property: " + propertyName);
                     }
                 }
             }
+            clazz = clazz.getSuperclass();
         }
         
         throw new IllegalArgumentException("Property not found or not manageable: " + propertyName);
@@ -495,14 +602,17 @@ public abstract class Match implements ForwardingAudience {
 
     public QManageable getPropertyAnnotation(String propertyName) {
         Class<?> clazz = this.getClass();
-        
-        for (Field field : clazz.getDeclaredFields()) {
-            if (field.isAnnotationPresent(QManageable.class)) {
-                QManageable annotation = field.getAnnotation(QManageable.class);
-                if (annotation.name().equals(propertyName)) {
-                    return annotation;
+
+        while (clazz != null && Match.class.isAssignableFrom(clazz)) {
+            for (Field field : clazz.getDeclaredFields()) {
+                if (field.isAnnotationPresent(QManageable.class)) {
+                    QManageable annotation = field.getAnnotation(QManageable.class);
+                    if (annotation.name().equals(propertyName)) {
+                        return annotation;
+                    }
                 }
             }
+            clazz = clazz.getSuperclass();
         }
         
         return null;
@@ -538,6 +648,75 @@ public abstract class Match implements ForwardingAudience {
 
     protected PluginConfig.ScoreboardGuiConfig scoreboardConfig() {
         return QuakePlugin.INSTANCE.config.gui.scoreboard;
+    }
+
+    protected void startMatchTimer() {
+        stopMatchTimer();
+        if (timeLimitSeconds <= 0) {
+            remainingTimeSeconds = -1;
+            onMatchTimerTick();
+            return;
+        }
+
+        remainingTimeSeconds = timeLimitSeconds;
+        onMatchTimerTick();
+        matchTimerTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (matchEnding) {
+                    cancel();
+                    return;
+                }
+
+                remainingTimeSeconds--;
+                onMatchTimerTick();
+                if (remainingTimeSeconds <= 0) {
+                    matchTimerTask = null;
+                    cancel();
+                    onTimeLimitReached();
+                }
+            }
+        }.runTaskTimer(QuakePlugin.INSTANCE, 20, 20);
+    }
+
+    protected void stopMatchTimer() {
+        if (matchTimerTask != null) {
+            matchTimerTask.cancel();
+            matchTimerTask = null;
+        }
+    }
+
+    protected boolean hasTimeLimit() {
+        return timeLimitSeconds > 0;
+    }
+
+    protected int getRemainingTimeSeconds() {
+        return remainingTimeSeconds;
+    }
+
+    protected String getFormattedTimeRemaining() {
+        if (remainingTimeSeconds < 0) {
+            return formatTime(timeLimitSeconds);
+        }
+
+        return formatTime(remainingTimeSeconds);
+    }
+
+    public static String formatTime(int seconds) {
+        if (seconds <= 0) {
+            return "none";
+        }
+
+        int minutes = seconds / 60;
+        int remainder = seconds % 60;
+        return String.format(Locale.ROOT, "%d:%02d", minutes, remainder);
+    }
+
+    protected void onMatchTimerTick() {
+    }
+
+    protected void onTimeLimitReached() {
+        end();
     }
 
     protected void updateSidebar(List<Component> lines) {
@@ -584,7 +763,7 @@ public abstract class Match implements ForwardingAudience {
     }
 
     private String makeSidebarEntry(Component line, int uniqueIndex) {
-        String entry = LegacyComponentSerializer.legacySection().serialize(line);
+        String entry = ScoreboardText.serialize(line);
         if (entry.isEmpty()) {
             entry = org.bukkit.ChatColor.values()[uniqueIndex % org.bukkit.ChatColor.values().length].toString();
         }

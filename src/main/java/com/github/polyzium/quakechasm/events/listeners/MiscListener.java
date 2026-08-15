@@ -19,6 +19,10 @@
 
 package com.github.polyzium.quakechasm.events.listeners;
 
+import com.github.polyzium.quakechasm.PluginConfig;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
+import org.bukkit.Location;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -34,6 +38,8 @@ import com.github.polyzium.quakechasm.matchmaking.matches.Match;
 import static com.github.polyzium.quakechasm.game.combat.WeaponUtil.damageCustom;
 
 public class MiscListener implements Listener {
+    private static final long SAFE_ZONE_WARNING_COOLDOWN_MS = 1500;
+
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player joinedPlayer = event.getPlayer();
@@ -41,6 +47,9 @@ public class MiscListener implements Listener {
         Match.refreshPlayerListVisibility();
 
         joinedPlayer.teleport(QuakePlugin.LOBBY);
+        if (QuakePlugin.INSTANCE.lobbyScoreboard != null) {
+            QuakePlugin.INSTANCE.lobbyScoreboard.apply(joinedPlayer);
+        }
         QuakePlugin.INSTANCE.matchmakingService.queueAutoJoin(joinedPlayer);
     }
 
@@ -80,10 +89,48 @@ public class MiscListener implements Listener {
             event.setCancelled(true);
             return;
         }
+        if (blockEnemySafeZone(event, userState)) {
+            return;
+        }
 
         userState.strafeJumpTicks++;
         Vector velocity = event.getTo().toVector().subtract(event.getFrom().toVector());
         StrafeJumpHandler.applyStrafeAcceleration(player, userState, velocity);
+    }
+
+    private boolean blockEnemySafeZone(PlayerMoveEvent event, QuakeUserState userState) {
+        if (userState.currentMatch == null) {
+            return false;
+        }
+
+        PluginConfig.TeamSafeZoneConfig config = QuakePlugin.INSTANCE.config.teamSafeZone;
+        if (config == null || !config.enabled || config.radius <= 0) {
+            return false;
+        }
+
+        Location from = event.getFrom();
+        Location to = event.getTo();
+        if (!userState.currentMatch.isEnemySafeZone(event.getPlayer(), to)) {
+            return false;
+        }
+
+        if (userState.currentMatch.isEnemySafeZone(event.getPlayer(), from)) {
+            return false;
+        }
+
+        event.setCancelled(true);
+        warnSafeZone(event.getPlayer(), userState, config.message);
+        return true;
+    }
+
+    private void warnSafeZone(Player player, QuakeUserState userState, String message) {
+        long now = System.currentTimeMillis();
+        if (now - userState.lastSafeZoneWarningMillis < SAFE_ZONE_WARNING_COOLDOWN_MS) {
+            return;
+        }
+
+        userState.lastSafeZoneWarningMillis = now;
+        player.sendActionBar(Component.text(message).color(TextColor.color(0xff5555)));
     }
 
     // Telefrag: kill any entity at the teleport destination

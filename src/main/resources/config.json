@@ -19,7 +19,8 @@
     "fallbackMode": "ffa",
     "defaultNeedPlayers": 2,
     "defaultScoreLimit": 10,
-    "defaultMaxPlayers": 0,
+    "defaultTimeLimitSeconds": 300,
+    "defaultMaxPlayers": 50,
     "autoJoinDelayTicks": 5,
     "keepConfiguredMatchesReady": true,
     "maintenanceIntervalTicks": 200,
@@ -47,5 +48,21 @@
       "splitWaitingPlayers": true,
       "maxPlayerRows": 8
     }
+  },
+  "scoreboard1": {
+    "title": " <gradient:#fa7f05:#f79514><bold>Minearchy</bold></gradient>",
+    "lines": [
+      " ",
+      "&f🛡 %vault_prefix%",
+      "&f👤 &f%player%",
+      "&f🏷%vault_suffix%",
+      " ",
+      " <gradient:#fa7f05:#f79514>minearchy.com</gradient>"
+    ]
+  },
+  "teamSafeZone": {
+    "enabled": true,
+    "radius": 8.0,
+    "message": "You can't enter the enemy safe zone."
   }
 }

@@ -263,6 +263,10 @@
         "tiedWithScore": "<yellow>Teams are tied <score> to <score></yellow>"
       }
     },
+    "time": {
+      "limitReached": "Time limit reached",
+      "tied": "Match tied"
+    },
     "end": {
       "teleportCountdown": "Teleporting to lobby in <count>"
     },
@@ -309,7 +313,12 @@
       "noProperties": "<yellow>This match has no manageable properties.</yellow>",
       "propertiesTitle": "<blue><bold>Manageable Properties:</bold></blue>",
       "propertyEntry": "<gray><property>: <white><value>",
-      "canManage": "<green>You can manage this match.</green>"
+      "canManage": "<green>You can manage this match.</green>",
+      "start": {
+        "started": "<green>Started the match on <map_name>.</green>",
+        "alreadyStarted": "<yellow>This match has already started.</yellow>",
+        "empty": "<yellow>Cannot start an empty match.</yellow>"
+      }
     },
     "info": {
       "title": "<blue><bold>Match Info</bold></blue>",
@@ -366,7 +375,7 @@
     "list": {
       "empty": "<yellow>No map setups are available.</yellow>",
       "title": "<blue><bold>Map Match Defaults</bold></blue>",
-      "entry": "<white><display_name></white> <dark_gray>(<map_name>)</dark_gray> <gray>- <source> <gray>- mode=<white><mode></white> need=<white><need_players></white> score=<white><score_limit></white> startup=<white><startup></white> autojoin=<white><autojoin></white></gray>"
+      "entry": "<white><display_name></white> <dark_gray>(<map_name>)</dark_gray> <gray>- <source> <gray>- mode=<white><mode></white> need=<white><need_players></white> score=<white><score_limit></white> time=<white><time_limit></white> max=<white><max_players></white> startup=<white><startup></white> autojoin=<white><autojoin></white></gray>"
     },
     "create": {
       "created": "<green>Created configured <mode> match on <map_name>.</green>"
@@ -401,6 +410,7 @@
           "map": "<gray>Map: <white><map_name></white></gray>",
           "players": "<gray>Players: <white><players></white><dark_gray>/</dark_gray><white><max_players></white></gray>",
           "scoreLimit": "<gray>Limit: <white><score_limit></white></gray>",
+          "timeLimit": "<gray>Time: <white><time_limit></white></gray>",
           "privacy": "<gray>Access: <privacy></gray>"
         },
         "status": {
@@ -534,7 +544,7 @@
   },
   "scoreboard": {
     "title": "<gradient:#fa7f05:#f79514><bold>Quake</bold></gradient>",
-    "website": "<gradient:#fa7f05:#f79514>minearchy.com</gradient>",
+    "website": "<gradient:#ff8a00:#ffd166>minearchy.com</gradient>",
     "mode": "<gray>Mode: <white><mode></white></gray>",
     "map": "<gray>Map: <white><map_name></white></gray>",
     "waiting": {
@@ -547,7 +557,8 @@
     },
     "limit": {
       "frags": "<light_green>First to <white><limit>Kills</white> wins!</light_green>",
-      "captures": "<gray>Capture Limit <white><limit></white></gray>"
+      "captures": "<gray>Capture Limit <white><limit></white></gray>",
+      "time": "<gray>Time <white><time></white></gray>"
     },
     "players": {
       "title": "<white><bold>Top Kills</bold></white>",

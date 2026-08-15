@@ -263,6 +263,10 @@
         "tiedWithScore": "<yellow>Команды равны: <score> против <score></yellow>"
       }
     },
+    "time": {
+      "limitReached": "Время матча истекло",
+      "tied": "Ничья"
+    },
     "end": {
       "teleportCountdown": "Телепортация в лобби через <count>"
     },
@@ -309,7 +313,12 @@
       "noProperties": "<yellow>У этого матча нет управляемых свойств.</yellow>",
       "propertiesTitle": "<blue><bold>Управляемые свойства:</bold></blue>",
       "propertyEntry": "<gray><property>: <white><value>",
-      "canManage": "<green>Вы можете управлять этим матчем.</green>"
+      "canManage": "<green>Вы можете управлять этим матчем.</green>",
+      "start": {
+        "started": "<green>Матч на карте <map_name> запущен.</green>",
+        "alreadyStarted": "<yellow>Этот матч уже начался.</yellow>",
+        "empty": "<yellow>Нельзя запустить пустой матч.</yellow>"
+      }
     },
     "info": {
       "title": "<blue><bold>Информация о матче</bold></blue>",
@@ -366,7 +375,7 @@
     "list": {
       "empty": "<yellow>Нет доступных настроек карт.</yellow>",
       "title": "<blue><bold>Настройки матчей карт</bold></blue>",
-      "entry": "<white><display_name></white> <dark_gray>(<map_name>)</dark_gray> <gray>- <source> <gray>- mode=<white><mode></white> need=<white><need_players></white> score=<white><score_limit></white> startup=<white><startup></white> autojoin=<white><autojoin></white></gray>"
+      "entry": "<white><display_name></white> <dark_gray>(<map_name>)</dark_gray> <gray>- <source> <gray>- mode=<white><mode></white> need=<white><need_players></white> score=<white><score_limit></white> time=<white><time_limit></white> max=<white><max_players></white> startup=<white><startup></white> autojoin=<white><autojoin></white></gray>"
     },
     "create": {
       "created": "<green>Создан настроенный матч <mode> на <map_name>.</green>"
@@ -401,6 +410,7 @@
           "map": "<gray>Карта: <white><map_name></white></gray>",
           "players": "<gray>Игроки: <white><players></white><dark_gray>/</dark_gray><white><max_players></white></gray>",
           "scoreLimit": "<gray>Лимит: <white><score_limit></white></gray>",
+          "timeLimit": "<gray>Время: <white><time_limit></white></gray>",
           "privacy": "<gray>Доступ: <privacy></gray>"
         },
         "status": {
@@ -534,7 +544,7 @@
   },
   "scoreboard": {
     "title": "<gradient:#fa7f05:#f79514><bold>Quake</bold></gradient>",
-    "website": "<gradient:#fa7f05:#f79514>minearchy.com</gradient>",
+    "website": "<gradient:#ff8a00:#ffd166>minearchy.com</gradient>",
     "mode": "<gray>Режим: <white><mode></white></gray>",
     "map": "<gray>Карта: <white><map_name></white></gray>",
     "waiting": {
@@ -547,7 +557,8 @@
     },
     "limit": {
       "frags": "<gray>Лимит убийств <white><limit></white></gray>",
-      "captures": "<gray>Лимит захватов <white><limit></white></gray>"
+      "captures": "<gray>Лимит захватов <white><limit></white></gray>",
+      "time": "<gray>Время <white><time></white></gray>"
     },
     "players": {
       "title": "<white><bold>Счет</bold></white>",

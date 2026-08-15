@@ -36,6 +36,7 @@ public class GameSetup {
     private final String mode;
     private final int needPlayers;
     private final int scoreLimit;
+    private final int timeLimitSeconds;
     private final MatchPrivacy privacy;
     private final String password;
     private final boolean createOnStartup;
@@ -47,6 +48,7 @@ public class GameSetup {
             String mode,
             int needPlayers,
             int scoreLimit,
+            int timeLimitSeconds,
             MatchPrivacy privacy,
             String password,
             boolean createOnStartup,
@@ -57,6 +59,7 @@ public class GameSetup {
         this.mode = normalizeMode(mode);
         this.needPlayers = needPlayers;
         this.scoreLimit = scoreLimit;
+        this.timeLimitSeconds = Math.max(0, timeLimitSeconds);
         this.privacy = privacy == null ? MatchPrivacy.PUBLIC : privacy;
         this.password = password;
         this.createOnStartup = createOnStartup;
@@ -77,6 +80,7 @@ public class GameSetup {
                 mode,
                 needPlayers,
                 config.defaultScoreLimit,
+                config.defaultTimeLimitSeconds,
                 MatchPrivacy.PUBLIC,
                 null,
                 config.createsMatchesAutomatically(),
@@ -93,6 +97,7 @@ public class GameSetup {
                 firstNonBlank(setupConfig.mode, fallback.getMode()),
                 setupConfig.needPlayers != null ? setupConfig.needPlayers : fallback.getNeedPlayers(),
                 setupConfig.scoreLimit != null ? setupConfig.scoreLimit : fallback.getScoreLimit(),
+                setupConfig.timeLimitSeconds != null ? setupConfig.timeLimitSeconds : fallback.getTimeLimitSeconds(),
                 parsePrivacy(firstNonBlank(setupConfig.privacy, fallback.getPrivacy().name())),
                 firstNonBlank(setupConfig.password, fallback.getPassword()),
                 setupConfig.createOnStartup != null ? setupConfig.createOnStartup : fallback.shouldCreateOnStartup(),
@@ -115,6 +120,10 @@ public class GameSetup {
 
     public int getScoreLimit() {
         return scoreLimit;
+    }
+
+    public int getTimeLimitSeconds() {
+        return timeLimitSeconds;
     }
 
     public MatchPrivacy getPrivacy() {

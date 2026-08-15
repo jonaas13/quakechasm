@@ -101,6 +101,8 @@ public class MatchBrowserMenu {
             lore.add(TranslationManager.t("menu.matchBrowser.match.lore.scoreLimit", locale,
                     Placeholder.unparsed("score_limit", String.valueOf(setup.getScoreLimit()))));
         }
+        lore.add(TranslationManager.t("menu.matchBrowser.match.lore.timeLimit", locale,
+                Placeholder.unparsed("time_limit", Match.formatTime(setup.getTimeLimitSeconds()))));
         lore.add(TranslationManager.t("menu.matchBrowser.match.lore.privacy", locale,
                 Placeholder.component("privacy", privacyComponent(match.getPrivacy(), locale))));
         if (config.showOwner) {

@@ -195,6 +195,8 @@ public class MatchmakingService {
 
         match.setNeedPlayers(setup.getNeedPlayers());
         match.setScoreLimit(setup.getScoreLimit());
+        match.setTimeLimitSeconds(setup.getTimeLimitSeconds());
+        match.setMaxPlayers(setup.getMaxPlayers());
         return match;
     }
 
@@ -259,11 +261,12 @@ public class MatchmakingService {
                 mode,
                 needPlayers,
                 fallback.getScoreLimit(),
+                fallback.getTimeLimitSeconds(),
                 privacy,
                 password,
                 false,
                 false,
-                0
+                fallback.getMaxPlayers()
         );
 
         return createMatch(setup, ownerId);
