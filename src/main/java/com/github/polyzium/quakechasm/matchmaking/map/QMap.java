@@ -64,6 +64,40 @@ public class QMap {
         this.neededPlayers = neededPlayers;
     }
 
+    public String getDisplayName() {
+        String rawDisplayName = displayName != null && !displayName.isBlank() ? displayName : name;
+        return formatDisplayName(rawDisplayName);
+    }
+
+    private static String formatDisplayName(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder(value.length());
+        boolean capitalizeNext = true;
+        boolean pendingSpace = false;
+
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '_' || Character.isWhitespace(c)) {
+                pendingSpace = true;
+                capitalizeNext = true;
+                continue;
+            }
+
+            if (pendingSpace && builder.length() > 0) {
+                builder.append(' ');
+            }
+            pendingSpace = false;
+
+            builder.append(capitalizeNext ? Character.toUpperCase(c) : c);
+            capitalizeNext = false;
+        }
+
+        return builder.toString();
+    }
+
     // Call this ONLY WHEN STARTING A MATCH!!!
     public void chunkLoad() {
         for (Chunk chunk : this.getChunks()) {

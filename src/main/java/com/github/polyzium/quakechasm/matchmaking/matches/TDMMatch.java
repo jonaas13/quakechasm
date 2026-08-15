@@ -30,6 +30,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import com.github.polyzium.quakechasm.PluginConfig;
 import com.github.polyzium.quakechasm.QuakePlugin;
 import com.github.polyzium.quakechasm.QuakeUserState;
 import com.github.polyzium.quakechasm.game.combat.DamageCause;
@@ -260,18 +261,32 @@ public class TDMMatch extends Match {
     }
 
     private List<Component> getSidebarLines() {
+        PluginConfig.ScoreboardGuiConfig config = scoreboardConfig();
         ArrayList<Component> lines = new ArrayList<>();
-        lines.add(sidebarLine("scoreboard.mode",
-                Placeholder.unparsed("mode", TranslationManager.tLegacy(getNameKey(), TranslationManager.FALLBACK))));
-        lines.add(sidebarLine("scoreboard.map",
-                Placeholder.unparsed("map_name", map.name)));
+        if (config.showMode) {
+            lines.add(sidebarLine("scoreboard.mode",
+                    Placeholder.unparsed("mode", TranslationManager.tLegacy(getNameKey(), TranslationManager.FALLBACK))));
+        }
+        if (config.showMap) {
+            lines.add(sidebarLine("scoreboard.map",
+                    Placeholder.unparsed("map_name", map.getDisplayName())));
+        }
 
         if (!started) {
             if (warmupTask == null) {
-                lines.add(sidebarLine("scoreboard.waiting.players",
-                        Placeholder.unparsed("current", String.valueOf(players.size())),
-                        Placeholder.unparsed("needed", String.valueOf(needPlayers))));
+                lines.add(sidebarLine("scoreboard.waiting.title"));
+                if (config.splitWaitingPlayers) {
+                    lines.add(sidebarLine("scoreboard.waiting.playersCurrent",
+                            Placeholder.unparsed("current", String.valueOf(players.size())),
+                            Placeholder.unparsed("needed", String.valueOf(needPlayers))));
+                    lines.add(sidebarLine("scoreboard.waiting.playersNeeded"));
+                } else {
+                    lines.add(sidebarLine("scoreboard.waiting.players",
+                            Placeholder.unparsed("current", String.valueOf(players.size())),
+                            Placeholder.unparsed("needed", String.valueOf(needPlayers))));
+                }
             } else {
+                lines.add(sidebarLine("scoreboard.waiting.warmup"));
                 lines.add(sidebarLine("scoreboard.waiting.countdown",
                         Placeholder.unparsed("seconds", String.valueOf(Math.max(0, warmupSeconds)))));
             }
@@ -282,8 +297,10 @@ public class TDMMatch extends Match {
                 Placeholder.unparsed("score", String.valueOf(teamScores[0]))));
         lines.add(sidebarLine("scoreboard.team.blue",
                 Placeholder.unparsed("score", String.valueOf(teamScores[1]))));
-        lines.add(sidebarLine("scoreboard.limit.frags",
-                Placeholder.unparsed("limit", String.valueOf(fraglimit))));
+        if (config.showScoreLimit) {
+            lines.add(sidebarLine("scoreboard.limit.frags",
+                    Placeholder.unparsed("limit", String.valueOf(fraglimit))));
+        }
         lines.add(sidebarLine("scoreboard.players.title"));
 
         List<Map.Entry<Player, Integer>> sortedScores = new ArrayList<>(scores.entrySet());
@@ -291,11 +308,12 @@ public class TDMMatch extends Match {
 
         int place = 1;
         for (Map.Entry<Player, Integer> scoreEntry : sortedScores) {
-            if (place > 8) break;
+            if (place > config.maxPlayerRows) break;
             Team team = players.get(scoreEntry.getKey());
-            lines.add(Component.text(place + ". ")
-                    .append(Component.text(scoreEntry.getKey().getName()).color(TextColor.color(Team.Colors.get(team))))
-                    .append(Component.text(": " + scoreEntry.getValue())));
+            lines.add(sidebarLine("scoreboard.players.teamEntry",
+                    Placeholder.unparsed("place", String.valueOf(place)),
+                    Placeholder.component("player_name", Component.text(scoreEntry.getKey().getName()).color(TextColor.color(Team.Colors.get(team)))),
+                    Placeholder.unparsed("score", scoreEntry.getValue().toString())));
             place++;
         }
 

@@ -26,6 +26,7 @@ import com.github.polyzium.quakechasm.matchmaking.matches.Match;
 import com.github.polyzium.quakechasm.matchmaking.matches.MatchPrivacy;
 import com.github.polyzium.quakechasm.misc.TranslationManager;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -80,9 +81,9 @@ public class MatchBrowserMenu {
         ItemMeta meta = item.getItemMeta();
 
         Component matchType = TranslationManager.t(match.getNameKey(), locale);
-        meta.displayName(TranslationManager.t("menu.matchBrowser.match.name", locale,
+        meta.displayName(itemText(TranslationManager.t("menu.matchBrowser.match.name", locale,
                 Placeholder.component("match_type", matchType),
-                Placeholder.unparsed("map_name", match.getMap().displayName)));
+                Placeholder.unparsed("map_name", match.getMap().getDisplayName())), config));
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
 
         ArrayList<Component> lore = new ArrayList<>();
@@ -92,7 +93,7 @@ public class MatchBrowserMenu {
         lore.add(TranslationManager.t("menu.matchBrowser.match.lore.mode", locale,
                 Placeholder.component("match_type", matchType)));
         lore.add(TranslationManager.t("menu.matchBrowser.match.lore.map", locale,
-                Placeholder.unparsed("map_name", match.getMap().displayName)));
+                Placeholder.unparsed("map_name", match.getMap().getDisplayName())));
         lore.add(TranslationManager.t("menu.matchBrowser.match.lore.players", locale,
                 Placeholder.unparsed("players", String.valueOf(match.getPlayers().size())),
                 Placeholder.unparsed("max_players", maxPlayersText(setup, locale))));
@@ -107,7 +108,7 @@ public class MatchBrowserMenu {
         }
         lore.add(Component.empty());
         lore.add(actionComponent(match.getPrivacy(), locale));
-        meta.lore(lore);
+        meta.lore(itemLore(lore, config));
 
         item.setItemMeta(meta);
         return item;
@@ -116,10 +117,10 @@ public class MatchBrowserMenu {
     private static ItemStack createEmptyItem(PluginConfig.MatchBrowserGuiConfig config, Locale locale) {
         ItemStack item = new ItemStack(configuredMaterial(config.emptyMaterial, Material.BARRIER));
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(TranslationManager.t("menu.matchBrowser.empty.name", locale));
-        meta.lore(List.of(
+        meta.displayName(itemText(TranslationManager.t("menu.matchBrowser.empty.name", locale), config));
+        meta.lore(itemLore(List.of(
                 TranslationManager.t("menu.matchBrowser.empty.lore", locale)
-        ));
+        ), config));
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         item.setItemMeta(meta);
         return item;
@@ -128,9 +129,28 @@ public class MatchBrowserMenu {
     private static ItemStack createFillerItem(PluginConfig.MatchBrowserGuiConfig config) {
         ItemStack item = new ItemStack(configuredMaterial(config.fillerMaterial, Material.GRAY_STAINED_GLASS_PANE));
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(Component.empty());
+        meta.displayName(itemText(Component.empty(), config));
+        meta.setHideTooltip(true);
         item.setItemMeta(meta);
         return item;
+    }
+
+    private static Component itemText(Component component, PluginConfig.MatchBrowserGuiConfig config) {
+        if (!config.forcePlainText) {
+            return component;
+        }
+
+        return component.decoration(TextDecoration.ITALIC, false);
+    }
+
+    private static List<Component> itemLore(List<Component> lore, PluginConfig.MatchBrowserGuiConfig config) {
+        if (!config.forcePlainText) {
+            return lore;
+        }
+
+        return lore.stream()
+                .map(component -> component.decoration(TextDecoration.ITALIC, false))
+                .toList();
     }
 
     private static Material materialForPrivacy(MatchPrivacy privacy, PluginConfig.MatchBrowserGuiConfig config) {

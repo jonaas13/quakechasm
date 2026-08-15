@@ -40,6 +40,7 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Scoreboard;
 import org.jetbrains.annotations.NotNull;
+import com.github.polyzium.quakechasm.PluginConfig;
 import com.github.polyzium.quakechasm.QuakePlugin;
 import com.github.polyzium.quakechasm.QuakeUserState;
 import com.github.polyzium.quakechasm.game.combat.DamageCause;
@@ -530,7 +531,18 @@ public abstract class Match implements ForwardingAudience {
         return TranslationManager.t(key, TranslationManager.FALLBACK, placeholders);
     }
 
+    protected PluginConfig.ScoreboardGuiConfig scoreboardConfig() {
+        return QuakePlugin.INSTANCE.config.gui.scoreboard;
+    }
+
     protected void updateSidebar(List<Component> lines) {
+        PluginConfig.ScoreboardGuiConfig config = scoreboardConfig();
+        if (!config.enabled) {
+            this.vanillaScoreboard.clearSlot(DisplaySlot.SIDEBAR);
+            return;
+        }
+
+        this.sidebarObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
         this.sidebarObjective.displayName(TranslationManager.t("scoreboard.title", TranslationManager.FALLBACK));
 
         for (String entry : sidebarEntries) {

@@ -537,20 +537,25 @@
     "mode": "<gray>Режим: <white><mode></white></gray>",
     "map": "<gray>Карта: <white><map_name></white></gray>",
     "waiting": {
+      "title": "<yellow>Ожидание игроков</yellow>",
       "players": "<yellow><current>/<needed> игроков нужно для старта</yellow>",
-      "countdown": "<yellow>Старт через <seconds>с</yellow>"
+      "playersCurrent": "<yellow><current>/<needed> игроков</yellow>",
+      "playersNeeded": "<gray>нужно для старта</gray>",
+      "warmup": "<gold>Разминка</gold>",
+      "countdown": "<gray>Старт через <white><seconds>с</white></gray>"
     },
     "limit": {
-      "frags": "<gray>Лимит убийств: <white><limit></white></gray>",
-      "captures": "<gray>Лимит захватов: <white><limit></white></gray>"
+      "frags": "<gray>Лимит убийств <white><limit></white></gray>",
+      "captures": "<gray>Лимит захватов <white><limit></white></gray>"
     },
     "players": {
-      "title": "<white>Счет</white>",
-      "entry": "<gray><place>. <white><player_name></white>: <yellow><score></yellow></gray>"
+      "title": "<white><bold>Счет</bold></white>",
+      "entry": "<gray><place>. <white><player_name></white> <yellow><score></yellow></gray>",
+      "teamEntry": "<gray><place>. <player_name> <yellow><score></yellow></gray>"
     },
     "team": {
-      "blue": "Синяя команда: <score>",
-      "red": "Красная команда: <score>"
+      "blue": "<blue>Синие</blue> <white><score></white>",
+      "red": "<red>Красные</red> <white><score></white>"
     }
   },
   "warning": {

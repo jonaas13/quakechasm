@@ -92,6 +92,11 @@ public class TranslationManager {
     }
 
     private String getTranslationString(String key, Locale locale) {
+        String override = getOverride(key);
+        if (override != null) {
+            return override;
+        }
+
         String localeString = locale.toString();
         if (!translations.containsKey(localeString) && !translations.containsKey(locale.getLanguage())) {
             try {
@@ -153,6 +158,19 @@ public class TranslationManager {
 
         QuakePlugin.INSTANCE.getLogger().severe("TranslationManager could not get translation of " + key);
         return key;
+    }
+
+    private String getOverride(String key) {
+        if (QuakePlugin.INSTANCE.config == null || QuakePlugin.INSTANCE.config.locale == null || QuakePlugin.INSTANCE.config.locale.overrides == null) {
+            return null;
+        }
+
+        String override = QuakePlugin.INSTANCE.config.locale.overrides.get(key);
+        if (override == null || override.isBlank()) {
+            return null;
+        }
+
+        return override;
     }
 
     public Component translate(String key, Locale locale, TagResolver... placeholders) {

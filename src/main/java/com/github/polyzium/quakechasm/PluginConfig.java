@@ -29,6 +29,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 
 public class PluginConfig {
@@ -52,6 +53,9 @@ public class PluginConfig {
     public static class LocaleConfig {
         @SerializedName("fallback")
         public String fallback = "en_US";
+
+        @SerializedName("overrides")
+        public LinkedHashMap<String, String> overrides = new LinkedHashMap<>();
 
         public Locale getFallbackLocale() {
             String[] parts = fallback.split("_");
@@ -135,6 +139,9 @@ public class PluginConfig {
     public static class GuiConfig {
         @SerializedName("matchBrowser")
         public MatchBrowserGuiConfig matchBrowser = new MatchBrowserGuiConfig();
+
+        @SerializedName("scoreboard")
+        public ScoreboardGuiConfig scoreboard = new ScoreboardGuiConfig();
     }
 
     public static class MatchBrowserGuiConfig {
@@ -167,6 +174,29 @@ public class PluginConfig {
 
         @SerializedName("showScoreLimit")
         public boolean showScoreLimit = true;
+
+        @SerializedName("forcePlainText")
+        public boolean forcePlainText = true;
+    }
+
+    public static class ScoreboardGuiConfig {
+        @SerializedName("enabled")
+        public boolean enabled = true;
+
+        @SerializedName("showMode")
+        public boolean showMode = true;
+
+        @SerializedName("showMap")
+        public boolean showMap = true;
+
+        @SerializedName("showScoreLimit")
+        public boolean showScoreLimit = true;
+
+        @SerializedName("splitWaitingPlayers")
+        public boolean splitWaitingPlayers = true;
+
+        @SerializedName("maxPlayerRows")
+        public int maxPlayerRows = 8;
     }
 
     public static class GameSetupConfig {
@@ -237,6 +267,7 @@ public class PluginConfig {
         boolean changed = missingAny(configRoot, new String[][]{
                 {"locale"},
                 {"locale", "fallback"},
+                {"locale", "overrides"},
                 {"lobby"},
                 {"lobby", "world"},
                 {"lobby", "x"},
@@ -267,7 +298,15 @@ public class PluginConfig {
                 {"gui", "matchBrowser", "fillerMaterial"},
                 {"gui", "matchBrowser", "fillEmptySlots"},
                 {"gui", "matchBrowser", "showOwner"},
-                {"gui", "matchBrowser", "showScoreLimit"}
+                {"gui", "matchBrowser", "showScoreLimit"},
+                {"gui", "matchBrowser", "forcePlainText"},
+                {"gui", "scoreboard"},
+                {"gui", "scoreboard", "enabled"},
+                {"gui", "scoreboard", "showMode"},
+                {"gui", "scoreboard", "showMap"},
+                {"gui", "scoreboard", "showScoreLimit"},
+                {"gui", "scoreboard", "splitWaitingPlayers"},
+                {"gui", "scoreboard", "maxPlayerRows"}
         });
         boolean missingFallbackMode = isMissing(configRoot, new String[]{"matchmaking", "fallbackMode"});
         boolean hasLegacyDefaultMode = !isMissing(configRoot, new String[]{"matchmaking", "defaultMode"});
@@ -279,6 +318,10 @@ public class PluginConfig {
 
         if (config.locale == null) {
             config.locale = new LocaleConfig();
+            changed = true;
+        }
+        if (config.locale.overrides == null) {
+            config.locale.overrides = new LinkedHashMap<>();
             changed = true;
         }
         if (config.lobby == null) {
@@ -347,6 +390,18 @@ public class PluginConfig {
         }
         if (config.gui.matchBrowser.maxRows > 6) {
             config.gui.matchBrowser.maxRows = 6;
+            changed = true;
+        }
+        if (config.gui.scoreboard == null) {
+            config.gui.scoreboard = new ScoreboardGuiConfig();
+            changed = true;
+        }
+        if (config.gui.scoreboard.maxPlayerRows < 1) {
+            config.gui.scoreboard.maxPlayerRows = 1;
+            changed = true;
+        }
+        if (config.gui.scoreboard.maxPlayerRows > 12) {
+            config.gui.scoreboard.maxPlayerRows = 12;
             changed = true;
         }
 

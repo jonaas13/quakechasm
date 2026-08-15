@@ -537,20 +537,25 @@
     "mode": "<gray>Mode: <white><mode></white></gray>",
     "map": "<gray>Map: <white><map_name></white></gray>",
     "waiting": {
+      "title": "<yellow>Waiting for players</yellow>",
       "players": "<yellow><current>/<needed> players needed to start</yellow>",
-      "countdown": "<yellow>Starting in <seconds>s</yellow>"
+      "playersCurrent": "<yellow><current>/<needed> players</yellow>",
+      "playersNeeded": "<gray>needed to start</gray>",
+      "warmup": "<gold>Warmup</gold>",
+      "countdown": "<gray>Starting in <white><seconds>s</white></gray>"
     },
     "limit": {
-      "frags": "<gray>Frag limit: <white><limit></white></gray>",
-      "captures": "<gray>Capture limit: <white><limit></white></gray>"
+      "frags": "<gray>Frag limit <white><limit></white></gray>",
+      "captures": "<gray>Capture limit <white><limit></white></gray>"
     },
     "players": {
-      "title": "<white>Scores</white>",
-      "entry": "<gray><place>. <white><player_name></white>: <yellow><score></yellow></gray>"
+      "title": "<white><bold>Scores</bold></white>",
+      "entry": "<gray><place>. <white><player_name></white> <yellow><score></yellow></gray>",
+      "teamEntry": "<gray><place>. <player_name> <yellow><score></yellow></gray>"
     },
     "team": {
-      "blue": "Blue team: <score>",
-      "red": "Red team: <score>"
+      "blue": "<blue>Blue</blue> <white><score></white>",
+      "red": "<red>Red</red> <white><score></white>"
     }
   },
   "warning": {

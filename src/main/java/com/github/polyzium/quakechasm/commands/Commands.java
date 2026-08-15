@@ -172,7 +172,7 @@ public abstract class Commands {
                     Placeholder.unparsed("index", String.valueOf(i)),
                     Placeholder.component("privacy_icon", privacyIcon),
                     Placeholder.unparsed("match_type", matchTypeTranslated),
-                    Placeholder.unparsed("map_name", match.getMap().displayName),
+                    Placeholder.unparsed("map_name", match.getMap().getDisplayName()),
                     Placeholder.unparsed("player_count", String.valueOf(match.getPlayers().size())),
                     Placeholder.component("owner_info", ownerInfo)
             ).append(joinButton);
@@ -197,7 +197,7 @@ public abstract class Commands {
                     : TranslationManager.t("setup.source.mapDefault", locale);
             sender.sendMessage(TranslationManager.t("setup.list.entry", locale,
                     Placeholder.unparsed("map_name", setup.getMap().name),
-                    Placeholder.unparsed("display_name", setup.getMap().displayName),
+                    Placeholder.unparsed("display_name", setup.getMap().getDisplayName()),
                     Placeholder.component("source", source),
                     Placeholder.unparsed("mode", setup.getMode()),
                     Placeholder.unparsed("need_players", String.valueOf(setup.getNeedPlayers())),
@@ -682,7 +682,7 @@ public abstract class Commands {
                             }
 
                             player.sendMessage(TranslationManager.t("command.map.created", player,
-                                Placeholder.unparsed("map_name", displayName)));
+                                Placeholder.unparsed("map_name", qMap.getDisplayName())));
                         })
                 )
                 .withSubcommand(new CommandAPICommand("remove")
@@ -1141,7 +1141,7 @@ public abstract class Commands {
                                 Placeholder.unparsed("match_type", matchTypeTranslated)));
 
                             player.sendMessage(TranslationManager.t("match.info.map", player,
-                                Placeholder.unparsed("map_name", match.getMap().displayName)));
+                                Placeholder.unparsed("map_name", match.getMap().getDisplayName())));
 
                             player.sendMessage(TranslationManager.t("match.info.privacy", player,
                                 Placeholder.unparsed("privacy", match.getPrivacy().name())));

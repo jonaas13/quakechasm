@@ -1,6 +1,7 @@
 {
   "locale": {
-    "fallback": "en_US"
+    "fallback": "en_US",
+    "overrides": {}
   },
   "lobby": {
     "world": "world",
@@ -35,7 +36,16 @@
       "fillerMaterial": "GRAY_STAINED_GLASS_PANE",
       "fillEmptySlots": true,
       "showOwner": true,
-      "showScoreLimit": true
+      "showScoreLimit": true,
+      "forcePlainText": true
+    },
+    "scoreboard": {
+      "enabled": true,
+      "showMode": true,
+      "showMap": true,
+      "showScoreLimit": true,
+      "splitWaitingPlayers": true,
+      "maxPlayerRows": 8
     }
   }
 }
