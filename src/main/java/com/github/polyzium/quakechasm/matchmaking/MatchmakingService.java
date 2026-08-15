@@ -367,7 +367,8 @@ public class MatchmakingService {
                     return setup.shouldAutoJoin()
                             && (!setup.hasPlayerLimit() || match.getPlayers().size() < setup.getMaxPlayers());
                 })
-                .min(Comparator.comparingInt(match -> match.getPlayers().size()))
+                .min(Comparator.comparingInt(this::joinPriorityGroup)
+                        .thenComparingInt(this::joinPriorityPlayerCount))
                 .orElse(null);
     }
 
@@ -376,7 +377,28 @@ public class MatchmakingService {
                 .filter(match -> !match.matchEnding)
                 .filter(match -> match.getPrivacy() == MatchPrivacy.PUBLIC)
                 .filter(match -> match.canJoin(player, null))
-                .min(Comparator.comparingInt(match -> match.getPlayers().size()))
+                .min(Comparator.comparingInt(this::joinPriorityGroup)
+                        .thenComparingInt(this::joinPriorityPlayerCount))
                 .orElse(null);
+    }
+
+    private int joinPriorityGroup(Match match) {
+        boolean waiting = !match.hasStarted();
+        int playerCount = match.getPlayers().size();
+        if (waiting && playerCount > 0) {
+            return 0;
+        }
+        if (waiting) {
+            return 1;
+        }
+        return 2;
+    }
+
+    private int joinPriorityPlayerCount(Match match) {
+        int playerCount = match.getPlayers().size();
+        if (!match.hasStarted()) {
+            return -playerCount;
+        }
+        return playerCount;
     }
 }

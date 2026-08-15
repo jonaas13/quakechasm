@@ -134,6 +134,10 @@ public abstract class Match implements ForwardingAudience {
     public abstract void setScoreLimit(int scoreLimit);
     public abstract void setNeedPlayers(int needPlayers);
 
+    public boolean hasStarted() {
+        return false;
+    }
+
     public void join(Player player, Team team) {
         Team resolvedTeam;
         if (team == null)

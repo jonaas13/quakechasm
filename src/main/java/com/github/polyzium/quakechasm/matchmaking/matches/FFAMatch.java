@@ -80,6 +80,11 @@ public class FFAMatch extends Match {
     }
 
     @Override
+    public boolean hasStarted() {
+        return started;
+    }
+
+    @Override
     public void join(Player player, Team team) {
         super.join(player, team);
         scores.put(player, 0);
