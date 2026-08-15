@@ -29,6 +29,7 @@ import com.github.polyzium.quakechasm.QuakePlugin;
 import com.github.polyzium.quakechasm.QuakeUserState;
 import com.github.polyzium.quakechasm.game.combat.DamageCause;
 import com.github.polyzium.quakechasm.game.movement.StrafeJumpHandler;
+import com.github.polyzium.quakechasm.matchmaking.matches.Match;
 
 import static com.github.polyzium.quakechasm.game.combat.WeaponUtil.damageCustom;
 
@@ -36,16 +37,11 @@ public class MiscListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player joinedPlayer = event.getPlayer();
-        for (QuakeUserState userState : QuakePlugin.INSTANCE.userStates.values()) {
-            if (userState.currentMatch != null)
-                userState.getPlayer().unlistPlayer(joinedPlayer);
-        }
-
         QuakePlugin.INSTANCE.initPlayer(joinedPlayer);
+        Match.refreshPlayerListVisibility();
 
-        if (!QuakePlugin.INSTANCE.matchmakingService.autoJoin(joinedPlayer)) {
-            joinedPlayer.teleport(QuakePlugin.LOBBY);
-        }
+        joinedPlayer.teleport(QuakePlugin.LOBBY);
+        QuakePlugin.INSTANCE.matchmakingService.queueAutoJoin(joinedPlayer);
     }
 
     @EventHandler
@@ -53,8 +49,12 @@ public class MiscListener implements Listener {
         Player player = event.getPlayer();
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
         if (userState != null && userState.currentMatch != null) userState.currentMatch.leave(player);
+        if (QuakePlugin.INSTANCE.matchmakingService != null) {
+            QuakePlugin.INSTANCE.matchmakingService.removePendingAutoJoin(player);
+        }
 
         QuakePlugin.INSTANCE.userStates.remove(player);
+        Match.refreshPlayerListVisibility();
 
         player.teleport(QuakePlugin.LOBBY);
     }

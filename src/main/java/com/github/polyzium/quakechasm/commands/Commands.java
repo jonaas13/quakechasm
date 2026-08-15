@@ -192,9 +192,13 @@ public abstract class Commands {
 
         sender.sendMessage(TranslationManager.t("setup.list.title", locale));
         for (GameSetup setup : setups) {
+            Component source = QuakePlugin.INSTANCE.matchmakingService.hasConfiguredSetup(setup.getMap())
+                    ? TranslationManager.t("setup.source.configured", locale)
+                    : TranslationManager.t("setup.source.mapDefault", locale);
             sender.sendMessage(TranslationManager.t("setup.list.entry", locale,
                     Placeholder.unparsed("map_name", setup.getMap().name),
                     Placeholder.unparsed("display_name", setup.getMap().displayName),
+                    Placeholder.component("source", source),
                     Placeholder.unparsed("mode", setup.getMode()),
                     Placeholder.unparsed("need_players", String.valueOf(setup.getNeedPlayers())),
                     Placeholder.unparsed("score_limit", String.valueOf(setup.getScoreLimit())),

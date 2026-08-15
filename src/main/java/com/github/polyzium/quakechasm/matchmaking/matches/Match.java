@@ -27,12 +27,16 @@ import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.scoreboard.Criteria;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Scoreboard;
 import org.jetbrains.annotations.NotNull;
@@ -58,8 +62,10 @@ public abstract class Match implements ForwardingAudience {
     protected QMap map;
     protected HashMap<Player, Team> players = new HashMap<>();
     protected Scoreboard vanillaScoreboard;
+    protected Objective sidebarObjective;
     protected org.bukkit.scoreboard.Team vanillaRedTeam;
     protected org.bukkit.scoreboard.Team vanillaBlueTeam;
+    private final ArrayList<String> sidebarEntries = new ArrayList<>();
     public boolean matchEnding = false;
 
     protected UUID ownerId;
@@ -83,9 +89,16 @@ public abstract class Match implements ForwardingAudience {
         
         this.map.chunkLoad();
 
+        this.vanillaScoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+        this.sidebarObjective = this.vanillaScoreboard.registerNewObjective(
+                "quake",
+                Criteria.DUMMY,
+                TranslationManager.t("scoreboard.title", TranslationManager.FALLBACK)
+        );
+        this.sidebarObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
+
         // This is needed to hide nametags
         if (this.isTeamMatch()) {
-            this.vanillaScoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
             this.vanillaRedTeam = this.vanillaScoreboard.registerNewTeam("red");
             this.vanillaBlueTeam = this.vanillaScoreboard.registerNewTeam("blue");
 
@@ -147,10 +160,6 @@ public abstract class Match implements ForwardingAudience {
         MiscUtil.teleEffect(spawn, false);
         userState.initForMatch();
 
-        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            player.unlistPlayer(onlinePlayer);
-        }
-
         // This is needed to hide nametags
         if (this.isTeamMatch()) {
             switch (this.players.get(player)) {
@@ -158,9 +167,11 @@ public abstract class Match implements ForwardingAudience {
                 case BLUE -> this.vanillaBlueTeam.addPlayer(player);
                 default -> throw new IllegalArgumentException("Attempt to add player of disallowed team to vanilla team");
             }
-            player.setScoreboard(this.vanillaScoreboard);
             setArmor(player, resolvedTeam);
         }
+
+        player.setScoreboard(this.vanillaScoreboard);
+        refreshPlayerListVisibility();
 
         userState.switchChat(Chatroom.MATCH);
         this.sendMessage(TranslationManager.t("match.player.joined", TranslationManager.FALLBACK,
@@ -200,12 +211,17 @@ public abstract class Match implements ForwardingAudience {
                         cleanup(player);
                     }
 
-                    if (that.isTeamMatch()) {
+                    if (that.vanillaRedTeam != null) {
                         that.vanillaRedTeam.unregister();
+                    }
+                    if (that.vanillaBlueTeam != null) {
                         that.vanillaBlueTeam.unregister();
                     }
 
                     QuakePlugin.INSTANCE.matchManager.matches.remove(that);
+                    if (QuakePlugin.INSTANCE.matchmakingService != null) {
+                        QuakePlugin.INSTANCE.matchmakingService.onMatchEnded(that);
+                    }
 
                     cancel();
                 }
@@ -232,8 +248,10 @@ public abstract class Match implements ForwardingAudience {
     }
     public void cleanup(Player player) {
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
-        userState.currentMatch = null;
-        userState.switchChat(Chatroom.GLOBAL);
+        if (userState != null) {
+            userState.currentMatch = null;
+            userState.switchChat(Chatroom.GLOBAL);
+        }
         player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
 
         // Restore normal movement speeds
@@ -241,12 +259,11 @@ public abstract class Match implements ForwardingAudience {
 
         MiscUtil.teleEffect(player.getLocation(), true);
         player.teleport(QuakePlugin.LOBBY);
-        userState.reset();
-
-        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            player.listPlayer(onlinePlayer);
+        if (userState != null) {
+            userState.reset();
         }
 
+        refreshPlayerListVisibility();
         player.sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
     }
     public void onDeath(Player victim, Entity attacker, DamageCause cause) {
@@ -483,5 +500,64 @@ public abstract class Match implements ForwardingAudience {
         }
         
         return null;
+    }
+
+    public static void refreshPlayerListVisibility() {
+        for (Player viewer : Bukkit.getOnlinePlayers()) {
+            Match viewerMatch = getCurrentMatch(viewer);
+
+            for (Player target : Bukkit.getOnlinePlayers()) {
+                Match targetMatch = getCurrentMatch(target);
+                boolean shouldList = viewer.equals(target)
+                        || (viewerMatch == null && targetMatch == null)
+                        || (viewerMatch != null && viewerMatch == targetMatch);
+
+                if (shouldList) {
+                    viewer.listPlayer(target);
+                } else {
+                    viewer.unlistPlayer(target);
+                }
+            }
+        }
+    }
+
+    private static Match getCurrentMatch(Player player) {
+        QuakeUserState state = QuakePlugin.INSTANCE.userStates.get(player);
+        return state == null ? null : state.currentMatch;
+    }
+
+    protected Component sidebarLine(String key, TagResolver... placeholders) {
+        return TranslationManager.t(key, TranslationManager.FALLBACK, placeholders);
+    }
+
+    protected void updateSidebar(List<Component> lines) {
+        this.sidebarObjective.displayName(TranslationManager.t("scoreboard.title", TranslationManager.FALLBACK));
+
+        for (String entry : sidebarEntries) {
+            this.vanillaScoreboard.resetScores(entry);
+        }
+        sidebarEntries.clear();
+
+        int visibleLineCount = Math.min(lines.size(), 15);
+        for (int i = 0; i < visibleLineCount; i++) {
+            String entry = makeSidebarEntry(lines.get(i), i);
+            sidebarEntries.add(entry);
+            this.sidebarObjective.getScore(entry).setScore(visibleLineCount - i);
+        }
+    }
+
+    private String makeSidebarEntry(Component line, int uniqueIndex) {
+        String entry = LegacyComponentSerializer.legacySection().serialize(line);
+        if (entry.isEmpty()) {
+            entry = org.bukkit.ChatColor.values()[uniqueIndex % org.bukkit.ChatColor.values().length].toString();
+        }
+
+        int colorIndex = uniqueIndex;
+        while (sidebarEntries.contains(entry)) {
+            entry += org.bukkit.ChatColor.values()[colorIndex % org.bukkit.ChatColor.values().length];
+            colorIndex++;
+        }
+
+        return entry;
     }
 }

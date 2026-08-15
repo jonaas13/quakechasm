@@ -15,7 +15,7 @@
   },
   "matchmaking": {
     "mode": "manual",
-    "defaultMode": "ffa",
+    "fallbackMode": "ffa",
     "defaultNeedPlayers": 2,
     "defaultScoreLimit": 10,
     "defaultMaxPlayers": 0,
@@ -23,5 +23,19 @@
     "keepConfiguredMatchesReady": true,
     "maintenanceIntervalTicks": 200,
     "setups": []
+  },
+  "gui": {
+    "matchBrowser": {
+      "minRows": 3,
+      "maxRows": 6,
+      "publicMaterial": "LIME_CONCRETE",
+      "passwordMaterial": "YELLOW_CONCRETE",
+      "inviteOnlyMaterial": "RED_CONCRETE",
+      "emptyMaterial": "BARRIER",
+      "fillerMaterial": "GRAY_STAINED_GLASS_PANE",
+      "fillEmptySlots": true,
+      "showOwner": true,
+      "showScoreLimit": true
+    }
   }
 }

@@ -53,6 +53,7 @@ public class TDMMatch extends Match {
     private int[] teamScores = {0,0};
     private boolean started = false;
     private BukkitTask warmupTask = null;
+    private int warmupSeconds = -1;
     
     public TDMMatch(QMap map) {
         super(map);
@@ -103,7 +104,11 @@ public class TDMMatch extends Match {
     public void leave(Player player) {
         super.leave(player);
         scores.remove(player);
+        stopWarmupIfNeeded();
         this.updateScoreboard();
+        if (QuakePlugin.INSTANCE.matchmakingService != null) {
+            QuakePlugin.INSTANCE.matchmakingService.autoJoinPendingPlayers();
+        }
         
         if (players.isEmpty()) {
             QuakePlugin.INSTANCE.getLogger().warning("Last player of match "+this.getNameKey()+", "+map.name+" has left. Ending match.");
@@ -127,6 +132,9 @@ public class TDMMatch extends Match {
             int count = 10;
             @Override
             public void run() {
+                warmupSeconds = count;
+                updateScoreboard();
+
                 for (Player player : players) {
                     player.showTitle(Title.title(
                             TranslationManager.t(getNameKey(), player),
@@ -138,6 +146,8 @@ public class TDMMatch extends Match {
                 count--;
 
                 if (count == -1) {
+                    warmupSeconds = -1;
+                    warmupTask = null;
                     start();
                     cancel();
                 }
@@ -157,6 +167,7 @@ public class TDMMatch extends Match {
         }
 
         started = true;
+        warmupSeconds = -1;
 
         this.updateScoreboard();
         for (Player player : this.players.keySet()) {
@@ -240,10 +251,65 @@ public class TDMMatch extends Match {
     }
 
     private void updateScoreboard() {
+        this.updateSidebar(getSidebarLines());
+
         for (Player player : players.keySet()) {
             Component header = getHeaderComponent();
             player.sendPlayerListHeaderAndFooter(header, this.getScoreboard());
         }
+    }
+
+    private List<Component> getSidebarLines() {
+        ArrayList<Component> lines = new ArrayList<>();
+        lines.add(sidebarLine("scoreboard.mode",
+                Placeholder.unparsed("mode", TranslationManager.tLegacy(getNameKey(), TranslationManager.FALLBACK))));
+        lines.add(sidebarLine("scoreboard.map",
+                Placeholder.unparsed("map_name", map.name)));
+
+        if (!started) {
+            if (warmupTask == null) {
+                lines.add(sidebarLine("scoreboard.waiting.players",
+                        Placeholder.unparsed("current", String.valueOf(players.size())),
+                        Placeholder.unparsed("needed", String.valueOf(needPlayers))));
+            } else {
+                lines.add(sidebarLine("scoreboard.waiting.countdown",
+                        Placeholder.unparsed("seconds", String.valueOf(Math.max(0, warmupSeconds)))));
+            }
+            return lines;
+        }
+
+        lines.add(sidebarLine("scoreboard.team.red",
+                Placeholder.unparsed("score", String.valueOf(teamScores[0]))));
+        lines.add(sidebarLine("scoreboard.team.blue",
+                Placeholder.unparsed("score", String.valueOf(teamScores[1]))));
+        lines.add(sidebarLine("scoreboard.limit.frags",
+                Placeholder.unparsed("limit", String.valueOf(fraglimit))));
+        lines.add(sidebarLine("scoreboard.players.title"));
+
+        List<Map.Entry<Player, Integer>> sortedScores = new ArrayList<>(scores.entrySet());
+        sortedScores.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+
+        int place = 1;
+        for (Map.Entry<Player, Integer> scoreEntry : sortedScores) {
+            if (place > 8) break;
+            Team team = players.get(scoreEntry.getKey());
+            lines.add(Component.text(place + ". ")
+                    .append(Component.text(scoreEntry.getKey().getName()).color(TextColor.color(Team.Colors.get(team))))
+                    .append(Component.text(": " + scoreEntry.getValue())));
+            place++;
+        }
+
+        return lines;
+    }
+
+    private void stopWarmupIfNeeded() {
+        if (started || warmupTask == null || players.size() >= needPlayers) {
+            return;
+        }
+
+        warmupTask.cancel();
+        warmupTask = null;
+        warmupSeconds = -1;
     }
 
     @Override

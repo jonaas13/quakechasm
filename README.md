@@ -5,9 +5,9 @@
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-green)](https://papermc.io/)
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://adoptium.net/)
 
-Quakechasm (formerly DarkChronics-Quake) is a feature-rich implementation of the Quake minigame for modern Minecraft servers running Paper. Built from the ground up with versatility and entertainment value at its core, Quakechasm brings the authentic Quake experience to Minecraft like never before.
+Quakechasm (formerly DarkChronics-Quake) is the plugin package for a feature-rich Quake minigame on modern Minecraft servers running Paper. Built from the ground up with versatility and entertainment value at its core, it brings the authentic Quake experience to Minecraft like never before.
 
-## Why Quakechasm over other Quake plugins?
+## Why Quake?
 
 While other Quake plugins take inspiration from Hypixel's simplified interpretation, Quakechasm draws directly from id Software's legendary Quake series, specifically Quake 3 Arena and Quake Live. This isn't just another instagib clone; it's a faithful recreation of classic arena FPS gameplay in Minecraft.
 
@@ -54,9 +54,54 @@ You only need these steps if you prefer compiling the plugin yourself.
 
 ## Matchmaking and autoplay
 
-Quakechasm separates game setup defaults from match commands. Each map gets an effective setup from `plugins/Quakechasm/config.json`: either a map-specific entry in `matchmaking.setups`, or a default derived from the map's first recommended mode and needed player count.
+Quakechasm separates game setup defaults from match commands. Each map gets one effective default setup from `plugins/Quakechasm/config.json`: either a map-specific entry in `matchmaking.setups`, or a map default derived from the map's first recommended mode and needed player count. If a map has no recommended mode saved, `matchmaking.fallbackMode` is used.
 
-Set `matchmaking.mode` to `startup` to create configured matches automatically, or `autoplay` to also put joining players directly into a public configured match.
+Quakechasm uses `config.json`, not Bukkit's usual `config.yml`. If an older `config.json` is missing newer sections such as `matchmaking` or `gui.matchBrowser`, the plugin writes the missing defaults into the file the next time it loads.
+
+Set `matchmaking.mode` to `startup` to create configured matches automatically, or `autoplay` to also put joining players directly into a public configured match. When `matchmaking.keepConfiguredMatchesReady` is `true`, configured startup matches are re-created immediately after they end.
+
+Example:
+
+```json
+{
+  "matchmaking": {
+    "mode": "startup",
+    "fallbackMode": "ffa",
+    "defaultNeedPlayers": 2,
+    "defaultScoreLimit": 10,
+    "defaultMaxPlayers": 0,
+    "autoJoinDelayTicks": 5,
+    "keepConfiguredMatchesReady": true,
+    "maintenanceIntervalTicks": 200,
+    "setups": [
+      {
+        "map": "arena",
+        "mode": "ffa",
+        "needPlayers": 2,
+        "scoreLimit": 25,
+        "privacy": "public",
+        "createOnStartup": true,
+        "autoJoin": true,
+        "maxPlayers": 8
+      }
+    ]
+  },
+  "gui": {
+    "matchBrowser": {
+      "minRows": 3,
+      "maxRows": 6,
+      "publicMaterial": "LIME_CONCRETE",
+      "passwordMaterial": "YELLOW_CONCRETE",
+      "inviteOnlyMaterial": "RED_CONCRETE",
+      "emptyMaterial": "BARRIER",
+      "fillerMaterial": "GRAY_STAINED_GLASS_PANE",
+      "fillEmptySlots": true,
+      "showOwner": true,
+      "showScoreLimit": true
+    }
+  }
+}
+```
 
 Useful commands:
 

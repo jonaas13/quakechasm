@@ -9,7 +9,7 @@ api-version: '1.21'
 
 permissions:
   quake.*:
-    description: Grants all Quakechasm permissions
+    description: Grants all Quake permissions
     default: op
     children:
       quake.admin: true

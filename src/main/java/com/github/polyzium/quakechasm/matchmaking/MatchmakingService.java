@@ -27,6 +27,8 @@ import com.github.polyzium.quakechasm.matchmaking.map.QMap;
 import com.github.polyzium.quakechasm.matchmaking.matches.Match;
 import com.github.polyzium.quakechasm.matchmaking.matches.MatchPrivacy;
 import com.github.polyzium.quakechasm.matchmaking.setup.GameSetup;
+import com.github.polyzium.quakechasm.misc.TranslationManager;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -44,6 +46,8 @@ public class MatchmakingService {
 
     private final QuakePlugin plugin;
     private final HashSet<String> warnedSetupProblems = new HashSet<>();
+    private final HashSet<UUID> pendingAutoJoinPlayers = new HashSet<>();
+    private final HashSet<UUID> notifiedAutoJoinWaitingPlayers = new HashSet<>();
     private BukkitTask maintenanceTask;
 
     public MatchmakingService(QuakePlugin plugin) {
@@ -54,13 +58,23 @@ public class MatchmakingService {
     public void start() {
         createConfiguredMatches();
 
-        if (plugin.config.matchmaking.keepConfiguredMatchesReady) {
+        if (plugin.config.matchmaking.keepConfiguredMatchesReady || plugin.config.matchmaking.joinsPlayersAutomatically()) {
             maintenanceTask = new BukkitRunnable() {
                 @Override
                 public void run() {
-                    int created = createConfiguredMatches();
-                    if (created > 0 && plugin.config.matchmaking.joinsPlayersAutomatically()) {
+                    int created = 0;
+                    if (plugin.config.matchmaking.keepConfiguredMatchesReady) {
+                        created = createConfiguredMatches();
+                    }
+
+                    if (!plugin.config.matchmaking.joinsPlayersAutomatically()) {
+                        return;
+                    }
+
+                    if (created > 0) {
                         autoJoinAvailablePlayers();
+                    } else {
+                        autoJoinPendingPlayers();
                     }
                 }
             }.runTaskTimer(plugin, plugin.config.matchmaking.maintenanceIntervalTicks, plugin.config.matchmaking.maintenanceIntervalTicks);
@@ -77,6 +91,27 @@ public class MatchmakingService {
         if (maintenanceTask != null) {
             maintenanceTask.cancel();
             maintenanceTask = null;
+        }
+        pendingAutoJoinPlayers.clear();
+        notifiedAutoJoinWaitingPlayers.clear();
+    }
+
+    public void onMatchEnded(Match endedMatch) {
+        if (!plugin.config.matchmaking.keepConfiguredMatchesReady) {
+            return;
+        }
+
+        GameSetup setup = getSetupForMap(endedMatch.getMap());
+        if (!setup.shouldCreateOnStartup()) {
+            return;
+        }
+
+        Match recreated = createMatch(setup, null);
+        if (recreated != null) {
+            plugin.getLogger().info("Re-created configured matchmaking match on " + setup.getMap().name);
+            if (plugin.config.matchmaking.joinsPlayersAutomatically()) {
+                autoJoinAvailablePlayers();
+            }
         }
     }
 
@@ -95,15 +130,28 @@ public class MatchmakingService {
 
     public GameSetup getSetupForMap(QMap map) {
         PluginConfig.MatchmakingConfig matchmakingConfig = plugin.config.matchmaking;
-
-        for (PluginConfig.GameSetupConfig setupConfig : matchmakingConfig.setups) {
-            if (setupConfig.map == null) continue;
-            if (setupConfig.map.equalsIgnoreCase(map.name)) {
-                return GameSetup.fromConfig(map, setupConfig, matchmakingConfig);
-            }
+        PluginConfig.GameSetupConfig setupConfig = getSetupConfigForMap(map);
+        if (setupConfig != null) {
+            return GameSetup.fromConfig(map, setupConfig, matchmakingConfig);
         }
 
         return GameSetup.fromMapDefault(map, matchmakingConfig);
+    }
+
+    public boolean hasConfiguredSetup(QMap map) {
+        return getSetupConfigForMap(map) != null;
+    }
+
+    private PluginConfig.GameSetupConfig getSetupConfigForMap(QMap map) {
+        PluginConfig.MatchmakingConfig matchmakingConfig = plugin.config.matchmaking;
+        for (PluginConfig.GameSetupConfig setupConfig : matchmakingConfig.setups) {
+            if (setupConfig.map == null) continue;
+            if (setupConfig.map.equalsIgnoreCase(map.name)) {
+                return setupConfig;
+            }
+        }
+
+        return null;
     }
 
     public int createConfiguredMatches() {
@@ -223,6 +271,9 @@ public class MatchmakingService {
 
     public void queueAutoJoin(Player player) {
         if (!plugin.config.matchmaking.joinsPlayersAutomatically()) return;
+        if (!canAutoJoin(player)) return;
+
+        if (!pendingAutoJoinPlayers.add(player.getUniqueId())) return;
         long delay = Math.max(1, plugin.config.matchmaking.autoJoinDelayTicks);
 
         new BukkitRunnable() {
@@ -235,16 +286,36 @@ public class MatchmakingService {
 
     public void autoJoinAvailablePlayers() {
         for (Player player : Bukkit.getOnlinePlayers()) {
+            queueAutoJoin(player);
+        }
+        autoJoinPendingPlayers();
+    }
+
+    public void autoJoinPendingPlayers() {
+        List<UUID> pendingPlayers = new ArrayList<>(pendingAutoJoinPlayers);
+        for (UUID playerId : pendingPlayers) {
+            Player player = Bukkit.getPlayer(playerId);
+            if (player == null) {
+                removePendingAutoJoin(playerId);
+                continue;
+            }
+
             autoJoin(player);
         }
     }
 
-    public boolean autoJoin(Player player) {
-        if (!player.isOnline()) return false;
-        if (!player.hasPermission("quake.player")) return false;
+    public void removePendingAutoJoin(Player player) {
+        removePendingAutoJoin(player.getUniqueId());
+    }
 
-        QuakeUserState userState = plugin.userStates.get(player);
-        if (userState == null || userState.currentMatch != null) {
+    private void removePendingAutoJoin(UUID playerId) {
+        pendingAutoJoinPlayers.remove(playerId);
+        notifiedAutoJoinWaitingPlayers.remove(playerId);
+    }
+
+    public boolean autoJoin(Player player) {
+        if (!canAutoJoin(player)) {
+            removePendingAutoJoin(player);
             return false;
         }
 
@@ -255,16 +326,35 @@ public class MatchmakingService {
         }
 
         if (match == null) {
+            notifyWaitingForAutoJoin(player);
             return false;
         }
 
         try {
             match.join(player, null);
+            removePendingAutoJoin(player);
             return true;
         } catch (RuntimeException e) {
+            removePendingAutoJoin(player);
             plugin.getLogger().log(Level.WARNING, "Failed to auto-join " + player.getName() + " to match on " + match.getMap().name, e);
             return false;
         }
+    }
+
+    private boolean canAutoJoin(Player player) {
+        if (!player.isOnline()) return false;
+        if (!player.hasPermission("quake.player")) return false;
+
+        QuakeUserState userState = plugin.userStates.get(player);
+        return userState != null && userState.currentMatch == null;
+    }
+
+    private void notifyWaitingForAutoJoin(Player player) {
+        if (!pendingAutoJoinPlayers.contains(player.getUniqueId())) return;
+        if (!notifiedAutoJoinWaitingPlayers.add(player.getUniqueId())) return;
+
+        player.sendMessage(TranslationManager.t("matchmaking.autoplay.waiting", player,
+                Placeholder.unparsed("retry_seconds", String.valueOf(Math.max(1, plugin.config.matchmaking.maintenanceIntervalTicks / 20)))));
     }
 
     public Match findBestAutoJoinMatch(Player player) {

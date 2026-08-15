@@ -65,7 +65,7 @@ public class GameSetup {
     }
 
     public static GameSetup fromMapDefault(QMap map, PluginConfig.MatchmakingConfig config) {
-        String mode = config.defaultMode;
+        String mode = config.getFallbackMode();
         if (map.recommendedModes != null && !map.recommendedModes.isEmpty()) {
             mode = map.recommendedModes.get(0).name().toLowerCase(Locale.ROOT);
         }

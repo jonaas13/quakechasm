@@ -335,6 +335,9 @@
     }
   },
   "matchmaking": {
+    "autoplay": {
+      "waiting": "<yellow>Все матчи Quake заполнены. Вы автоматически войдете, когда освободится место. <gray>Повтор через <retry_seconds>с.</gray></yellow>"
+    },
     "mapUnfit": "<red>Карта <map_name> не подходит для <mode></red>",
     "match": {
       "accept": {
@@ -362,11 +365,15 @@
   "setup": {
     "list": {
       "empty": "<yellow>Нет доступных настроек карт.</yellow>",
-      "title": "<blue><bold>Настройки игр</bold></blue>",
-      "entry": "<gray><map_name></gray> <white><display_name></white> <gray>mode=<mode> need=<need_players> score=<score_limit> startup=<startup> autojoin=<autojoin></gray>"
+      "title": "<blue><bold>Настройки матчей карт</bold></blue>",
+      "entry": "<white><display_name></white> <dark_gray>(<map_name>)</dark_gray> <gray>- <source> <gray>- mode=<white><mode></white> need=<white><need_players></white> score=<white><score_limit></white> startup=<white><startup></white> autojoin=<white><autojoin></white></gray>"
     },
     "create": {
       "created": "<green>Создан настроенный матч <mode> на <map_name>.</green>"
+    },
+    "source": {
+      "configured": "<green>Настроено</green>",
+      "mapDefault": "<yellow>По умолчанию карты</yellow>"
     }
   },
   "menu": {
@@ -379,6 +386,43 @@
     "leader": "Лидер",
     "leaveParty": "Покинуть",
     "main": "Главное меню",
+    "matchBrowser": {
+      "title": "<dark_red><bold>Quake</bold></dark_red> <dark_gray>|</dark_gray> <white>Матчи</white>",
+      "empty": {
+        "name": "<red>Нет доступных матчей</red>",
+        "lore": "<gray>Используйте <white>/quake setup create MAP</white> или включите автосоздание матчей.</gray>"
+      },
+      "match": {
+        "name": "<white><match_type></white> <dark_gray>|</dark_gray> <aqua><map_name></aqua>",
+        "unlimitedPlayers": "без лимита",
+        "lore": {
+          "status": "<dark_gray>#<index></dark_gray> <status>",
+          "mode": "<gray>Режим: <white><match_type></white></gray>",
+          "map": "<gray>Карта: <white><map_name></white></gray>",
+          "players": "<gray>Игроки: <white><players></white><dark_gray>/</dark_gray><white><max_players></white></gray>",
+          "scoreLimit": "<gray>Лимит: <white><score_limit></white></gray>",
+          "privacy": "<gray>Доступ: <privacy></gray>"
+        },
+        "status": {
+          "open": "<green>Открыт</green>",
+          "ending": "<red>Завершается</red>"
+        },
+        "privacy": {
+          "public": "<green>Публичный</green>",
+          "password": "<yellow>Пароль</yellow>",
+          "inviteOnly": "<red>По приглашению</red>"
+        },
+        "owner": {
+          "matchmaking": "<gray>Владелец: <white>Подбор игроков</white></gray>",
+          "player": "<gray>Владелец: <white><owner_name></white></gray>"
+        },
+        "action": {
+          "join": "<green>Нажмите, чтобы присоединиться</green>",
+          "password": "<yellow>Используйте /quake matchmaking join с указанным индексом и паролем</yellow>",
+          "inviteOnly": "<yellow>Нажмите, чтобы войти при наличии приглашения</yellow>"
+        }
+      }
+    },
     "matchmaking": {
       "cancelSearch": "Отменить поиск",
       "search": "Поиск матча",
@@ -489,6 +533,21 @@
     "reload": "Плагин перезагружен"
   },
   "scoreboard": {
+    "title": "<dark_red><bold>Quake</bold></dark_red>",
+    "mode": "<gray>Режим: <white><mode></white></gray>",
+    "map": "<gray>Карта: <white><map_name></white></gray>",
+    "waiting": {
+      "players": "<yellow><current>/<needed> игроков нужно для старта</yellow>",
+      "countdown": "<yellow>Старт через <seconds>с</yellow>"
+    },
+    "limit": {
+      "frags": "<gray>Лимит убийств: <white><limit></white></gray>",
+      "captures": "<gray>Лимит захватов: <white><limit></white></gray>"
+    },
+    "players": {
+      "title": "<white>Счет</white>",
+      "entry": "<gray><place>. <white><player_name></white>: <yellow><score></yellow></gray>"
+    },
     "team": {
       "blue": "Синяя команда: <score>",
       "red": "Красная команда: <score>"

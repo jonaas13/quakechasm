@@ -335,6 +335,9 @@
     }
   },
   "matchmaking": {
+    "autoplay": {
+      "waiting": "<yellow>All Quake matches are full. You will join automatically when a slot opens. <gray>Retrying every <retry_seconds>s.</gray></yellow>"
+    },
     "mapUnfit": "<red>Map <map_name> is unfit for <mode></red>",
     "match": {
       "accept": {
@@ -362,11 +365,15 @@
   "setup": {
     "list": {
       "empty": "<yellow>No map setups are available.</yellow>",
-      "title": "<blue><bold>Game Setups</bold></blue>",
-      "entry": "<gray><map_name></gray> <white><display_name></white> <gray>mode=<mode> need=<need_players> score=<score_limit> startup=<startup> autojoin=<autojoin></gray>"
+      "title": "<blue><bold>Map Match Defaults</bold></blue>",
+      "entry": "<white><display_name></white> <dark_gray>(<map_name>)</dark_gray> <gray>- <source> <gray>- mode=<white><mode></white> need=<white><need_players></white> score=<white><score_limit></white> startup=<white><startup></white> autojoin=<white><autojoin></white></gray>"
     },
     "create": {
       "created": "<green>Created configured <mode> match on <map_name>.</green>"
+    },
+    "source": {
+      "configured": "<green>Configured</green>",
+      "mapDefault": "<yellow>Map default</yellow>"
     }
   },
   "menu": {
@@ -379,6 +386,43 @@
     "leader": "Leader",
     "leaveParty": "Leave",
     "main": "Main menu",
+    "matchBrowser": {
+      "title": "<dark_red><bold>Quake</bold></dark_red> <dark_gray>|</dark_gray> <white>Matches</white>",
+      "empty": {
+        "name": "<red>No matches available</red>",
+        "lore": "<gray>Use <white>/quake setup create MAP</white> or enable startup matchmaking.</gray>"
+      },
+      "match": {
+        "name": "<white><match_type></white> <dark_gray>|</dark_gray> <aqua><map_name></aqua>",
+        "unlimitedPlayers": "unlimited",
+        "lore": {
+          "status": "<dark_gray>#<index></dark_gray> <status>",
+          "mode": "<gray>Mode: <white><match_type></white></gray>",
+          "map": "<gray>Map: <white><map_name></white></gray>",
+          "players": "<gray>Players: <white><players></white><dark_gray>/</dark_gray><white><max_players></white></gray>",
+          "scoreLimit": "<gray>Limit: <white><score_limit></white></gray>",
+          "privacy": "<gray>Access: <privacy></gray>"
+        },
+        "status": {
+          "open": "<green>Open</green>",
+          "ending": "<red>Ending</red>"
+        },
+        "privacy": {
+          "public": "<green>Public</green>",
+          "password": "<yellow>Password</yellow>",
+          "inviteOnly": "<red>Invite only</red>"
+        },
+        "owner": {
+          "matchmaking": "<gray>Owner: <white>Matchmaking</white></gray>",
+          "player": "<gray>Owner: <white><owner_name></white></gray>"
+        },
+        "action": {
+          "join": "<green>Click to join</green>",
+          "password": "<yellow>Use /quake matchmaking join with the listed index and password</yellow>",
+          "inviteOnly": "<yellow>Click to join if invited</yellow>"
+        }
+      }
+    },
     "matchmaking": {
       "cancelSearch": "Cancel search",
       "search": "Search match",
@@ -489,6 +533,21 @@
     "reload": "Plugin reloaded"
   },
   "scoreboard": {
+    "title": "<dark_red><bold>Quake</bold></dark_red>",
+    "mode": "<gray>Mode: <white><mode></white></gray>",
+    "map": "<gray>Map: <white><map_name></white></gray>",
+    "waiting": {
+      "players": "<yellow><current>/<needed> players needed to start</yellow>",
+      "countdown": "<yellow>Starting in <seconds>s</yellow>"
+    },
+    "limit": {
+      "frags": "<gray>Frag limit: <white><limit></white></gray>",
+      "captures": "<gray>Capture limit: <white><limit></white></gray>"
+    },
+    "players": {
+      "title": "<white>Scores</white>",
+      "entry": "<gray><place>. <white><player_name></white>: <yellow><score></yellow></gray>"
+    },
     "team": {
       "blue": "Blue team: <score>",
       "red": "Red team: <score>"

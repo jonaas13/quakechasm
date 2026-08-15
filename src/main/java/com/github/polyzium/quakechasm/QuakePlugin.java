@@ -440,7 +440,7 @@ public class QuakePlugin extends JavaPlugin {
         Bukkit.getServer().broadcast(
                 Component.join(
                         JoinConfiguration.noSeparators(),
-                        Component.text("[Quakechasm] ").color(TextColor.color(0xff0000)),
+                        Component.text("[Quake] ").color(TextColor.color(0xff0000)),
                         TranslationManager.t("plugin.reload", TranslationManager.FALLBACK)
                 )
         );
