@@ -65,6 +65,7 @@ public class HealthSpawner extends Spawner {
         NamespacedKey healthKey = new NamespacedKey(QuakePlugin.INSTANCE, "health");
         displayData.set(healthKey, PersistentDataType.INTEGER, this.health);
 
+        PickupItemModels.applyHealthModel(item, this.health);
         super.display.setItemStack(item);
         QEntityUtil.setEntityType(super.display, "health_spawner");
 
@@ -76,7 +77,14 @@ public class HealthSpawner extends Spawner {
 
         PersistentDataContainer displayData = display.getPersistentDataContainer();
         NamespacedKey healthKey = new NamespacedKey(QuakePlugin.INSTANCE, "health");
-        this.health = displayData.get(healthKey, PersistentDataType.INTEGER);
+        Integer persistedHealth = displayData.get(healthKey, PersistentDataType.INTEGER);
+        this.health = persistedHealth == null ? 0 : persistedHealth;
+
+        ItemStack item = display.getItemStack();
+        PickupItemModels.applyHealthModel(item, this.health);
+        if (item != null && !item.isEmpty()) {
+            display.setItemStack(item);
+        }
 
         QuakePlugin.INSTANCE.triggers.add(this);
     }

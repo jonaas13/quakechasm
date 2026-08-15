@@ -533,7 +533,8 @@
     "reload": "Плагин перезагружен"
   },
   "scoreboard": {
-    "title": "<dark_red><bold>Quake</bold></dark_red>",
+    "title": "<gradient:#fa7f05:#f79514><bold>Quake</bold></gradient>",
+    "website": "<gradient:#fa7f05:#f79514>minearchy.com</gradient>",
     "mode": "<gray>Режим: <white><mode></white></gray>",
     "map": "<gray>Карта: <white><map_name></white></gray>",
     "waiting": {

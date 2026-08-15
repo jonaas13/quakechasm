@@ -173,7 +173,7 @@
       "cooldown": "Dash cooldown <seconds>s"
     },
     "kill": {
-      "message": "You fragged <victim>"
+      "message": "You shot <victim>"
     },
     "medal": {
       "awarded": "Medal awarded: <medal_text>",
@@ -230,7 +230,7 @@
       "name": "Free For All"
     },
     "generic": {
-      "startMessage": "Get <fraglimit> frags",
+      "startMessage": "Get <fraglimit> Kills",
       "wins": "<winner> wins"
     },
     "player": {
@@ -533,29 +533,30 @@
     "reload": "Plugin reloaded"
   },
   "scoreboard": {
-    "title": "<dark_red><bold>Quake</bold></dark_red>",
+    "title": "<gradient:#fa7f05:#f79514><bold>Quake</bold></gradient>",
+    "website": "<gradient:#fa7f05:#f79514>minearchy.com</gradient>",
     "mode": "<gray>Mode: <white><mode></white></gray>",
     "map": "<gray>Map: <white><map_name></white></gray>",
     "waiting": {
-      "title": "<yellow>Waiting for players</yellow>",
+      "title": "<gold>Waiting for players</gold>",
       "players": "<yellow><current>/<needed> players needed to start</yellow>",
       "playersCurrent": "<yellow><current>/<needed> players</yellow>",
-      "playersNeeded": "<gray>needed to start</gray>",
+      "playersNeeded": "<yellow>needed to start</yellow>",
       "warmup": "<gold>Warmup</gold>",
       "countdown": "<gray>Starting in <white><seconds>s</white></gray>"
     },
     "limit": {
-      "frags": "<gray>Frag limit <white><limit></white></gray>",
-      "captures": "<gray>Capture limit <white><limit></white></gray>"
+      "frags": "<light_green>First to <white><limit>Kills</white> wins!</light_green>",
+      "captures": "<gray>Capture Limit <white><limit></white></gray>"
     },
     "players": {
-      "title": "<white><bold>Scores</bold></white>",
-      "entry": "<gray><place>. <white><player_name></white> <yellow><score></yellow></gray>",
-      "teamEntry": "<gray><place>. <player_name> <yellow><score></yellow></gray>"
+      "title": "<white><bold>Top Kills</bold></white>",
+      "entry": "<gray><place>. <white><player_name></white> <gold><score></gold></gray>",
+      "teamEntry": "<gray><place>. <player_name> <gold><score></gold></gray>"
     },
     "team": {
-      "blue": "<blue>Blue</blue> <white><score></white>",
-      "red": "<red>Red</red> <white><score></white>"
+      "blue": "<blue>Blue</blue> <gold><score></gold>",
+      "red": "<red>Red</red> <gold><score></gold>"
     }
   },
   "warning": {

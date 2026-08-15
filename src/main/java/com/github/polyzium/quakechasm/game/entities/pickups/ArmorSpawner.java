@@ -68,6 +68,7 @@ public class ArmorSpawner extends Spawner {
         NamespacedKey armorKey = new NamespacedKey(QuakePlugin.INSTANCE, "armor");
         displayData.set(armorKey, PersistentDataType.INTEGER, this.armor);
 
+        PickupItemModels.applyArmorModel(item, this.armor);
         super.display.setItemStack(item);
         QEntityUtil.setEntityType(super.display, "armor_spawner");
 
@@ -79,7 +80,14 @@ public class ArmorSpawner extends Spawner {
 
         PersistentDataContainer displayData = display.getPersistentDataContainer();
         NamespacedKey armorKey = new NamespacedKey(QuakePlugin.INSTANCE, "armor");
-        this.armor = displayData.get(armorKey, PersistentDataType.INTEGER);
+        Integer persistedArmor = displayData.get(armorKey, PersistentDataType.INTEGER);
+        this.armor = persistedArmor == null ? 0 : persistedArmor;
+
+        ItemStack item = display.getItemStack();
+        PickupItemModels.applyArmorModel(item, this.armor);
+        if (item != null && !item.isEmpty()) {
+            display.setItemStack(item);
+        }
 
         QuakePlugin.INSTANCE.triggers.add(this);
     }

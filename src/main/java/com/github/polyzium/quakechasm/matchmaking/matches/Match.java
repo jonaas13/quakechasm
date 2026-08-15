@@ -22,12 +22,11 @@ package com.github.polyzium.quakechasm.matchmaking.matches;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.audience.ForwardingAudience;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
@@ -67,6 +66,8 @@ public abstract class Match implements ForwardingAudience {
     protected org.bukkit.scoreboard.Team vanillaRedTeam;
     protected org.bukkit.scoreboard.Team vanillaBlueTeam;
     private final ArrayList<String> sidebarEntries = new ArrayList<>();
+    private static final int MAX_SIDEBAR_LINES = 15;
+    private static final int STATIC_BRANDING_LINES = 1;
     public boolean matchEnding = false;
 
     protected UUID ownerId;
@@ -554,12 +555,32 @@ public abstract class Match implements ForwardingAudience {
         }
         sidebarEntries.clear();
 
-        int visibleLineCount = Math.min(lines.size(), 15);
+        int dynamicLineCount = Math.min(lines.size(), MAX_SIDEBAR_LINES - STATIC_BRANDING_LINES);
+        ArrayList<Component> visibleLines = new ArrayList<>(lines.subList(0, dynamicLineCount));
+        visibleLines.add(centerSidebarLine(sidebarLine("scoreboard.website"), visibleLines));
+
+        int visibleLineCount = visibleLines.size();
         for (int i = 0; i < visibleLineCount; i++) {
-            String entry = makeSidebarEntry(lines.get(i), i);
+            String entry = makeSidebarEntry(visibleLines.get(i), i);
             sidebarEntries.add(entry);
             this.sidebarObjective.getScore(entry).setScore(visibleLineCount - i);
         }
+    }
+
+    private Component centerSidebarLine(Component line, List<Component> referenceLines) {
+        PlainTextComponentSerializer plainText = PlainTextComponentSerializer.plainText();
+        int lineLength = plainText.serialize(line).length();
+        int targetLength = lineLength;
+        for (Component referenceLine : referenceLines) {
+            targetLength = Math.max(targetLength, plainText.serialize(referenceLine).length());
+        }
+
+        int padding = Math.max(0, (targetLength - lineLength) / 2);
+        if (padding == 0) {
+            return line;
+        }
+
+        return Component.text(" ".repeat(padding)).append(line);
     }
 
     private String makeSidebarEntry(Component line, int uniqueIndex) {
