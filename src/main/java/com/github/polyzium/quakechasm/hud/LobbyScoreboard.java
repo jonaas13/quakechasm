@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
 public class LobbyScoreboard {
     private static final int MAX_SIDEBAR_LINES = 15;
     private static final Pattern HEX_SPAN = Pattern.compile("<#([0-9a-fA-F]{6})>(.*?)</#([0-9a-fA-F]{6})>");
+    private static final Pattern LEGACY_HEX_CODE = Pattern.compile("&#([0-9a-fA-F]{6})");
     private static final Pattern LEGACY_CODE = Pattern.compile("&([0-9a-fk-orA-FK-OR])");
     private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
     private static final LegacyComponentSerializer LEGACY_AMPERSAND = LegacyComponentSerializer.legacyAmpersand();
@@ -95,7 +96,7 @@ public class LobbyScoreboard {
         }
 
         String resolved = resolvePlaceholders(player, raw);
-        String miniMessage = legacyCodesToMiniMessage(hexSpansToGradient(resolved.replace('§', '&')));
+        String miniMessage = legacyCodesToMiniMessage(legacyHexCodesToMiniMessage(hexSpansToGradient(resolved.replace('§', '&'))));
 
         try {
             return MINI_MESSAGE.deserialize(miniMessage);
@@ -193,6 +194,16 @@ public class LobbyScoreboard {
                     result,
                     Matcher.quoteReplacement("<gradient:#" + matcher.group(1) + ":#" + matcher.group(3) + ">" + matcher.group(2) + "</gradient>")
             );
+        }
+        matcher.appendTail(result);
+        return result.toString();
+    }
+
+    private String legacyHexCodesToMiniMessage(String input) {
+        Matcher matcher = LEGACY_HEX_CODE.matcher(input);
+        StringBuilder result = new StringBuilder();
+        while (matcher.find()) {
+            matcher.appendReplacement(result, Matcher.quoteReplacement("<#" + matcher.group(1) + ">"));
         }
         matcher.appendTail(result);
         return result.toString();
