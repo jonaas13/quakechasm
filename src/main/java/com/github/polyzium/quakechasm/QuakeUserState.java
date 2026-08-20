@@ -186,7 +186,9 @@ public class QuakeUserState {
 
     public void respawn() {
         Location spawnpoint = this.prepareRespawn();
+        this.currentMatch.getMap().preparePlayerTeleport(player, spawnpoint);
         player.teleport(spawnpoint);
+        this.currentMatch.getMap().refreshPlayerTeleport(player, spawnpoint);
         MiscUtil.teleEffect(spawnpoint, false);
 
         if (this.currentMatch.isTeamMatch())

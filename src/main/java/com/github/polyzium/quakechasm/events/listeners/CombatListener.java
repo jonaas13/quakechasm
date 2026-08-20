@@ -202,7 +202,9 @@ public class CombatListener implements Listener {
 
         // Calculate armor factor
         // But first, cancel vanilla armor
-        event.setDamage(EntityDamageEvent.DamageModifier.ARMOR, 0);
+        if (event.isApplicable(EntityDamageEvent.DamageModifier.ARMOR)) {
+            event.setDamage(EntityDamageEvent.DamageModifier.ARMOR, 0);
+        }
         double finalDamage = event.getDamage();
         if (userState.armor > 0) {
             finalDamage /= 3;

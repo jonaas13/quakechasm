@@ -22,21 +22,24 @@ package com.github.polyzium.quakechasm.events.listeners;
 import com.github.polyzium.quakechasm.matchmaking.Team;
 import com.github.polyzium.quakechasm.misc.TranslationManager;
 import io.papermc.paper.event.player.AsyncChatEvent;
-import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import com.github.polyzium.quakechasm.QuakePlugin;
 import com.github.polyzium.quakechasm.QuakeUserState;
 import com.github.polyzium.quakechasm.misc.Chatroom;
 
+import java.util.ArrayList;
+
 public class ChatListener implements Listener {
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onChat(AsyncChatEvent event) {
         Player player = event.getPlayer();
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
@@ -85,60 +88,29 @@ public class ChatListener implements Listener {
             return;
         }
 
-        event.message(Component.text(processedMessage));
+        event.setCancelled(true);
+        sendChat(player, userState, targetChatroom, Component.text(processedMessage));
+    }
 
-        switch (targetChatroom) {
-            case GLOBAL -> chatGlobal(event);
-            case MATCH -> chatMatch(event);
-            case TEAM -> chatTeam(event);
+    private void sendChat(Player source, QuakeUserState sourceState, Chatroom chatroom, Component message) {
+        for (Player viewer : getViewers(source, sourceState, chatroom)) {
+            viewer.sendMessage(formatMessage(chatroom, viewer, source.displayName(), message));
         }
     }
 
-    public void chatGlobal(AsyncChatEvent event) {
-        event.renderer((source, sourceDisplayName, message, viewer) -> {
-            Player viewerPlayer = viewer instanceof Player ? (Player) viewer : event.getPlayer();
-            return Component.textOfChildren(Chatroom.GLOBAL.getPrefix(viewerPlayer.locale()), MiniMessage.miniMessage().deserialize(
-                " <b><color:#7f7f7f><source_display_name></color></b> <message>",
-                Placeholder.component("source_display_name", sourceDisplayName),
-                Placeholder.component("message", message)
-            ));
-        });
+    private Iterable<Player> getViewers(Player source, QuakeUserState sourceState, Chatroom chatroom) {
+        return switch (chatroom) {
+            case GLOBAL -> new ArrayList<Player>(Bukkit.getOnlinePlayers());
+            case MATCH -> sourceState.currentMatch.getPlayers();
+            case TEAM -> sourceState.currentMatch.getPlayersInTeam(sourceState.currentMatch.getTeamOfPlayer(source));
+        };
     }
 
-    public void chatMatch(AsyncChatEvent event) {
-        QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(event.getPlayer());
-        if (userState == null || userState.currentMatch == null) return;
-
-        event.viewers().clear();
-        event.viewers().add(Audience.audience(userState.currentMatch));
-
-        event.renderer((source, sourceDisplayName, message, viewer) -> {
-            Player viewerPlayer = viewer instanceof Player ? (Player) viewer : event.getPlayer();
-            return Component.textOfChildren(Chatroom.MATCH.getPrefix(viewerPlayer.locale()), MiniMessage.miniMessage().deserialize(
+    private Component formatMessage(Chatroom chatroom, Player viewer, Component sourceDisplayName, Component message) {
+        return Component.textOfChildren(chatroom.getPrefix(viewer.locale()), MiniMessage.miniMessage().deserialize(
                 " <b><color:#7f7f7f><source_display_name></color></b> <message>",
                 Placeholder.component("source_display_name", sourceDisplayName),
                 Placeholder.component("message", message)
-            ));
-        });
-    }
-
-    public void chatTeam(AsyncChatEvent event) {
-        Player player = event.getPlayer();
-        QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
-        if (userState == null || userState.currentMatch == null) return;
-
-        event.viewers().clear();
-        event.viewers().add(Audience.audience(userState.currentMatch.getTeamAudience(
-                userState.currentMatch.getTeamOfPlayer(player)
-        )));
-
-        event.renderer((source, sourceDisplayName, message, viewer) -> {
-            Player viewerPlayer = viewer instanceof Player ? (Player) viewer : event.getPlayer();
-            return Component.textOfChildren(Chatroom.TEAM.getPrefix(viewerPlayer.locale()), MiniMessage.miniMessage().deserialize(
-                " <b><color:#7f7f7f><source_display_name></color></b> <message>",
-                Placeholder.component("source_display_name", sourceDisplayName),
-                Placeholder.component("message", message)
-            ));
-        });
+        ));
     }
 }

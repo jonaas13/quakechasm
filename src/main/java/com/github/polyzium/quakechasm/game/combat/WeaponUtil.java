@@ -347,6 +347,10 @@ public abstract class WeaponUtil {
         if (cause == null)
             cause = DamageCause.UNKNOWN;
 
+        if (isFriendlyFire(victim, attacker)) {
+            return;
+        }
+
         if (cause == DamageCause.RAILGUN && attacker instanceof Player attackerPlayer) {
             QuakeUserState attackerState = QuakePlugin.INSTANCE.userStates.get(attackerPlayer);
             if (attackerState != null) {
@@ -365,6 +369,22 @@ public abstract class WeaponUtil {
 
 //        victim.damage(amount, attacker);
         victim.damage(amount, DamageSource.builder(DamageType.GENERIC).withDirectEntity(attacker).withCausingEntity(attacker).build());
+    }
+
+    private static boolean isFriendlyFire(LivingEntity victim, Entity attacker) {
+        if (!(victim instanceof Player victimPlayer) || !(attacker instanceof Player attackerPlayer) || victimPlayer == attackerPlayer) {
+            return false;
+        }
+
+        QuakeUserState victimState = QuakePlugin.INSTANCE.userStates.get(victimPlayer);
+        QuakeUserState attackerState = QuakePlugin.INSTANCE.userStates.get(attackerPlayer);
+        if (victimState == null || attackerState == null || victimState.currentMatch == null || victimState.currentMatch != attackerState.currentMatch) {
+            return false;
+        }
+
+        Team victimTeam = victimState.currentMatch.getTeamOfPlayer(victimPlayer);
+        Team attackerTeam = attackerState.currentMatch.getTeamOfPlayer(attackerPlayer);
+        return victimState.currentMatch.isTeamMatch() && victimTeam != null && victimTeam == attackerTeam;
     }
 
     public static void knockback(Location from, Entity victim, double power) {

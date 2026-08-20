@@ -26,6 +26,9 @@ import org.bukkit.Location;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.util.Vector;
@@ -40,6 +43,32 @@ import static com.github.polyzium.quakechasm.game.combat.WeaponUtil.damageCustom
 
 public class MiscListener implements Listener {
     private static final long SAFE_ZONE_WARNING_COOLDOWN_MS = 1500;
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (isPlayingMatch(event.getPlayer())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event) {
+        if (isPlayingMatch(event.getPlayer())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onBlockInteract(PlayerInteractEvent event) {
+        if (!isPlayingMatch(event.getPlayer())) {
+            return;
+        }
+
+        Action action = event.getAction();
+        if (action == Action.RIGHT_CLICK_BLOCK || action == Action.LEFT_CLICK_BLOCK || action == Action.PHYSICAL) {
+            event.setCancelled(true);
+        }
+    }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -151,7 +180,12 @@ public class MiscListener implements Listener {
         }
 
         userState.lastSafeZoneWarningMillis = now;
-        player.sendActionBar(Component.text(message).color(TextColor.color(0xff5555)));
+        player.sendMessage(Component.text(message).color(TextColor.color(0xff5555)));
+    }
+
+    private boolean isPlayingMatch(Player player) {
+        QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+        return userState != null && userState.currentMatch != null;
     }
 
     // Telefrag: kill any entity at the teleport destination

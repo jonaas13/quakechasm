@@ -25,6 +25,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.util.BoundingBox;
 import com.github.polyzium.quakechasm.QuakePlugin;
 import com.github.polyzium.quakechasm.game.entities.Trigger;
@@ -140,6 +141,45 @@ public class QMap {
         );
 
         return resolveSafeSpawnLocation(spawnPoint.pos);
+    }
+
+    public void preparePlayerTeleport(Player player, Location location) {
+        loadChunksAround(location, 1);
+    }
+
+    public void refreshPlayerTeleport(Player player, Location location) {
+        if (player == null || location == null || !com.github.polyzium.quakechasm.misc.MiscUtil.isBedrockPlayer(player)) {
+            return;
+        }
+
+        World world = location.getWorld();
+        if (world == null) {
+            return;
+        }
+
+        int centerX = location.getBlockX() >> 4;
+        int centerZ = location.getBlockZ() >> 4;
+        for (int x = centerX - 1; x <= centerX + 1; x++) {
+            for (int z = centerZ - 1; z <= centerZ + 1; z++) {
+                world.refreshChunk(x, z);
+            }
+        }
+    }
+
+    private void loadChunksAround(Location location, int radius) {
+        if (location == null || location.getWorld() == null) {
+            return;
+        }
+
+        World world = location.getWorld();
+        int centerX = location.getBlockX() >> 4;
+        int centerZ = location.getBlockZ() >> 4;
+        for (int x = centerX - radius; x <= centerX + radius; x++) {
+            for (int z = centerZ - radius; z <= centerZ + radius; z++) {
+                Chunk chunk = world.getChunkAt(x, z);
+                chunk.load(true);
+            }
+        }
     }
 
     private Location resolveSafeSpawnLocation(Location rawLocation) {
@@ -287,6 +327,10 @@ public class QMap {
     }
 
     public void cleanup() {
+        cleanup(true);
+    }
+
+    public void cleanup(boolean unloadChunks) {
         Collection<Entity> entities = this.world.getNearbyEntities(this.bounds);
         ArrayList<PowerupSpawner> powerupsForCleanup = new ArrayList<>();
         for (Trigger trigger : QuakePlugin.INSTANCE.triggers) {
@@ -302,6 +346,10 @@ public class QMap {
 
         for (PowerupSpawner powerupSpawner : powerupsForCleanup) {
             powerupSpawner.matchCleanup();
+        }
+
+        if (!unloadChunks) {
+            return;
         }
 
         for (Chunk chunk : this.getChunks()) {

@@ -676,8 +676,8 @@ public class CTFMatch extends Match {
 
             if (!sameTeam && started)
                 scores.put(pAttacker, oldScores + 1);
-            else
-                scores.put(pAttacker, oldScores - 1);
+            else if (started)
+                scores.put(pAttacker, Math.max(0, oldScores - 1));
 
             pAttacker.showTitle(Title.title(
                     TranslationManager.t("game.kill.message", pAttacker, Placeholder.unparsed("victim", victim.getName())),
@@ -686,7 +686,7 @@ public class CTFMatch extends Match {
             ));
         } else if ((attacker == null || victim == attacker) && started) {
             Integer oldKills = scores.get(victim);
-            scores.put(victim, oldKills-1);
+            scores.put(victim, Math.max(0, oldKills - 1));
         }
 
         Location loc = victim.getLocation();

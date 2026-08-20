@@ -419,7 +419,7 @@ public class FFAMatch extends Match {
             ));
         } else if (attacker == null || victim == attacker) {
             Integer oldScore = scores.get(victim);
-            scores.put(victim, oldScore-1);
+            scores.put(victim, Math.max(0, oldScore - 1));
             victim.playSound(victim, "quake.feedback.score_down", SoundCategory.NEUTRAL, 1, 1);
         }
 

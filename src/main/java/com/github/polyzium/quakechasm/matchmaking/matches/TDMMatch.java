@@ -416,10 +416,10 @@ public class TDMMatch extends Match {
                     default -> throw new IllegalArgumentException("Got a kill not from red or blue teams");
                 }
             } else {
-                scores.put(pAttacker, oldScore-1);
+                scores.put(pAttacker, Math.max(0, oldScore - 1));
                 switch (players.get(pAttacker)) {
-                    case RED -> teamScores[0] -= 1;
-                    case BLUE -> teamScores[1] -= 1;
+                    case RED -> teamScores[0] = Math.max(0, teamScores[0] - 1);
+                    case BLUE -> teamScores[1] = Math.max(0, teamScores[1] - 1);
                     default -> throw new IllegalArgumentException("Got a teamkill not from red or blue teams");
                 }
             }
@@ -431,10 +431,10 @@ public class TDMMatch extends Match {
             ));
         } else if (attacker == null || victim == attacker) {
             Integer oldScore = scores.get(victim);
-            scores.put(victim, oldScore-1);
+            scores.put(victim, Math.max(0, oldScore - 1));
             switch (players.get(victim)) {
-                case RED -> teamScores[0] -= 1;
-                case BLUE -> teamScores[1] -= 1;
+                case RED -> teamScores[0] = Math.max(0, teamScores[0] - 1);
+                case BLUE -> teamScores[1] = Math.max(0, teamScores[1] - 1);
                 default -> throw new IllegalArgumentException("Got a teamkill not from red or blue teams");
             }
             victim.playSound(victim, "quake.feedback.score_down", SoundCategory.NEUTRAL, 1, 1);

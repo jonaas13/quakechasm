@@ -198,7 +198,9 @@ public abstract class Match implements ForwardingAudience {
         players.put(player, resolvedTeam);
         userState.currentMatch = this;
 
+        map.preparePlayerTeleport(player, spawn);
         player.teleport(spawn);
+        map.refreshPlayerTeleport(player, spawn);
         MiscUtil.teleEffect(spawn, false);
         userState.initForMatch();
 
@@ -215,12 +217,13 @@ public abstract class Match implements ForwardingAudience {
         player.setScoreboard(this.vanillaScoreboard);
         refreshPlayerListVisibility();
 
-        userState.switchChat(Chatroom.MATCH);
+        userState.switchChat(getDefaultGameChatroom());
         if (hasWarmupPhase() && !hasStarted()) {
             broadcastWarmupJoin(player);
+        } else {
+            this.sendMessage(TranslationManager.t("match.player.joined", TranslationManager.FALLBACK,
+                Placeholder.unparsed("player_name", player.getName())));
         }
-        this.sendMessage(TranslationManager.t("match.player.joined", TranslationManager.FALLBACK,
-            Placeholder.unparsed("player_name", player.getName())));
     }
 
     public void leave(Player player) {
@@ -256,8 +259,12 @@ public abstract class Match implements ForwardingAudience {
                         Title.Times.times(Duration.ZERO, Duration.ofSeconds(1), Duration.ofSeconds(1))));
 
                 if (endTimer == 0) {
-                    for (Player player : players.keySet()) {
+                    boolean autoJoinNextMatch = shouldKeepChunksLoadedForAutoJoin();
+                    for (Player player : new ArrayList<>(players.keySet())) {
                         cleanup(player);
+                        if (autoJoinNextMatch && QuakePlugin.INSTANCE.matchmakingService != null) {
+                            QuakePlugin.INSTANCE.matchmakingService.queueAutoJoin(player);
+                        }
                     }
 
                     if (that.vanillaRedTeam != null) {
@@ -268,7 +275,7 @@ public abstract class Match implements ForwardingAudience {
                     }
 
                     QuakePlugin.INSTANCE.matchManager.matches.remove(that);
-                    that.map.cleanup();
+                    that.map.cleanup(!that.shouldKeepChunksLoadedForAutoJoin());
                     if (QuakePlugin.INSTANCE.matchmakingService != null) {
                         QuakePlugin.INSTANCE.matchmakingService.onMatchEnded(that);
                     }
@@ -307,11 +314,18 @@ public abstract class Match implements ForwardingAudience {
         player.setWalkSpeed(QuakePlugin.INSTANCE.config.player.walkSpeed);
 
         MiscUtil.teleEffect(player.getLocation(), true);
-        player.teleport(getCleanupDestination(player));
+        Location cleanupDestination = getCleanupDestination(player);
+        if (isMapDestination(cleanupDestination)) {
+            map.preparePlayerTeleport(player, cleanupDestination);
+        }
+        player.teleport(cleanupDestination);
+        if (isMapDestination(cleanupDestination)) {
+            map.refreshPlayerTeleport(player, cleanupDestination);
+        }
         if (userState != null) {
             userState.reset();
         }
-        if (QuakePlugin.INSTANCE.lobbyScoreboard != null) {
+        if (isLobbyDestination(cleanupDestination) && QuakePlugin.INSTANCE.lobbyScoreboard != null) {
             QuakePlugin.INSTANCE.lobbyScoreboard.apply(player);
         }
 
@@ -320,18 +334,26 @@ public abstract class Match implements ForwardingAudience {
     }
 
     private Location getCleanupDestination(Player player) {
-        if (QuakePlugin.INSTANCE.config.matchmaking.joinsPlayersAutomatically()) {
-            Team team = this.players.get(player);
-            if (team != null) {
-                try {
-                    return this.map.getRandomSpawnpoint(team);
-                } catch (IllegalStateException e) {
-                    QuakePlugin.INSTANCE.getLogger().warning("Falling back to lobby after match cleanup: " + e.getMessage());
-                }
-            }
+        return QuakePlugin.LOBBY;
+    }
+
+    private boolean shouldKeepChunksLoadedForAutoJoin() {
+        return QuakePlugin.INSTANCE.matchmakingService != null
+                && QuakePlugin.INSTANCE.config.matchmaking.keepConfiguredMatchesReady
+                && QuakePlugin.INSTANCE.config.matchmaking.joinsPlayersAutomatically();
+    }
+
+    private boolean isLobbyDestination(Location location) {
+        if (location == null || QuakePlugin.LOBBY == null) {
+            return false;
         }
 
-        return QuakePlugin.LOBBY;
+        return Objects.equals(location.getWorld(), QuakePlugin.LOBBY.getWorld())
+                && location.distanceSquared(QuakePlugin.LOBBY) < 0.0001;
+    }
+
+    private boolean isMapDestination(Location location) {
+        return location != null && location.getWorld() == this.map.world && this.map.bounds.contains(location.toVector());
     }
     public void onDeath(Player victim, Entity attacker, DamageCause cause) {
         QuakeUserState victimState = QuakePlugin.INSTANCE.userStates.get(victim);
@@ -393,29 +415,30 @@ public abstract class Match implements ForwardingAudience {
     }
 
     protected void broadcastWarmupJoin(Player player) {
-        String maxPlayersText = hasPlayerLimit() ? String.valueOf(maxPlayers) : "unlimited";
-        String mode = TranslationManager.tLegacy(getNameKey(), TranslationManager.FALLBACK);
-        Bukkit.broadcastMessage("§8[§cQuake§8] §f" + player.getName()
-                + " joined " + mode
-                + " on " + map.getDisplayName()
-                + " §7(" + players.size() + "/" + maxPlayersText + " players)");
+        sendMessage(TranslationManager.t("match.player.joined", TranslationManager.FALLBACK,
+                Placeholder.unparsed("player_name", player.getName())));
+    }
+
+    private Chatroom getDefaultGameChatroom() {
+        return isTeamMatch() ? Chatroom.TEAM : Chatroom.MATCH;
     }
 
     public static Component getDeathMessage(Player victim, Entity attacker, DamageCause cause, Locale locale) {
         // TODO Vault API for prefixes and shit
+        DamageCause resolvedCause = cause == null ? DamageCause.UNKNOWN : cause;
         Component component;
         if (attacker == null || victim == attacker) {
-            String deathMsgKey = DeathMessages.SUICIDE.get(cause);
+            String deathMsgKey = DeathMessages.SUICIDE.get(resolvedCause);
             if (deathMsgKey == null) {
                 deathMsgKey = "obituary.suicide.unknown";
             }
-            component = TranslationManager.t(deathMsgKey, locale, Placeholder.parsed("victim_name", victim.getName()), Placeholder.parsed("death_cause", cause.name()));
+            component = TranslationManager.t(deathMsgKey, locale, Placeholder.parsed("victim_name", victim.getName()), Placeholder.parsed("death_cause", resolvedCause.name()));
         } else {
-            String deathMsgKey = DeathMessages.FRAG.get(cause);
+            String deathMsgKey = DeathMessages.FRAG.get(resolvedCause);
             if (deathMsgKey == null) {
                 deathMsgKey = "obituary.unknown";
             }
-            component = TranslationManager.t(deathMsgKey, locale, Placeholder.parsed("victim_name", victim.getName()), Placeholder.parsed("attacker_name", attacker.getName()), Placeholder.parsed("death_cause", cause.name()));
+            component = TranslationManager.t(deathMsgKey, locale, Placeholder.parsed("victim_name", victim.getName()), Placeholder.parsed("attacker_name", attacker.getName()), Placeholder.parsed("death_cause", resolvedCause.name()));
         }
 
         return component.color(TextColor.color(0xff3f3f));

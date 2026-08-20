@@ -27,7 +27,7 @@ public abstract class DeathMessages {
     public static EnumMap<DamageCause, String> SUICIDE = new EnumMap<>(DamageCause.class);
     public static EnumMap<DamageCause, String> FRAG = new EnumMap<>(DamageCause.class);
     static {
-        SUICIDE.put(DamageCause.UNKNOWN, "obituary.unknown");
+        SUICIDE.put(DamageCause.UNKNOWN, "obituary.suicide.unknown");
         SUICIDE.put(DamageCause.SUICIDE, "obituary.suicide.generic");
         SUICIDE.put(DamageCause.FALLING, "obituary.fall");
         SUICIDE.put(DamageCause.CRUSH, "obituary.crush");
@@ -36,7 +36,7 @@ public abstract class DeathMessages {
         SUICIDE.put(DamageCause.TARGET_LASER, "obituary.suicide.laser");
         SUICIDE.put(DamageCause.TRIGGER_HURT, "obituary.suicide.void");
         SUICIDE.put(DamageCause.ROCKET_SPLASH, "obituary.suicide.explosion");
-        SUICIDE.put(DamageCause.PLASMA_SPLASH, "obituary.suicide.plasmagun");
+        SUICIDE.put(DamageCause.PLASMA_SPLASH, "obituary.suicide.plasma");
         SUICIDE.put(DamageCause.BFG_SPLASH, "obituary.suicide.bfg");
 
         FRAG.put(DamageCause.UNKNOWN, "obituary.generic");
