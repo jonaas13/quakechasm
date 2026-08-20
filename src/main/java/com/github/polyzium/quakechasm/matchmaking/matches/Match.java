@@ -198,9 +198,7 @@ public abstract class Match implements ForwardingAudience {
         players.put(player, resolvedTeam);
         userState.currentMatch = this;
 
-        map.preparePlayerTeleport(player, spawn);
-        player.teleport(spawn);
-        map.refreshPlayerTeleport(player, spawn);
+        teleportToMatchSpawn(player, spawn);
         MiscUtil.teleEffect(spawn, false);
         userState.initForMatch();
 
@@ -218,11 +216,11 @@ public abstract class Match implements ForwardingAudience {
         refreshPlayerListVisibility();
 
         userState.switchChat(getDefaultGameChatroom());
+        retryBedrockPostJoinTeleport(player, spawn);
         if (hasWarmupPhase() && !hasStarted()) {
             broadcastWarmupJoin(player);
         } else {
-            this.sendMessage(TranslationManager.t("match.player.joined", TranslationManager.FALLBACK,
-                Placeholder.unparsed("player_name", player.getName())));
+            broadcastJoin(player);
         }
     }
 
@@ -286,6 +284,63 @@ public abstract class Match implements ForwardingAudience {
         }.runTaskTimer(QuakePlugin.INSTANCE, 20, 20);
     }
     public abstract Team assignTeam(Player player);
+
+    private void teleportToMatchSpawn(Player player, Location spawn) {
+        map.preparePlayerTeleport(player, spawn);
+        player.teleport(spawn);
+        map.refreshPlayerTeleport(player, spawn);
+
+        if (MiscUtil.isBedrockPlayer(player)) {
+            retryBedrockMatchTeleport(player, spawn);
+        }
+    }
+
+    private void retryBedrockMatchTeleport(Player player, Location spawn) {
+        Match match = this;
+        new BukkitRunnable() {
+            private int attempts = 0;
+
+            @Override
+            public void run() {
+                QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+                if (!player.isOnline() || userState == null || userState.currentMatch != match || match.hasStarted() || attempts >= 3) {
+                    cancel();
+                    return;
+                }
+
+                map.preparePlayerTeleport(player, spawn);
+                player.teleport(spawn);
+                map.refreshPlayerTeleport(player, spawn);
+                player.setFallDistance(0);
+                player.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
+                attempts++;
+            }
+        }.runTaskTimer(QuakePlugin.INSTANCE, 5, 10);
+    }
+
+    private void retryBedrockPostJoinTeleport(Player player, Location spawn) {
+        if (!MiscUtil.isBedrockPlayer(player)) {
+            return;
+        }
+
+        Match match = this;
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+                if (!player.isOnline() || userState == null || userState.currentMatch != match || match.hasStarted()) {
+                    return;
+                }
+
+                map.preparePlayerTeleport(player, spawn);
+                player.teleport(spawn);
+                map.refreshPlayerTeleport(player, spawn);
+                player.setFallDistance(0);
+                player.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
+            }
+        }.runTaskLater(QuakePlugin.INSTANCE, 20);
+    }
+
     public static void setArmor(Player player, Team team) {
         ItemStack torso = new ItemStack(Material.LEATHER_CHESTPLATE);
         ItemStack pants = new ItemStack(Material.LEATHER_LEGGINGS);
@@ -415,8 +470,16 @@ public abstract class Match implements ForwardingAudience {
     }
 
     protected void broadcastWarmupJoin(Player player) {
-        sendMessage(TranslationManager.t("match.player.joined", TranslationManager.FALLBACK,
-                Placeholder.unparsed("player_name", player.getName())));
+        broadcastJoin(player);
+    }
+
+    private void broadcastJoin(Player player) {
+        String maxPlayersText = hasPlayerLimit() ? String.valueOf(maxPlayers) : "unlimited";
+        String mode = TranslationManager.tLegacy(getNameKey(), TranslationManager.FALLBACK);
+        sendMessage("§8[§cQuake§8] §f" + player.getName()
+                + " joined " + mode
+                + " on " + map.getDisplayName()
+                + " §7(" + players.size() + "/" + maxPlayersText + " players)");
     }
 
     private Chatroom getDefaultGameChatroom() {

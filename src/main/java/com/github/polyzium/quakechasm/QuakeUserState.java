@@ -189,10 +189,37 @@ public class QuakeUserState {
         this.currentMatch.getMap().preparePlayerTeleport(player, spawnpoint);
         player.teleport(spawnpoint);
         this.currentMatch.getMap().refreshPlayerTeleport(player, spawnpoint);
+        retryBedrockRespawnTeleport(spawnpoint);
         MiscUtil.teleEffect(spawnpoint, false);
 
         if (this.currentMatch.isTeamMatch())
             Match.setArmor(this.player, this.currentMatch.getTeamOfPlayer(this.player));
+    }
+
+    private void retryBedrockRespawnTeleport(Location spawnpoint) {
+        if (!MiscUtil.isBedrockPlayer(player)) {
+            return;
+        }
+
+        Match match = this.currentMatch;
+        new BukkitRunnable() {
+            private int attempts = 0;
+
+            @Override
+            public void run() {
+                if (!player.isOnline() || currentMatch != match || attempts >= 3) {
+                    cancel();
+                    return;
+                }
+
+                match.getMap().preparePlayerTeleport(player, spawnpoint);
+                player.teleport(spawnpoint);
+                match.getMap().refreshPlayerTeleport(player, spawnpoint);
+                player.setFallDistance(0);
+                player.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
+                attempts++;
+            }
+        }.runTaskTimer(QuakePlugin.INSTANCE, 5, 10);
     }
 
     public void switchChat(Chatroom chatroom) {

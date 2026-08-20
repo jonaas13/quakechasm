@@ -22,12 +22,11 @@ package com.github.polyzium.quakechasm.events.listeners;
 import com.github.polyzium.quakechasm.matchmaking.Team;
 import com.github.polyzium.quakechasm.misc.TranslationManager;
 import io.papermc.paper.event.player.AsyncChatEvent;
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -35,8 +34,6 @@ import org.bukkit.event.Listener;
 import com.github.polyzium.quakechasm.QuakePlugin;
 import com.github.polyzium.quakechasm.QuakeUserState;
 import com.github.polyzium.quakechasm.misc.Chatroom;
-
-import java.util.ArrayList;
 
 public class ChatListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
@@ -88,29 +85,50 @@ public class ChatListener implements Listener {
             return;
         }
 
-        event.setCancelled(true);
-        sendChat(player, userState, targetChatroom, Component.text(processedMessage));
+        event.message(Component.text(processedMessage));
+        if (targetChatroom == Chatroom.GLOBAL && userState.currentMatch != null) {
+            sendGlobalOutsideMatches(event, player);
+            event.setCancelled(true);
+            return;
+        }
+
+        filterViewers(event, player, userState, targetChatroom);
     }
 
-    private void sendChat(Player source, QuakeUserState sourceState, Chatroom chatroom, Component message) {
-        for (Player viewer : getViewers(source, sourceState, chatroom)) {
-            viewer.sendMessage(formatMessage(chatroom, viewer, source.displayName(), message));
+    private void sendGlobalOutsideMatches(AsyncChatEvent event, Player source) {
+        Component renderedMessage = null;
+        Component message = event.message();
+        for (Audience viewer : event.viewers()) {
+            if (!(viewer instanceof Player viewerPlayer)) {
+                continue;
+            }
+
+            QuakeUserState viewerState = QuakePlugin.INSTANCE.userStates.get(viewerPlayer);
+            if (viewerState != null && viewerState.currentMatch != null) {
+                continue;
+            }
+
+            if (renderedMessage == null) {
+                renderedMessage = event.renderer().render(source, source.displayName(), message, viewer);
+            }
+            viewerPlayer.sendMessage(renderedMessage);
         }
     }
 
-    private Iterable<Player> getViewers(Player source, QuakeUserState sourceState, Chatroom chatroom) {
-        return switch (chatroom) {
-            case GLOBAL -> new ArrayList<Player>(Bukkit.getOnlinePlayers());
-            case MATCH -> sourceState.currentMatch.getPlayers();
-            case TEAM -> sourceState.currentMatch.getPlayersInTeam(sourceState.currentMatch.getTeamOfPlayer(source));
-        };
-    }
+    private void filterViewers(AsyncChatEvent event, Player source, QuakeUserState sourceState, Chatroom chatroom) {
+        event.viewers().removeIf(viewer -> {
+            if (!(viewer instanceof Player viewerPlayer)) {
+                return chatroom != Chatroom.GLOBAL;
+            }
 
-    private Component formatMessage(Chatroom chatroom, Player viewer, Component sourceDisplayName, Component message) {
-        return Component.textOfChildren(chatroom.getPrefix(viewer.locale()), MiniMessage.miniMessage().deserialize(
-                " <b><color:#7f7f7f><source_display_name></color></b> <message>",
-                Placeholder.component("source_display_name", sourceDisplayName),
-                Placeholder.component("message", message)
-        ));
+            QuakeUserState viewerState = QuakePlugin.INSTANCE.userStates.get(viewerPlayer);
+            return switch (chatroom) {
+                case GLOBAL -> viewerState != null && viewerState.currentMatch != null;
+                case MATCH -> viewerState == null || viewerState.currentMatch != sourceState.currentMatch;
+                case TEAM -> viewerState == null
+                        || viewerState.currentMatch != sourceState.currentMatch
+                        || sourceState.currentMatch.getTeamOfPlayer(viewerPlayer) != sourceState.currentMatch.getTeamOfPlayer(source);
+            };
+        });
     }
 }

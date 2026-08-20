@@ -183,10 +183,13 @@ public class TDMMatch extends Match {
     public void start() {
         map.prepareForMatch(this);
 
-        for (Player player : players.keySet()) {
+        for (Player player : new ArrayList<>(players.keySet())) {
             scores.put(player, 0);
 
             QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
+            if (userState == null || userState.currentMatch != this) {
+                continue;
+            }
             userState.reset();
             userState.respawn();
         }

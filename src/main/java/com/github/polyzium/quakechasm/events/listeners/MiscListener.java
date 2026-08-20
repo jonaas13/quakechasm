@@ -65,7 +65,7 @@ public class MiscListener implements Listener {
         }
 
         Action action = event.getAction();
-        if (action == Action.RIGHT_CLICK_BLOCK || action == Action.LEFT_CLICK_BLOCK || action == Action.PHYSICAL) {
+        if (action == Action.RIGHT_CLICK_BLOCK || action == Action.LEFT_CLICK_BLOCK) {
             event.setCancelled(true);
         }
     }
@@ -192,10 +192,20 @@ public class MiscListener implements Listener {
     @EventHandler
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         Player teleportingPlayer = event.getPlayer();
+        QuakeUserState teleportingState = QuakePlugin.INSTANCE.userStates.get(teleportingPlayer);
+        if (teleportingState == null || teleportingState.currentMatch == null || !teleportingState.currentMatch.hasStarted()) {
+            return;
+        }
 
         for (Entity entity : event.getTo().getWorld().getNearbyEntities(event.getTo(), 1.5, 2.0, 1.5)) {
             if (entity.equals(teleportingPlayer)) continue;
             if (!(entity instanceof LivingEntity victim)) continue;
+            if (victim instanceof Player victimPlayer) {
+                QuakeUserState victimState = QuakePlugin.INSTANCE.userStates.get(victimPlayer);
+                if (victimState == null || victimState.currentMatch != teleportingState.currentMatch) {
+                    continue;
+                }
+            }
 
             damageCustom(victim, 1000, teleportingPlayer, DamageCause.TELEFRAG);
         }
