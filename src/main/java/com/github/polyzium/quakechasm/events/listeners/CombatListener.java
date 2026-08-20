@@ -72,11 +72,15 @@ public class CombatListener implements Listener {
 
         // Do not shoot when match is ending (immobilized)
         QuakeUserState state = QuakePlugin.INSTANCE.userStates.get(player);
-        if (state.currentMatch != null && state.currentMatch.matchEnding) {
+        if (state == null || state.currentMatch == null) {
+            return;
+        }
+        if (state.currentMatch.matchEnding) {
             event.setCancelled(true);
             return;
         }
         state.weaponState.shoot(player);
+        event.setCancelled(true);
     }
 
     @EventHandler

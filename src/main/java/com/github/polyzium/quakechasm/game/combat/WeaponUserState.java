@@ -39,6 +39,22 @@ public class WeaponUserState {
     public int[] ammo = new int[]{100, 0, 0, 0, 0, 0, 0};
     public int[] cooldowns = new int[]{0, 0, 0, 0, 0, 0, 0};
 
+    public void stop() {
+        if (shooterTask != null) {
+            shooterTask.cancel();
+            shooterTask = null;
+        }
+        if (shooter != null) {
+            shooter.cancel();
+            shooter = null;
+        }
+        if (clickDetector != null) {
+            clickDetector.cancel();
+            clickDetector = null;
+        }
+        shooting = false;
+    }
+
     public void shoot(Player player) {
         /*
         From the event listener we are assuming

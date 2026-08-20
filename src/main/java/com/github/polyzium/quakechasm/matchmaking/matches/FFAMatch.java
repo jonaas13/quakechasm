@@ -193,7 +193,6 @@ public class FFAMatch extends Match {
     }
 
     public void end() {
-        this.map.cleanup();
         super.end();
     }
 

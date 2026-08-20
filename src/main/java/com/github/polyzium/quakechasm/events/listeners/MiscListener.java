@@ -34,6 +34,7 @@ import com.github.polyzium.quakechasm.QuakeUserState;
 import com.github.polyzium.quakechasm.game.combat.DamageCause;
 import com.github.polyzium.quakechasm.game.movement.StrafeJumpHandler;
 import com.github.polyzium.quakechasm.matchmaking.matches.Match;
+import com.github.polyzium.quakechasm.misc.MiscUtil;
 
 import static com.github.polyzium.quakechasm.game.combat.WeaponUtil.damageCustom;
 
@@ -46,11 +47,19 @@ public class MiscListener implements Listener {
         QuakePlugin.INSTANCE.initPlayer(joinedPlayer);
         Match.refreshPlayerListVisibility();
 
+        if (QuakePlugin.INSTANCE.matchmakingService != null
+                && QuakePlugin.INSTANCE.config.matchmaking.joinsPlayersAutomatically()
+                && QuakePlugin.INSTANCE.matchmakingService.autoJoin(joinedPlayer)) {
+            return;
+        }
+
         joinedPlayer.teleport(QuakePlugin.LOBBY);
         if (QuakePlugin.INSTANCE.lobbyScoreboard != null) {
             QuakePlugin.INSTANCE.lobbyScoreboard.apply(joinedPlayer);
         }
-        QuakePlugin.INSTANCE.matchmakingService.queueAutoJoin(joinedPlayer);
+        if (QuakePlugin.INSTANCE.matchmakingService != null) {
+            QuakePlugin.INSTANCE.matchmakingService.queueAutoJoin(joinedPlayer);
+        }
     }
 
     @EventHandler
@@ -86,7 +95,7 @@ public class MiscListener implements Listener {
         QuakeUserState userState = QuakePlugin.INSTANCE.userStates.get(player);
         if (userState == null) return;
         if (userState.currentMatch != null && userState.currentMatch.matchEnding) {
-            event.setCancelled(true);
+            holdPosition(event);
             return;
         }
         if (blockEnemySafeZone(event, userState)) {
@@ -94,6 +103,10 @@ public class MiscListener implements Listener {
         }
 
         userState.strafeJumpTicks++;
+        if (MiscUtil.isBedrockPlayer(player)) {
+            return;
+        }
+
         Vector velocity = event.getTo().toVector().subtract(event.getFrom().toVector());
         StrafeJumpHandler.applyStrafeAcceleration(player, userState, velocity);
     }
@@ -118,9 +131,17 @@ public class MiscListener implements Listener {
             return false;
         }
 
-        event.setCancelled(true);
+        holdPosition(event);
         warnSafeZone(event.getPlayer(), userState, config.message);
         return true;
+    }
+
+    private void holdPosition(PlayerMoveEvent event) {
+        Location from = event.getFrom().clone();
+        Location to = event.getTo();
+        from.setYaw(to.getYaw());
+        from.setPitch(to.getPitch());
+        event.setTo(from);
     }
 
     private void warnSafeZone(Player player, QuakeUserState userState, String message) {

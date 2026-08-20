@@ -23,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.BoundingBox;
@@ -32,6 +33,7 @@ import com.github.polyzium.quakechasm.misc.adapters.WorldAdapter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.UUID;
 
 public abstract class MiscUtil {
     public static final double GRAVITY = 0.08;
@@ -141,5 +143,16 @@ public abstract class MiscUtil {
         ItemMeta itemMeta = itemStack.getItemMeta();
         itemMeta.displayName(name);
         itemStack.setItemMeta(itemMeta);
+    }
+
+    public static boolean isBedrockPlayer(Player player) {
+        try {
+            Class<?> floodgateApiClass = Class.forName("org.geysermc.floodgate.api.FloodgateApi");
+            Object floodgateApi = floodgateApiClass.getMethod("getInstance").invoke(null);
+            Object result = floodgateApiClass.getMethod("isFloodgatePlayer", UUID.class).invoke(floodgateApi, player.getUniqueId());
+            return result instanceof Boolean bedrock && bedrock;
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+            return false;
+        }
     }
 }

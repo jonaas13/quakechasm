@@ -109,8 +109,17 @@ public class QuakeUserState {
     }
 
     public void reset() {
+        this.weaponState.stop();
         this.weaponState = new WeaponUserState();
         this.armor = 0;
+        if (this.healthDecreaser != null) {
+            this.healthDecreaser.cancel();
+            this.healthDecreaser = null;
+        }
+        if (this.armorDecreaser != null) {
+            this.armorDecreaser.cancel();
+            this.armorDecreaser = null;
+        }
         for (Powerup activePowerup : this.activePowerups) {
             activePowerup.timer.cancel();
         }
@@ -161,6 +170,8 @@ public class QuakeUserState {
 
         player.getInventory().addItem(machinegun);
         player.getInventory().setHeldItemSlot(0);
+        player.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
+        player.setFallDistance(0);
 
         // Set health to 125 Quake HP
         player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(25);

@@ -21,7 +21,9 @@ package com.github.polyzium.quakechasm.matchmaking.map;
 
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.BoundingBox;
 import com.github.polyzium.quakechasm.QuakePlugin;
@@ -137,9 +139,61 @@ public class QMap {
                 ThreadLocalRandom.current().nextInt(allowedSpawnpoints.size())
         );
 
-        Location spLoc = spawnPoint.pos;
+        return resolveSafeSpawnLocation(spawnPoint.pos);
+    }
 
-        return spLoc;
+    private Location resolveSafeSpawnLocation(Location rawLocation) {
+        Location base = rawLocation.clone();
+        World world = base.getWorld();
+        if (world == null) {
+            return base;
+        }
+
+        double x = Math.floor(base.getX()) + 0.5;
+        double z = Math.floor(base.getZ()) + 0.5;
+        int centerY = base.getBlockY();
+        int minY = Math.max(world.getMinHeight() + 1, centerY - 8);
+        int maxY = Math.min(world.getMaxHeight() - 2, centerY + 4);
+
+        for (int y = centerY; y >= minY; y--) {
+            Location candidate = makeSpawnLocation(base, x, y, z);
+            if (isSafeSpawn(candidate)) {
+                return candidate;
+            }
+        }
+
+        for (int y = centerY + 1; y <= maxY; y++) {
+            Location candidate = makeSpawnLocation(base, x, y, z);
+            if (isSafeSpawn(candidate)) {
+                return candidate;
+            }
+        }
+
+        return base;
+    }
+
+    private Location makeSpawnLocation(Location source, double x, int y, double z) {
+        return new Location(source.getWorld(), x, y, z, source.getYaw(), source.getPitch());
+    }
+
+    private boolean isSafeSpawn(Location location) {
+        World world = location.getWorld();
+        if (world == null) {
+            return false;
+        }
+
+        Block below = world.getBlockAt(location.getBlockX(), location.getBlockY() - 1, location.getBlockZ());
+        Block feet = world.getBlockAt(location);
+        Block head = world.getBlockAt(location.getBlockX(), location.getBlockY() + 1, location.getBlockZ());
+
+        return isStandable(below.getType()) && feet.isPassable() && head.isPassable();
+    }
+
+    private boolean isStandable(Material material) {
+        return material.isSolid()
+                && material != Material.BARRIER
+                && material != Material.STRUCTURE_VOID
+                && material != Material.LIGHT;
     }
 
     public List<Spawnpoint> getSpawnpointsFor(Team team) {

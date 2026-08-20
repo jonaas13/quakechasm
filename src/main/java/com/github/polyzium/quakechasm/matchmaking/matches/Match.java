@@ -231,6 +231,9 @@ public abstract class Match implements ForwardingAudience {
             Placeholder.unparsed("player_name", player.getName())));
     }
     public void end() {
+        if (matchEnding) {
+            return;
+        }
         matchEnding = true;
         stopMatchTimer();
 
@@ -265,6 +268,7 @@ public abstract class Match implements ForwardingAudience {
                     }
 
                     QuakePlugin.INSTANCE.matchManager.matches.remove(that);
+                    that.map.cleanup();
                     if (QuakePlugin.INSTANCE.matchmakingService != null) {
                         QuakePlugin.INSTANCE.matchmakingService.onMatchEnded(that);
                     }
@@ -303,7 +307,7 @@ public abstract class Match implements ForwardingAudience {
         player.setWalkSpeed(QuakePlugin.INSTANCE.config.player.walkSpeed);
 
         MiscUtil.teleEffect(player.getLocation(), true);
-        player.teleport(QuakePlugin.LOBBY);
+        player.teleport(getCleanupDestination(player));
         if (userState != null) {
             userState.reset();
         }
@@ -313,6 +317,21 @@ public abstract class Match implements ForwardingAudience {
 
         refreshPlayerListVisibility();
         player.sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
+    }
+
+    private Location getCleanupDestination(Player player) {
+        if (QuakePlugin.INSTANCE.config.matchmaking.joinsPlayersAutomatically()) {
+            Team team = this.players.get(player);
+            if (team != null) {
+                try {
+                    return this.map.getRandomSpawnpoint(team);
+                } catch (IllegalStateException e) {
+                    QuakePlugin.INSTANCE.getLogger().warning("Falling back to lobby after match cleanup: " + e.getMessage());
+                }
+            }
+        }
+
+        return QuakePlugin.LOBBY;
     }
     public void onDeath(Player victim, Entity attacker, DamageCause cause) {
         QuakeUserState victimState = QuakePlugin.INSTANCE.userStates.get(victim);

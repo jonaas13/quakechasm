@@ -240,7 +240,6 @@ public class CTFMatch extends Match {
             player.hideBossBar(this.infoBar);
         }
 
-        this.map.cleanup();
         super.end();
     }
 

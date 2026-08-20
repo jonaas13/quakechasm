@@ -206,7 +206,6 @@ public class TDMMatch extends Match {
     }
 
     public void end() {
-        this.map.cleanup();
         super.end();
     }
 
