@@ -483,7 +483,7 @@ public abstract class Match implements ForwardingAudience {
     }
 
     private Chatroom getDefaultGameChatroom() {
-        return isTeamMatch() ? Chatroom.TEAM : Chatroom.MATCH;
+        return Chatroom.MATCH;
     }
 
     public static Component getDeathMessage(Player victim, Entity attacker, DamageCause cause, Locale locale) {
